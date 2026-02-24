@@ -19,18 +19,18 @@ export function Hero() {
         <div className="animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-river/[0.12] border border-river/25 rounded-full text-river text-xs font-medium uppercase tracking-[0.06em] mb-6">
             <span className="w-1.5 h-1.5 bg-river rounded-full animate-pulse-dot" />
-            Nonprofit Advisory & Technology
+            Powering Environmental Organizations to Do More
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.12] tracking-tight mb-6">
-            We build the pathways.
-            <br />
-            <em className="not-italic text-river">You change the place.</em>
+            We Build the Pathways That{' '}
+            <br className="hidden sm:block" />
+            <em className="not-italic text-river">Connect People to Place.</em>
           </h1>
 
           <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-xl font-light">
-            Wright Adventures helps conservation nonprofits, youth programs, and watershed groups grow
-            their impact — through strategic consulting, AI-powered tools, and hands-on program design.
+            Strategic consulting, AI-powered tools, and program design for environmental organizations
+            ready to scale their impact and grow the next generation of stewards.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
