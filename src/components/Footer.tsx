@@ -1,4 +1,5 @@
 import { BRAND } from '../data/siteData'
+import { Logo } from './Logo'
 
 const FOOTER_LINKS = [
   { label: 'Services', href: '#services' },
@@ -11,9 +12,11 @@ export function Footer() {
   return (
     <footer className="bg-[#001825] py-8 px-6 lg:px-12">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="text-white/50 text-sm font-light">
-          <strong className="text-white/70 font-medium">{BRAND.name}</strong> &copy;{' '}
-          {new Date().getFullYear()}
+        <div className="flex items-center gap-3">
+          <Logo dark className="h-8 w-auto" />
+          <span className="text-white/50 text-sm font-light">
+            &copy; {new Date().getFullYear()}
+          </span>
         </div>
 
         <ul className="flex gap-6 list-none">

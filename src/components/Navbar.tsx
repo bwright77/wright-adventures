@@ -32,11 +32,8 @@ export function Navbar() {
           : 'bg-white/92 backdrop-blur-md'
       }`}
     >
-      <a href="#" className="flex items-center gap-2.5 no-underline" onClick={handleNavClick}>
-        <Logo className="w-10 h-10" />
-        <div className="text-navy font-semibold text-lg tracking-wide">
-          WRIGHT <span className="font-light text-river">Adventures</span>
-        </div>
+      <a href="#" className="flex items-center no-underline" onClick={handleNavClick}>
+        <Logo dark={!scrolled} className="h-10 w-auto" />
       </a>
 
       {/* Desktop nav */}

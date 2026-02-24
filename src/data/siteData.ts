@@ -5,9 +5,9 @@
 export const BRAND = {
   name: 'Wright Adventures',
   tagline: 'Nonprofit Advisory & Technology',
-  email: 'benw21@gmail.com',
-  phone: '(206) 214-8073',
-  phoneHref: 'tel:+12062148073',
+  email: 'info@wrightadventures.org',
+  phone: '(303) 815-7613',
+  phoneHref: 'tel:+13038157613',
   linkedin: 'https://www.linkedin.com/in/benjamin-robert-wright/',
   location: 'Denver, Colorado',
 } as const
@@ -20,9 +20,9 @@ export const NAV_LINKS = [
 ] as const
 
 export const STATS = [
-  { value: '$3M', unit: '+', label: 'Raised for GroundWork Denver youth & conservation programs' },
-  { value: '$700K', unit: '/yr', label: 'Secured annually for Lincoln Hills Cares pathways programs' },
-  { value: '20', unit: '+ yrs', label: 'Combined experience in nonprofit leadership & technology' },
+  { value: '$15M', unit: '+', label: 'Raised for youth conservation and community health programs creating pathways to environmental careers and community leadership' },
+  { value: '800', unit: '+', label: 'Youth directly employed in programs we built — watershed restoration, tree planting, trail crews, and urban conservation' },
+  { value: '30', unit: '+ yrs', label: 'Combined experience in nonprofit leadership & technology' },
 ] as const
 
 export const SERVICES = [
@@ -93,6 +93,16 @@ export const CASE_STUDIES = [
     metrics: [
       { value: '$3M+', label: 'Total funds raised' },
       { value: 'Youth & watershed', label: 'Dual-impact programs' },
+    ],
+  },
+  {
+    tag: 'Brand & Technology',
+    tagColor: 'earth' as const,
+    title: 'Confluence Colorado',
+    description: 'Built Confluence Colorado\'s brand identity from the ground up — logo, visual language, and messaging — then designed and launched their website. We continue to manage their technology infrastructure and lead their grant management strategy, serving as an ongoing strategic and operational partner.',
+    metrics: [
+      { value: 'Full build', label: 'Brand, web & tech' },
+      { value: 'Ongoing', label: 'Strategy & tech partner' },
     ],
   },
 ] as const
