@@ -1,6 +1,12 @@
+import { Network, Cpu, type LucideProps } from 'lucide-react'
 import { useFadeIn } from '../hooks/useFadeIn'
 import { TEAM } from '../data/siteData'
 import shaneAndBen from '../assets/images/shane_and_ben.jpeg'
+
+const TEAM_ICONS: Record<string, React.ComponentType<LucideProps>> = {
+  Network,
+  Cpu,
+}
 
 function TeamMember({ member, index }: { member: typeof TEAM[number]; index: number }) {
   const { ref, style } = useFadeIn({ delay: index * 120 })
@@ -8,9 +14,9 @@ function TeamMember({ member, index }: { member: typeof TEAM[number]; index: num
   return (
     <div ref={ref} style={style} className="flex flex-col sm:flex-row gap-6 items-start p-6 rounded-xl bg-black/30 border border-white/[0.12] backdrop-blur-sm">
       <div
-        className={`w-[88px] h-[88px] rounded-xl bg-gradient-to-br ${member.gradient} flex items-center justify-center text-white text-2xl font-bold shrink-0`}
+        className={`w-[88px] h-[88px] rounded-xl bg-gradient-to-br ${member.gradient} flex items-center justify-center text-white shrink-0`}
       >
-        {member.initials}
+        {(() => { const Icon = TEAM_ICONS[member.icon]; return Icon ? <Icon size={36} strokeWidth={1.5} /> : null })()}
       </div>
       <div>
         <h3 className="text-lg font-semibold text-white mb-0.5">{member.name}</h3>

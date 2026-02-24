@@ -111,14 +111,14 @@ export const TEAM = [
   {
     name: 'Shane Wright',
     role: 'Founder & Executive Director',
-    initials: 'SW',
+    icon: 'Network',
     gradient: 'from-trail to-[#5A9C6D]',
     bio: '20+ years leading youth development, conservation, and community programs across Colorado. Former director of GroundWork Denver and architect of the Lincoln Hills Cares pathways initiative. Deep relationships across the nonprofit, foundation, and government sectors.',
   },
   {
     name: 'Benjamin Wright',
     role: 'Director of Technology & Innovation',
-    initials: 'BW',
+    icon: 'Cpu',
     gradient: 'from-river to-[#0080B0]',
     bio: '10+ years leading engineering teams at organizations including Paytient and Maxwell Financial Labs. JD from University of Denver with 6 years of legal practice. Builds AI-powered tools that make enterprise-grade software accessible to mission-driven organizations.',
   },
