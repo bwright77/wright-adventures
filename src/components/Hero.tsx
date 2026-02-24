@@ -23,7 +23,7 @@ export function Hero() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.12] tracking-tight mb-6">
-            We Build the Pathways That{' '}
+            Building the Pathways to{' '}
             <br className="hidden sm:block" />
             <em className="not-italic text-river">Connect People to Place.</em>
           </h1>
