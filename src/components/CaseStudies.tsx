@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { CASE_STUDIES } from '../data/siteData'
 import lhcLogo from '../assets/images/lhc.png'
@@ -20,9 +20,21 @@ const TAG_COLORS = {
 export function CaseStudies() {
   const [current, setCurrent] = useState(0)
   const total = CASE_STUDIES.length
+  const touchStartX = useRef<number | null>(null)
 
   const prev = () => setCurrent(i => (i - 1 + total) % total)
   const next = () => setCurrent(i => (i + 1) % total)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const delta = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(delta) > 40) delta > 0 ? next() : prev()
+    touchStartX.current = null
+  }
 
   return (
     <section id="work" className="py-24 px-6 lg:px-12 bg-gray-50">
@@ -36,7 +48,11 @@ export function CaseStudies() {
 
         <div className="mt-12 relative">
           {/* Carousel track */}
-          <div className="overflow-hidden rounded-xl">
+          <div
+            className="overflow-hidden rounded-xl"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
             <div
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${current * 100}%)` }}
