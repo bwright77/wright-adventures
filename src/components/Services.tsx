@@ -64,7 +64,7 @@ export function Services() {
         <div className="mb-14">
           <span className="section-label">What We Do</span>
           <h2 className="section-title">
-            Services built around
+            Services built around{' '}
             <br className="hidden sm:block" />
             what you actually need
           </h2>

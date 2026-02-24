@@ -9,7 +9,7 @@ function ApproachStep({ step, index }: { step: typeof APPROACH_STEPS[number]; in
     <div
       ref={ref}
       style={style}
-      className="p-7 rounded-xl bg-black/30 border border-white/[0.12] backdrop-blur-sm"
+      className="p-7 rounded-xl bg-black/50 border border-white/[0.15]"
     >
       <div className="text-5xl font-bold text-white/60 leading-none mb-4">
         {step.number}
