@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Calendar, Tag, ChevronDown, Pencil, UserCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, Tag, ChevronDown, Pencil, UserCircle, Sparkles } from 'lucide-react'
 import { format, formatDistanceToNow, addDays } from 'date-fns'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { TaskPanel } from '../../components/admin/TaskPanel'
+import { GrantChatPanel } from '../../components/admin/GrantChatPanel'
 import type { Opportunity, ActivityEntry, Profile } from '../../lib/types'
 
 // ── Pipeline config ───────────────────────────────────────────
@@ -174,6 +175,8 @@ export function OpportunityDetail() {
   const { id }      = useParams<{ id: string }>()
   const { user }    = useAuth()
   const queryClient = useQueryClient()
+
+  const [activeTab, setActiveTab] = useState<'details' | 'ai'>('details')
 
   const { data: opportunity, isLoading } = useQuery<Opportunity>({
     queryKey: ['opportunity', id],
@@ -429,21 +432,58 @@ export function OpportunityDetail() {
         </div>
       </div>
 
-      {/* Tasks */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <TaskPanel
-          opportunityId={id!}
-          typeId={opportunity.type_id}
-          primaryDeadline={opportunity.primary_deadline}
-          ownerId={opportunity.owner_id}
-        />
+      {/* Tab bar */}
+      <div className="flex gap-0 border-b border-gray-200 mb-6">
+        <button
+          onClick={() => setActiveTab('details')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            activeTab === 'details'
+              ? 'border-river text-river'
+              : 'border-transparent text-gray-500 hover:text-navy'
+          }`}
+        >
+          Tasks & Activity
+        </button>
+        {isGrant && (
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              activeTab === 'ai'
+                ? 'border-river text-river'
+                : 'border-transparent text-gray-500 hover:text-navy'
+            }`}
+          >
+            <Sparkles size={13} />
+            AI Draft Assistant
+          </button>
+        )}
       </div>
 
-      {/* Activity log */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Activity</h2>
-        <ActivityLog entries={activity} />
-      </div>
+      {activeTab === 'details' && (
+        <>
+          {/* Tasks */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <TaskPanel
+              opportunityId={id!}
+              typeId={opportunity.type_id}
+              primaryDeadline={opportunity.primary_deadline}
+              ownerId={opportunity.owner_id}
+            />
+          </div>
+
+          {/* Activity log */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Activity</h2>
+            <ActivityLog entries={activity} />
+          </div>
+        </>
+      )}
+
+      {activeTab === 'ai' && isGrant && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <GrantChatPanel opportunityId={id!} />
+        </div>
+      )}
     </div>
   )
 }

@@ -267,7 +267,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Return conversation_id in header so the frontend can track new conversations
     res.setHeader('X-Conversation-Id', convId!)
-    return result.pipeDataStreamToResponse(res)
+    result.pipeUIMessageStreamToResponse(res)
+    return
 
   } catch (err: unknown) {
     console.error('Claude stream error:', err)
