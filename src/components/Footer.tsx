@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BRAND } from '../data/siteData'
 import { Logo } from './Logo'
 
@@ -32,7 +33,12 @@ export function Footer() {
           ))}
         </ul>
 
-        <div className="text-white/30 text-xs">{BRAND.location}</div>
+        <div className="flex items-center gap-4">
+          <div className="text-white/30 text-xs">{BRAND.location}</div>
+          <Link to="/login" className="text-white/20 text-xs hover:text-white/40 transition-colors">
+            Login
+          </Link>
+        </div>
       </div>
     </footer>
   )
