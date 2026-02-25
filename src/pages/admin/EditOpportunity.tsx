@@ -39,6 +39,8 @@ const partnershipSchema = baseSchema.extend({
   alignment_notes:  z.string().optional(),
 })
 
+type AnyOppForm = z.infer<typeof grantSchema> | z.infer<typeof partnershipSchema>
+
 // ── Field helpers ─────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
   return <label className="block text-xs font-medium text-gray-500 mb-1">{children}</label>
@@ -98,10 +100,9 @@ export function EditOpportunity() {
   const isGrant = opp?.type_id === 'grant'
 
   const schema = isGrant ? grantSchema : partnershipSchema
-  type FormValues = z.infer<typeof typeof schema>
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
-    useForm<z.infer<typeof schema>>({
+    useForm<AnyOppForm>({
       resolver: zodResolver(schema),
       values: opp ? buildDefaults(opp) : undefined,
     })
@@ -138,7 +139,7 @@ export function EditOpportunity() {
     }
   }
 
-  async function onSubmit(values: z.infer<typeof schema>) {
+  async function onSubmit(values: AnyOppForm) {
     setSubmitError(null)
     const tags = values.tags
       ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
