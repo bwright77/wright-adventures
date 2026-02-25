@@ -44,13 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 // ── Kanban card ───────────────────────────────────────────────
-function KanbanCard({
-  opp,
-  onDrop,
-}: {
-  opp:    Opportunity
-  onDrop: (id: string, status: string) => void
-}) {
+function KanbanCard({ opp }: { opp: Opportunity }) {
   const org = opp.funder ?? opp.partner_org
 
   return (
@@ -107,7 +101,7 @@ function KanbanCol({
         }`}
       >
         {opportunities.map(o => (
-          <KanbanCard key={o.id} opp={o} onDrop={onDrop} />
+          <KanbanCard key={o.id} opp={o} />
         ))}
       </div>
     </div>

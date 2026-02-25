@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Opportunity, OpportunityTypeId, GrantType, PartnershipType } from '../../lib/types'
+import type { Opportunity, GrantType, PartnershipType } from '../../lib/types'
 
 // ── Schemas (same shape as NewOpportunity) ────────────────────
 const baseSchema = z.object({
