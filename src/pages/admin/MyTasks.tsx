@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, isAfter } from 'date-fns'
 import { CheckCircle2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Task } from '../../lib/types'
@@ -32,9 +33,13 @@ function TaskRow({ task, onComplete }: { task: Task; onComplete: (id: string) =>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-navy">{task.title}</p>
         {task.opportunity && (
-          <p className="text-xs text-gray-400 mt-0.5 capitalize">
+          <Link
+            to={`/admin/opportunities/${task.opportunity.id}`}
+            className="text-xs text-gray-400 hover:text-river mt-0.5 capitalize transition-colors"
+            onClick={e => e.stopPropagation()}
+          >
             {task.opportunity.type_id} · {task.opportunity.name}
-          </p>
+          </Link>
         )}
       </div>
       <div className="flex items-center gap-3 shrink-0">

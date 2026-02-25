@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, CheckSquare, LogOut } from 'lucide-react'
+import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Logo } from '../Logo'
 
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/admin',               label: 'Dashboard',     icon: LayoutDashboard, end: true  },
   { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase,       end: false },
   { to: '/admin/tasks',         label: 'My Tasks',      icon: CheckSquare,     end: false },
+  { to: '/admin/team',          label: 'Team',          icon: Users,           end: false },
 ]
 
 export function AdminLayout() {

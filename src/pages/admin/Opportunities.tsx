@@ -1,33 +1,37 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, LayoutList, Columns3 } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import type { Opportunity, OpportunityTypeId } from '../../lib/types'
 
 type TabFilter = 'all' | OpportunityTypeId
+type ViewMode  = 'table' | 'kanban'
 
-const STATUS_LABELS: Record<string, string> = {
-  grant_identified:       'Identified',
-  grant_evaluating:       'Evaluating',
-  grant_preparing:        'Preparing',
-  grant_submitted:        'Submitted',
-  grant_under_review:     'Under Review',
-  grant_awarded:          'Awarded',
-  grant_declined:         'Declined',
-  grant_withdrawn:        'Withdrawn',
-  grant_archived:         'Archived',
-  partnership_prospecting: 'Prospecting',
-  partnership_outreach:    'Outreach',
-  partnership_negotiating: 'Negotiating',
-  partnership_formalizing: 'Formalizing',
-  partnership_active:      'Active',
-  partnership_on_hold:     'On Hold',
-  partnership_completed:   'Completed',
-  partnership_declined:    'Declined',
-  partnership_archived:    'Archived',
-}
+// ── Pipeline definitions ──────────────────────────────────────
+const GRANT_COLS = [
+  { id: 'grant_identified',   label: 'Identified'   },
+  { id: 'grant_evaluating',   label: 'Evaluating'   },
+  { id: 'grant_preparing',    label: 'Preparing'    },
+  { id: 'grant_submitted',    label: 'Submitted'    },
+  { id: 'grant_under_review', label: 'Under Review' },
+  { id: 'grant_awarded',      label: 'Awarded'      },
+  { id: 'grant_declined',     label: 'Declined'     },
+]
+const PARTNERSHIP_COLS = [
+  { id: 'partnership_prospecting', label: 'Prospecting' },
+  { id: 'partnership_outreach',    label: 'Outreach'    },
+  { id: 'partnership_negotiating', label: 'Negotiating' },
+  { id: 'partnership_formalizing', label: 'Formalizing' },
+  { id: 'partnership_active',      label: 'Active'      },
+  { id: 'partnership_on_hold',     label: 'On Hold'     },
+  { id: 'partnership_completed',   label: 'Completed'   },
+]
+
+const STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  [...GRANT_COLS, ...PARTNERSHIP_COLS].map(s => [s.id, s.label])
+)
 
 const STATUS_COLORS: Record<string, string> = {
   grant_awarded:          'bg-trail-50 text-trail',
@@ -39,9 +43,83 @@ const STATUS_COLORS: Record<string, string> = {
   partnership_declined:   'bg-red-50 text-red-600',
 }
 
+// ── Kanban card ───────────────────────────────────────────────
+function KanbanCard({
+  opp,
+  onDrop,
+}: {
+  opp:    Opportunity
+  onDrop: (id: string, status: string) => void
+}) {
+  const org = opp.funder ?? opp.partner_org
+
+  return (
+    <Link
+      to={`/admin/opportunities/${opp.id}`}
+      draggable
+      onDragStart={e => e.dataTransfer.setData('opportunityId', opp.id)}
+      className="block bg-white rounded-lg border border-gray-200 p-3 hover:border-river/30 hover:shadow-sm transition-all cursor-pointer"
+    >
+      <p className="text-sm font-medium text-navy leading-snug">{opp.name}</p>
+      {org && <p className="text-xs text-gray-400 mt-0.5 truncate">{org}</p>}
+      {opp.primary_deadline && (
+        <p className="text-xs text-gray-400 mt-2">
+          {format(new Date(opp.primary_deadline), 'MMM d')}
+        </p>
+      )}
+    </Link>
+  )
+}
+
+// ── Kanban column ─────────────────────────────────────────────
+function KanbanCol({
+  col,
+  opportunities,
+  onDrop,
+}: {
+  col:           { id: string; label: string }
+  opportunities: Opportunity[]
+  onDrop:        (id: string, status: string) => void
+}) {
+  const [over, setOver] = useState(false)
+
+  return (
+    <div
+      className={`flex flex-col min-w-[220px] w-[220px] ${over ? 'opacity-80' : ''}`}
+      onDragOver={e => { e.preventDefault(); setOver(true) }}
+      onDragLeave={() => setOver(false)}
+      onDrop={e => {
+        e.preventDefault()
+        setOver(false)
+        const oppId = e.dataTransfer.getData('opportunityId')
+        if (oppId) onDrop(oppId, col.id)
+      }}
+    >
+      <div className="flex items-center justify-between mb-2 px-0.5">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-[0.07em]">{col.label}</span>
+        <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          {opportunities.length}
+        </span>
+      </div>
+      <div
+        className={`flex-1 space-y-2 min-h-[120px] rounded-lg p-2 transition-colors ${
+          over ? 'bg-river/5 border-2 border-river/20 border-dashed' : 'bg-gray-50'
+        }`}
+      >
+        {opportunities.map(o => (
+          <KanbanCard key={o.id} opp={o} onDrop={onDrop} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────
 export function Opportunities() {
+  const queryClient = useQueryClient()
   const [tab, setTab]       = useState<TabFilter>('all')
   const [search, setSearch] = useState('')
+  const [view, setView]     = useState<ViewMode>('table')
 
   const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
     queryKey: ['opportunities'],
@@ -55,11 +133,38 @@ export function Opportunities() {
     },
   })
 
+  const moveCard = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const opp = opportunities.find(o => o.id === id)
+      if (!opp || opp.status === status) return
+      const { error } = await supabase
+        .from('opportunities')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+      await supabase.from('activity_log').insert({
+        opportunity_id: id,
+        actor_id:       null,
+        action:         'status_changed',
+        details:        { from: opp.status, to: status },
+      })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
+  })
+
   const filtered = opportunities.filter(o => {
     if (tab !== 'all' && o.type_id !== tab) return false
     if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  // Kanban only shows one type at a time; default to grant if 'all'
+  const kanbanType: OpportunityTypeId = tab === 'all' ? 'grant' : tab
+  const kanbanCols = kanbanType === 'grant' ? GRANT_COLS : PARTNERSHIP_COLS
+  const kanbanOpps = opportunities.filter(o =>
+    o.type_id === kanbanType &&
+    (!search || o.name.toLowerCase().includes(search.toLowerCase()))
+  )
 
   return (
     <div className="p-8">
@@ -78,7 +183,7 @@ export function Opportunities() {
         </Link>
       </div>
 
-      {/* Filters */}
+      {/* Filters + view toggle */}
       <div className="flex flex-wrap items-center gap-4 mb-5">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
           {(['all', 'grant', 'partnership'] as TabFilter[]).map(t => (
@@ -93,6 +198,7 @@ export function Opportunities() {
             </button>
           ))}
         </div>
+
         <div className="relative flex-1 max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -102,6 +208,23 @@ export function Opportunities() {
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40 transition-colors"
           />
         </div>
+
+        <div className="ml-auto flex gap-1 bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setView('table')}
+            className={`p-1.5 rounded transition-colors ${view === 'table' ? 'bg-white shadow-sm text-navy' : 'text-gray-400 hover:text-navy'}`}
+            title="Table view"
+          >
+            <LayoutList size={15} />
+          </button>
+          <button
+            onClick={() => setView('kanban')}
+            className={`p-1.5 rounded transition-colors ${view === 'kanban' ? 'bg-white shadow-sm text-navy' : 'text-gray-400 hover:text-navy'}`}
+            title="Kanban view"
+          >
+            <Columns3 size={15} />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -109,7 +232,27 @@ export function Opportunities() {
         <div className="py-20 flex justify-center">
           <div className="w-5 h-5 border-2 border-river border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : view === 'kanban' ? (
+        // ── Kanban ───────────────────────────────────────────────
+        <div>
+          {tab === 'all' && (
+            <p className="text-xs text-gray-400 mb-3">
+              Showing {kanbanType} pipeline — select Grants or Partnerships to switch.
+            </p>
+          )}
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {kanbanCols.map(col => (
+              <KanbanCol
+                key={col.id}
+                col={col}
+                opportunities={kanbanOpps.filter(o => o.status === col.id)}
+                onDrop={(oppId, status) => moveCard.mutate({ id: oppId, status })}
+              />
+            ))}
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
+        // ── Empty state ──────────────────────────────────────────
         <div className="py-20 text-center bg-white rounded-xl border border-gray-200">
           <p className="text-gray-400 text-sm mb-2">
             {search ? 'No results match your search.' : 'No opportunities yet.'}
@@ -121,6 +264,7 @@ export function Opportunities() {
           )}
         </div>
       ) : (
+        // ── Table ────────────────────────────────────────────────
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full">
             <thead>
@@ -160,9 +304,7 @@ export function Opportunities() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 hidden md:table-cell">
-                    {o.primary_deadline
-                      ? format(new Date(o.primary_deadline), 'MMM d, yyyy')
-                      : '—'}
+                    {o.primary_deadline ? format(new Date(o.primary_deadline), 'MMM d, yyyy') : '—'}
                   </td>
                 </tr>
               ))}

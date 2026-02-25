@@ -7,8 +7,11 @@ import { AdminLayout } from './components/admin/AdminLayout'
 import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { Dashboard } from './pages/admin/Dashboard'
 import { Opportunities } from './pages/admin/Opportunities'
+import { NewOpportunity } from './pages/admin/NewOpportunity'
+import { EditOpportunity } from './pages/admin/EditOpportunity'
 import { OpportunityDetail } from './pages/admin/OpportunityDetail'
 import { MyTasks } from './pages/admin/MyTasks'
+import { UserManagement } from './pages/admin/UserManagement'
 
 function PublicLayout() {
   return (
@@ -44,8 +47,11 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="opportunities" element={<Opportunities />} />
+        <Route path="opportunities/new" element={<NewOpportunity />} />
         <Route path="opportunities/:id" element={<OpportunityDetail />} />
+        <Route path="opportunities/:id/edit" element={<EditOpportunity />} />
         <Route path="tasks" element={<MyTasks />} />
+        <Route path="team" element={<UserManagement />} />
       </Route>
     </Routes>
   )
