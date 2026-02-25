@@ -1,9 +1,9 @@
 # ADR-001: AI-Assisted Grant Writing — Phase 2
 
-**Project:** Wright Adventures — Opportunity Management Platform (OMP)  
-**Author:** Benjamin Wright, Director of Technology & Innovation  
-**Date:** 2026-02-25  
-**Status:** Accepted  
+**Project:** Wright Adventures — Opportunity Management Platform (OMP)
+**Author:** Benjamin Wright, Director of Technology & Innovation
+**Date:** 2026-02-25
+**Status:** Implemented
 **PRD Reference:** OMP PRD v2.0, Phase 2 — Collaboration & Intelligence
 
 ---
@@ -21,36 +21,6 @@ Three decisions drive the architecture:
 
 **Architectural constraint:** The existing app is React + Vite (SPA), not Next.js. There are no built-in API routes. A lightweight backend is required to keep the Anthropic API key server-side and enforce cost controls.
 
-**Repo structure (confirmed):**
-```
-.claude/                  ← Claude Code config — add ADR reference here
-src/
-  components/admin/
-  contexts/AuthContext.tsx
-  lib/supabase.ts
-  lib/types.ts
-  pages/admin/
-    Dashboard.tsx
-    Opportunities.tsx
-    OpportunityDetail.tsx
-    MyTasks.tsx
-supabase/migrations/
-  20260224000000_initial_schema.sql  ← Do not modify
-vercel.json               ← Must be updated — see Decision section
-```
-
-**`vercel.json` (confirmed current contents):**
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
-}
-```
-⚠️ The catch-all rewrite `/(.*) → /index.html` will intercept `/api/*` routes, causing all API calls to return the SPA's `index.html` instead of the serverless function response. This **must** be fixed before the AI API will work.
-
-**`profiles` table (confirmed):** `id`, `full_name`, `role` (`admin|manager|member|viewer`), `avatar_url`, `created_at`, `updated_at`. RLS policies in the AI migration reference `profiles.role` — this is correct.
-
-**`opportunities` table (confirmed):** All grant-specific and partnership-specific fields are on the single `opportunities` table (flat model, no join required). The opportunity briefing injection can pull directly from one row.
-
 ---
 
 ## Decision
@@ -59,7 +29,7 @@ Deploy a **Vercel Serverless Function** (via a `/api` directory in the existing 
 
 This avoids standing up a separate backend service while keeping the API key server-side and enabling cost enforcement.
 
-**Required `vercel.json` change** — scope the SPA rewrite to exclude `/api/*`:
+**`vercel.json` — scope the SPA rewrite to exclude `/api/*`:**
 ```json
 {
   "rewrites": [
@@ -72,87 +42,99 @@ Vercel evaluates rewrites in order — the `/api/*` rule must come first.
 
 ---
 
-## Architecture
+## Implementation — As Built
 
-### 1. Backend: Vercel Serverless Function
+### Package Versions (Actual)
 
-Add an `/api` directory to the existing repo. Vercel auto-deploys functions found here alongside the Vite frontend — zero infrastructure change required.
+```json
+"ai": "^6.0.100",
+"@ai-sdk/anthropic": "^3.0.47",
+"@ai-sdk/react": "^1.x"
+```
+
+> ⚠️ **AI SDK v6 breaking changes** — The ADR was originally drafted against AI SDK v3. v6 introduced significant API changes that affected both the server and client layers. See the v6 notes throughout this section.
+
+---
+
+### 1. Backend: Vercel Serverless Functions
 
 ```
 /api
   /ai
     chat.ts        ← Main streaming endpoint
-    usage.ts       ← Token usage query endpoint (admin)
+    usage.ts       ← Token usage query endpoint (admin only)
 ```
 
-**`/api/ai/chat.ts` responsibilities:**
-1. Authenticate the request (validate Supabase JWT from `Authorization` header)
-2. Check org token budget — reject with 402 if exceeded
-3. Fetch conversation history from Supabase for the given `conversation_id`
-4. Fetch opportunity context (fields + document text excerpts) from Supabase
-5. Build the full message array (system prompt + injected briefing + history + new user message)
-6. Stream response from Claude API back to client via SSE
-7. On stream completion, persist assistant message + token usage to Supabase
+**`/api/ai/chat.ts` — request lifecycle:**
+1. Validate `Authorization: Bearer <jwt>` header via `supabase.auth.getUser(jwt)` (service role client)
+2. Check org token budget — reject with HTTP 402 if `tokens_used + estimated > monthly_limit`; auto-provision budget row on first use of the month
+3. Resolve or create `ai_conversations` row
+4. Fetch opportunity fields from `opportunities` table
+5. Fetch `ai_messages` history for the conversation, ordered by `created_at`
+6. Build message array: injected briefing + ack on first turn, then full history + new user message
+7. Stream via `streamText` → `result.pipeUIMessageStreamToResponse(res)` (**v6: was `pipeDataStreamToResponse` in v3**)
+8. `onFinish`: persist assistant message + update `ai_conversations` token totals + update `token_budgets.tokens_used`
+
+**`/api/ai/usage.ts` — admin only:**
+- Validates JWT + checks `profiles.role === 'admin'`
+- Returns current period `monthly_limit`, `tokens_used`, `percent_used`, `updated_at`
+- Also returns last 50 conversations with per-conversation token totals
+
+**Request body received from client:**
+```json
+{
+  "message": "user text",
+  "conversation_id": "uuid | undefined",
+  "opportunity_id": "uuid | undefined"
+}
+```
+The server fetches full conversation history from Supabase — the client sends only the new message text, not the full history.
+
+---
 
 ### 2. Supabase Schema
 
-Run these migrations in order.
+Migration: `supabase/migrations/20260225000000_ai_grant_writing.sql`
 
 ```sql
 -- Application-wide token budget (single-tenant — one row per billing period)
--- Seeded with a default row on first use by the API function
 CREATE TABLE token_budgets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  monthly_limit INTEGER NOT NULL DEFAULT 500000, -- ~500K tokens/month (~$15 at Sonnet pricing)
-  current_period_start DATE NOT NULL DEFAULT date_trunc('month', now()),
-  tokens_used INTEGER NOT NULL DEFAULT 0,
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(current_period_start) -- one row per calendar month
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  monthly_limit        INTEGER NOT NULL DEFAULT 500000,
+  current_period_start DATE    NOT NULL DEFAULT date_trunc('month', now()),
+  tokens_used          INTEGER NOT NULL DEFAULT 0,
+  updated_at           TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(current_period_start)
 );
 
 -- One conversation per opportunity per user session
 CREATE TABLE ai_conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  opportunity_id UUID NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  total_input_tokens INTEGER NOT NULL DEFAULT 0,
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id      UUID NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
+  user_id             UUID NOT NULL REFERENCES auth.users(id),
+  created_at          TIMESTAMPTZ DEFAULT now(),
+  updated_at          TIMESTAMPTZ DEFAULT now(),
+  total_input_tokens  INTEGER NOT NULL DEFAULT 0,
   total_output_tokens INTEGER NOT NULL DEFAULT 0,
-  is_archived BOOLEAN NOT NULL DEFAULT false
+  is_archived         BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Individual turns in a conversation
 CREATE TABLE ai_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-  content TEXT NOT NULL,
-  input_tokens INTEGER,       -- populated on assistant messages only
-  output_tokens INTEGER,      -- populated on assistant messages only
-  is_injected BOOLEAN NOT NULL DEFAULT false, -- true = opportunity briefing, hidden in UI
-  created_at TIMESTAMPTZ DEFAULT now()
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID    NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
+  role            TEXT    NOT NULL CHECK (role IN ('user', 'assistant')),
+  content         TEXT    NOT NULL,
+  input_tokens    INTEGER,
+  output_tokens   INTEGER,
+  is_injected     BOOLEAN NOT NULL DEFAULT false,
+  created_at      TIMESTAMPTZ DEFAULT now()
 );
-
--- RLS policies
-ALTER TABLE ai_conversations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ai_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE token_budgets ENABLE ROW LEVEL SECURITY;
-
--- Any authenticated user can read/write their own conversations
-CREATE POLICY "authenticated_conversations" ON ai_conversations
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "authenticated_messages" ON ai_messages
-  USING (conversation_id IN (
-    SELECT id FROM ai_conversations WHERE user_id = auth.uid()
-  ));
-
--- Only admins can view/update token budgets
--- Matches existing role field on profiles table
-CREATE POLICY "admin_token_budgets" ON token_budgets
-  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin');
 ```
+
+RLS: users access only their own conversations; admins access token_budgets.
+
+---
 
 ### 3. Prompt Architecture
 
@@ -160,41 +142,21 @@ Every Claude API call receives the same structure:
 
 ```
 [System Prompt]           ← Static, sets assistant persona and WA context
-[Injected Briefing]       ← role: "user", is_injected: true — opportunity fields + doc excerpts
+[Injected Briefing]       ← role: "user", is_injected: true — opportunity fields
 [Injected Ack]            ← role: "assistant", is_injected: true — "Understood. Ready to draft."
 [Conversation History]    ← All prior non-injected turns for this conversation_id
 [New User Message]        ← Current turn
 ```
 
-The injected briefing is stored in `ai_messages` with `is_injected = true` and **never rendered in the UI**. It's always prepended to the message array on the server before sending to Claude.
+Injected messages are stored with `is_injected = true` and never rendered in the UI. On subsequent turns, the server detects `hasInjected = true` from the message list and skips re-injecting the briefing.
 
-**System Prompt:**
+**Opportunity Briefing Template** maps to confirmed `opportunities` column names:
 ```
-You are an expert grant writer for Wright Adventures, a Denver-based nonprofit consultancy 
-that connects underserved communities to nature, career pathways, and environmental stewardship. 
-Wright Adventures has raised over $3 million for partner programs and manages $700K+ annually 
-for Lincoln Hills Cares pathways programs.
-
-Your role is to write compelling, mission-aligned grant narrative drafts. Write in a professional 
-but authentic voice — not generic nonprofit boilerplate. Ground every draft in the specific 
-opportunity details provided. Be direct, specific, and outcomes-focused.
-
-When the user asks for revisions, apply them precisely and return the updated section or 
-full draft as appropriate. If the user's request is ambiguous, ask one clarifying question 
-before drafting.
-```
-
-**Opportunity Briefing Template (injected, hidden from UI):**
-
-Maps directly to confirmed `opportunities` table columns:
-```
-Here is the grant opportunity you will help draft:
-
 OPPORTUNITY: {name}
 FUNDER: {funder}
 GRANT TYPE: {grant_type}
-FUNDING AMOUNT REQUESTED: {amount_requested}
-FUNDING AMOUNT MAX: {amount_max}
+FUNDING AMOUNT REQUESTED: ${amount_requested}
+FUNDING AMOUNT MAX: ${amount_max}
 APPLICATION DEADLINE: {primary_deadline}
 LOI DEADLINE: {loi_deadline}
 ELIGIBILITY NOTES: {eligibility_notes}
@@ -202,92 +164,111 @@ CFDA NUMBER: {cfda_number}
 
 DESCRIPTION:
 {description}
-
-RELEVANT DOCUMENTS:
-{document_excerpts}  ← Text extracted from documents.storage_path files via Supabase Storage
-
-Please confirm you're ready to begin drafting.
 ```
+
+> Note: Document excerpt injection (`RELEVANT DOCUMENTS`) was deferred — it appears in the original briefing template but was not implemented in Phase 2.
+
+---
 
 ### 4. Cost Control Logic
 
-Enforced in `/api/ai/chat.ts` before forwarding to Claude:
+Inline in `/api/ai/chat.ts` before forwarding to Claude:
 
 ```typescript
-async function checkAndReserveBudget(estimatedTokens: number): Promise<void> {
-  const { data: budget } = await supabase
-    .from('token_budgets')
-    .select('monthly_limit, tokens_used')
-    .eq('current_period_start', startOfCurrentMonth())
-    .single();
-
-  if (!budget) {
-    // Auto-provision budget row for current month on first use
-    await supabase.from('token_budgets').insert({
-      current_period_start: startOfCurrentMonth(),
-      monthly_limit: 500000,
-      tokens_used: 0,
-    });
-    return;
-  }
-
-  if (budget.tokens_used + estimatedTokens > budget.monthly_limit) {
-    throw new BudgetExceededError(
-      `Monthly token budget exceeded. Used: ${budget.tokens_used.toLocaleString()} / ${budget.monthly_limit.toLocaleString()}`
-    );
-  }
+const estimatedTokens = Math.ceil(message.length / 4) + 2000
+if (budget.tokens_used + estimatedTokens > budget.monthly_limit) {
+  return res.status(402).json({
+    error: 'Monthly token budget exceeded',
+    used: budget.tokens_used,
+    limit: budget.monthly_limit,
+  })
 }
 ```
 
-After stream completion, update `token_budgets.tokens_used` and `ai_conversations.total_input_tokens / total_output_tokens` atomically.
+Budget row is auto-provisioned on first use of the month. After stream completion, `token_budgets.tokens_used` is updated using actual `usage.promptTokens + usage.completionTokens`.
 
-Return HTTP 402 with a structured error body if budget is exceeded — the frontend displays a user-friendly message with a link to the admin settings page.
+---
 
 ### 5. Conversation Length / Token Growth Mitigation
 
-Full conversation history is sent on every turn — costs grow linearly with conversation length. Two mitigations:
+Full conversation history is sent on every turn — costs grow linearly with conversation length.
 
-**Soft limit:** After 20 turns, the UI surfaces a banner: *"This draft session is getting long. Start a new draft session to keep costs down, or continue."*
+**Soft limit:** After 20 turns, the UI shows a banner warning. A "Start new session" button creates a new `ai_conversations` row (clears client-side messages, unsets `activeConvId`).
 
-**"New Draft" action:** Resets the conversation (creates a new `ai_conversations` row) but carries forward the final assistant message as the new briefing context. Preserves continuity without token bleed.
+**Session picker:** Multiple conversations per opportunity are supported. The UI shows "Session 1", "Session 2", etc. buttons. Users can switch between sessions or start a new one.
 
-Conversation summarization (full automatic compression) is **not** implemented in Phase 2 but the schema supports it — a `summary` column can be added to `ai_conversations` and prepended instead of full history when present.
+Conversation summarization is out of scope for Phase 2.
+
+---
 
 ### 6. Frontend Integration
 
-Install the Vercel AI SDK:
+**Packages installed:**
 ```bash
-npm install ai @ai-sdk/anthropic
+npm install @ai-sdk/react   # useChat hook (moved out of ai/react in v6)
 ```
 
-The `useChat` hook manages streaming, message state, loading state, and abort control:
+**`src/hooks/useGrantChat.ts`** — AI SDK v6 hook:
 
-```tsx
-// src/features/ai/useGrantChat.ts
-import { useChat } from 'ai/react';
-import { useSession } from '@/hooks/useSession';
+```typescript
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 
-export function useGrantChat(conversationId: string) {
-  const { session } = useSession();
+export function useGrantChat(opportunityId: string, convId: string | undefined) {
+  const { session } = useAuth()
+  const convIdRef = useRef(convId)
+  const sessionRef = useRef(session)
+  convIdRef.current = convId
+  sessionRef.current = session
 
   return useChat({
-    api: '/api/ai/chat',
-    id: conversationId,
-    headers: {
-      Authorization: `Bearer ${session?.access_token}`,
-    },
-    body: {
-      conversation_id: conversationId,
-    },
-    onError: (error) => {
-      // Handle 402 budget exceeded, 401 auth, 500 server errors
-      console.error('AI chat error:', error);
-    },
-  });
+    transport: new DefaultChatTransport({
+      api: '/api/ai/chat',
+      prepareSendMessagesRequest: async ({ messages }) => {
+        // Extract last user message — server manages full history via Supabase
+        const lastMsg = messages[messages.length - 1]
+        const textPart = lastMsg?.parts?.find(p => p.type === 'text')
+        return {
+          headers: { Authorization: `Bearer ${sessionRef.current?.access_token}` },
+          body: {
+            message: textPart?.text ?? '',
+            conversation_id: convIdRef.current,
+            opportunity_id: convIdRef.current ? undefined : opportunityId,
+          },
+        }
+      },
+    }),
+  })
 }
 ```
 
-**UI placement:** An "AI Draft Assistant" tab on the Opportunity detail page, visible only for Grant-type opportunities. The tab contains the chat interface — message history (excluding injected messages), input field, send button, streaming indicator, and token usage display (current conversation cost).
+> **v6 API changes vs. original spec:**
+> - `useChat` is now imported from `@ai-sdk/react`, not `ai/react`
+> - The `api`, `headers`, and `body` options moved into `new DefaultChatTransport({ ... })`
+> - `prepareSendMessagesRequest` is used to reformat the body to the server's expected shape (single `message` string, not the full messages array)
+> - `handleSubmit` / `handleInputChange` / `input` / `isLoading` are gone — replaced by `sendMessage({ text })` and `status` (`'submitted' | 'streaming' | 'ready' | 'error'`)
+> - `messages[n].content` (string) is gone — replaced by `messages[n].parts` (array); text is extracted via `parts.find(p => p.type === 'text')?.text`
+
+**`src/components/admin/GrantChatPanel.tsx`** — chat UI:
+- Session picker (one button per `ai_conversations` row)
+- Message bubbles with user/assistant styling
+- Animated typing indicator during stream
+- 20-turn soft limit banner + "Start new session" button
+- Token usage display (per-session total from `ai_conversations`)
+- Budget exceeded error display (HTTP 402)
+- After stream completes (`status: 'ready'`), refetches `ai_conversations` from Supabase to pick up newly-created conversation rows
+
+**`src/pages/admin/OpportunityDetail.tsx`** — tabbed layout:
+- "Tasks & Activity" tab (default) — existing TaskPanel + ActivityLog
+- "AI Draft Assistant" tab — `<GrantChatPanel>` — visible only when `opportunity.type_id === 'grant'`
+
+**`src/pages/admin/Settings.tsx`** — admin token budget UI:
+- Monthly usage bar (colors: gray → amber at 70% → red at 90%)
+- Estimated cost display (~$3/M tokens at Sonnet pricing)
+- Warning banner at ≥80%
+- Inline limit editor (direct Supabase update; admin RLS allows it)
+- Auto-refreshes every 60 seconds via TanStack Query `refetchInterval`
+- Accessible via "Settings" nav item (admin-only, filtered in `AdminLayout.tsx`)
 
 ---
 
@@ -296,89 +277,38 @@ export function useGrantChat(conversationId: string) {
 | Use Case | Model | Rationale |
 |---|---|---|
 | Grant narrative drafting | `claude-sonnet-4-6` | Best quality/cost ratio for long-form writing |
-| Document summarization / field extraction | `claude-haiku-4-5-20251001` | Fast, cheap for short extraction tasks |
-| Eligibility analysis against complex RFP | `claude-opus-4-6` | Reserved for deep reasoning tasks only |
+| Document summarization / field extraction | `claude-haiku-4-5-20251001` | Fast, cheap for short extraction tasks (Phase 3) |
+| Eligibility analysis against complex RFP | `claude-opus-4-6` | Reserved for deep reasoning tasks only (Phase 3) |
 
 ---
 
 ## Environment Variables
 
-Add to Vercel project settings (not committed to repo):
-
+Server-side (Vercel dashboard only — never commit):
 ```
 ANTHROPIC_API_KEY=sk-ant-...
-SUPABASE_SERVICE_ROLE_KEY=...   ← Service role for server-side Supabase access
 SUPABASE_URL=https://...supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
-The existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the frontend remain unchanged.
+Frontend (Vercel + local `.env.local`) — unchanged:
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
 
----
-
-## Implementation Sequence
-
-Build in this order — each step is independently testable:
-
-1. **`vercel.json`** — scope the SPA catch-all rewrite to exclude `/api/*` (see Decision section)
-2. **Supabase migration** — new file `supabase/migrations/20260225000000_ai_grant_writing.sql`: `token_budgets`, `ai_conversations`, `ai_messages` tables + RLS policies. Do not modify `20260224000000_initial_schema.sql`
-3. **`/api/ai/chat.ts`** — serverless function: auth check → budget check → history fetch → prompt assembly (using confirmed `opportunities` column names) → Claude stream → persist usage
-4. **`/api/ai/usage.ts`** — admin endpoint returning current period token usage
-5. **`useGrantChat` hook** — Vercel AI SDK `useChat` wrapper; auth token from existing `AuthContext.tsx`
-6. **Chat UI component** — message list, input, streaming indicator; filter `is_injected = true` messages from rendering
-7. **Opportunity detail integration** — "AI Draft Assistant" tab on `OpportunityDetail.tsx`, visible only when `opportunity.type_id === 'grant'`
-8. **Token budget admin UI** — usage display + limit configuration in Settings
-
----
-
-## Risks & Tradeoffs
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| `vercel.json` catch-all rewrite intercepts `/api/*` | All API calls return `index.html` — AI feature completely broken | **Known issue, confirmed fix in Decision section.** Must be Step 1 before any other work |
-| Vite SPA + Vercel Functions cold starts | First request latency ~500ms | Acceptable for non-latency-critical drafting; no mitigation needed at MVP scale |
-| Token costs exceed budget unexpectedly | Cost overrun | Hard server-side enforcement; admin alert at 80% consumption (~400K tokens) |
-| Document text extraction from PDFs/DOCX in Supabase Storage | Incomplete briefing context | Use `pdf-parse` + `mammoth` in API function; documents table `storage_path` provides the key |
-| Long conversations degrade context quality | Poor draft quality late in session | 20-turn soft limit + "New Draft" action |
-| API key exposure | Security breach | `ANTHROPIC_API_KEY` only in Vercel env vars server-side; never in `VITE_*` prefix |
-| `AuthContext.tsx` session token shape unknown | Auth check in API function may need adjustment | Inspect `AuthContext.tsx` before implementing `/api/ai/chat.ts` — adapt JWT extraction accordingly |
+> Supabase renamed "service_role" to "secret" in their dashboard UI, but the key itself and all code references are unchanged.
 
 ---
 
 ## Out of Scope (Phase 2)
 
+- Document excerpt injection into briefing (PDF/DOCX extraction via `pdf-parse` + `mammoth`)
 - Conversation summarization / automatic context compression
 - Past application ingestion as few-shot examples (Phase 3)
 - AI assistance for Partnership-type opportunities
 - Batch / async draft generation
 - Fine-tuning or custom model deployment
-
----
-
-## Claude Code Integration
-
-This ADR is the authoritative spec for Phase 2 AI implementation. Add it to the repo and reference it in `.claude/CLAUDE.md`:
-
-```markdown
-## Active ADRs
-- [ADR-001: AI Grant Writing](../docs/ADR-001-ai-grant-writing.md) — Phase 2 AI integration. 
-  Follow this spec exactly when implementing AI features.
-```
-
-**Recommended Claude Code session prompts (in order):**
-
-1. *"Read ADR-001. Fix `vercel.json` per the Decision section — scope the SPA catch-all rewrite to exclude `/api/*` so serverless functions are reachable."*
-
-2. *"Read ADR-001. Create `supabase/migrations/20260225000000_ai_grant_writing.sql` with the three tables (`token_budgets`, `ai_conversations`, `ai_messages`) and RLS policies exactly as specified. Do not touch the existing initial schema migration."*
-
-3. *"Read ADR-001. Implement `/api/ai/chat.ts` — the Vercel serverless function. Auth check using the Supabase JWT, budget check against `token_budgets`, history fetch, prompt assembly using the confirmed `opportunities` column names from the schema, Claude streaming via Vercel AI SDK, and usage persistence on stream completion."*
-
-4. *"Read ADR-001. Implement `/api/ai/usage.ts` — admin-only endpoint returning current month token usage from `token_budgets`."*
-
-5. *"Read ADR-001. Create `src/hooks/useGrantChat.ts` using Vercel AI SDK `useChat`. Pull the auth session token from the existing `AuthContext.tsx`."*
-
-6. *"Read ADR-001. Build the chat UI component and integrate it as an 'AI Draft Assistant' tab in `src/pages/admin/OpportunityDetail.tsx`. Show the tab only when `opportunity.type_id === 'grant'`. Filter messages where `is_injected === true` from the rendered conversation."*
-
-7. *"Read ADR-001. Add token budget display and monthly limit configuration to the admin Settings page — show tokens used, limit, percentage consumed, and a form for admins to update the limit."*
 
 ---
 
