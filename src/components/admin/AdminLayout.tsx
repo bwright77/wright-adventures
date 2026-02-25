@@ -1,17 +1,19 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut } from 'lucide-react'
+import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Logo } from '../Logo'
 
 const NAV_ITEMS = [
-  { to: '/admin',               label: 'Dashboard',     icon: LayoutDashboard, end: true  },
-  { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase,       end: false },
-  { to: '/admin/tasks',         label: 'My Tasks',      icon: CheckSquare,     end: false },
-  { to: '/admin/team',          label: 'Team',          icon: Users,           end: false },
+  { to: '/admin',               label: 'Dashboard',     icon: LayoutDashboard, end: true,  adminOnly: false },
+  { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase,       end: false, adminOnly: false },
+  { to: '/admin/tasks',         label: 'My Tasks',      icon: CheckSquare,     end: false, adminOnly: false },
+  { to: '/admin/team',          label: 'Team',          icon: Users,           end: false, adminOnly: false },
+  { to: '/admin/settings',      label: 'Settings',      icon: Settings,        end: false, adminOnly: true  },
 ]
 
 export function AdminLayout() {
   const { user, profile, signOut } = useAuth()
+  const isAdmin = profile?.role === 'admin'
   const navigate = useNavigate()
 
   async function handleSignOut() {
@@ -35,7 +37,7 @@ export function AdminLayout() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+          {NAV_ITEMS.filter(item => !item.adminOnly || isAdmin).map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

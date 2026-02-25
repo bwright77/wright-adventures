@@ -12,6 +12,7 @@ import { EditOpportunity } from './pages/admin/EditOpportunity'
 import { OpportunityDetail } from './pages/admin/OpportunityDetail'
 import { MyTasks } from './pages/admin/MyTasks'
 import { UserManagement } from './pages/admin/UserManagement'
+import { Settings } from './pages/admin/Settings'
 
 function PublicLayout() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="opportunities/:id/edit" element={<EditOpportunity />} />
         <Route path="tasks" element={<MyTasks />} />
         <Route path="team" element={<UserManagement />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   )
