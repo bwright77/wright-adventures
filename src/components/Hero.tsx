@@ -19,7 +19,7 @@ export function Hero() {
         <div className="animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-river/[0.12] border border-river/25 rounded-full text-river text-xs font-medium uppercase tracking-[0.06em] mb-6">
             <span className="w-1.5 h-1.5 bg-river rounded-full animate-pulse-dot" />
-            Powering Environmental Organizations to Do More
+            Empowering Organizations to Do More
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.12] tracking-tight mb-6">
