@@ -77,20 +77,37 @@ function parseJson<T>(text: string): T | null {
   }
 }
 
-async function searchOpportunities(payload: unknown): Promise<string[]> {
+interface SearchResult {
+  ids:        string[]
+  totalPages: number
+}
+
+async function searchOpportunities(payload: unknown, pageOffset: number): Promise<SearchResult> {
+  // Override page_offset in the stored payload so each run advances through pages
+  const body = {
+    ...(payload as Record<string, unknown>),
+    pagination: {
+      ...((payload as Record<string, unknown>).pagination as Record<string, unknown> ?? {}),
+      page_offset: pageOffset,
+    },
+  }
+
   const res = await fetch(`${SIMPLER_GRANTS_BASE}/opportunities/search`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Api-Key': process.env.SIMPLER_GRANTS_API_KEY!,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     throw new Error(`Search API ${res.status}: ${await res.text()}`)
   }
   const data = await res.json()
-  return (data.data ?? []).map((o: { opportunity_id: string }) => o.opportunity_id)
+  return {
+    ids:        (data.data ?? []).map((o: { opportunity_id: string }) => o.opportunity_id),
+    totalPages: data.pagination_info?.total_pages ?? 1,
+  }
 }
 
 async function fetchDetail(opportunityId: string): Promise<unknown> {
@@ -255,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── Load enabled queries ──────────────────────────────────────
     const { data: queries } = await supabase
       .from('discovery_queries')
-      .select('id, label, payload')
+      .select('id, label, payload, current_page')
       .eq('enabled', true)
       .order('priority', { ascending: true })
 
@@ -265,9 +282,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const allIds = new Set<string>()
     for (const query of queries) {
       try {
-        const ids = await searchOpportunities(query.payload)
+        const { ids, totalPages } = await searchOpportunities(query.payload, query.current_page ?? 1)
         ids.forEach(id => allIds.add(id))
         stats.opportunities_fetched += ids.length
+
+        // Advance page; wrap to 1 after the last page so next run starts fresh
+        const nextPage = (query.current_page ?? 1) >= totalPages ? 1 : (query.current_page ?? 1) + 1
+        await supabase
+          .from('discovery_queries')
+          .update({ current_page: nextPage, updated_at: new Date().toISOString() })
+          .eq('id', query.id)
       } catch (err) {
         stats.error_log.push({
           label: query.label,
