@@ -168,9 +168,9 @@ async function isAdminJwt(jwt: string): Promise<boolean> {
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
   if (!profile) {
-    console.error('[sync] profile lookup failed for', user.id, profileError?.message)
+    console.error('[sync] profile lookup failed for', user.id, profileError?.message ?? 'no profile row found')
     return false
   }
   console.log('[sync] user role:', profile.role)

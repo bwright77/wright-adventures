@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { UserPlus, Mail } from 'lucide-react'
+import { UserPlus, Mail, Pencil, Check, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Profile, UserRole } from '../../lib/types'
@@ -27,6 +27,8 @@ export function UserManagement() {
   const [inviteError, setInviteError]     = useState<string | null>(null)
   const [inviteSent, setInviteSent]       = useState(false)
   const [inviting, setInviting]           = useState(false)
+  const [editingNameId, setEditingNameId] = useState<string | null>(null)
+  const [editNameValue, setEditNameValue] = useState('')
 
   const { data: profiles = [], isLoading } = useQuery<Profile[]>({
     queryKey: ['profiles'],
@@ -46,6 +48,28 @@ export function UserManagement() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
   })
+
+  const updateName = useMutation({
+    mutationFn: async ({ id, full_name }: { id: string; full_name: string }) => {
+      const { error } = await supabase
+        .from('profiles').update({ full_name, updated_at: new Date().toISOString() }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setEditingNameId(null)
+      queryClient.invalidateQueries({ queryKey: ['profiles'] })
+    },
+  })
+
+  function startEditName(p: Profile) {
+    setEditingNameId(p.id)
+    setEditNameValue(p.full_name ?? '')
+  }
+
+  function commitNameEdit(id: string) {
+    const trimmed = editNameValue.trim()
+    if (trimmed) updateName.mutate({ id, full_name: trimmed })
+  }
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -149,9 +173,11 @@ export function UserManagement() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {profiles.map(p => {
-                const isMe       = p.id === myProfile?.id
-                const canEdit    = isAdmin && !isMe
-                const initials   = p.full_name
+                const isMe         = p.id === myProfile?.id
+                const canEdit      = isAdmin && !isMe
+                const canEditName  = isAdmin
+                const isEditingName = editingNameId === p.id
+                const initials     = p.full_name
                   ? p.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                   : '?'
 
@@ -162,11 +188,52 @@ export function UserManagement() {
                         <div className="w-8 h-8 rounded-full bg-river/20 flex items-center justify-center text-river text-xs font-semibold shrink-0">
                           {initials}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-navy">
-                            {p.full_name || <span className="text-gray-400 italic">No name</span>}
-                            {isMe && <span className="ml-1.5 text-xs text-gray-400">(you)</span>}
-                          </p>
+                        <div className="min-w-0">
+                          {canEditName && isEditingName ? (
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                autoFocus
+                                value={editNameValue}
+                                onChange={e => setEditNameValue(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') commitNameEdit(p.id)
+                                  if (e.key === 'Escape') setEditingNameId(null)
+                                }}
+                                className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40 w-36"
+                              />
+                              <button
+                                onClick={() => commitNameEdit(p.id)}
+                                disabled={updateName.isPending}
+                                className="p-1 text-river hover:bg-river/10 rounded transition-colors disabled:opacity-50"
+                                aria-label="Save"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                onClick={() => setEditingNameId(null)}
+                                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Cancel"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 group">
+                              <p className="text-sm font-medium text-navy">
+                                {p.full_name || <span className="text-gray-400 italic">No name</span>}
+                                {isMe && <span className="ml-1.5 text-xs text-gray-400">(you)</span>}
+                              </p>
+                              {canEditName && (
+                                <button
+                                  onClick={() => startEditName(p)}
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-300 hover:text-river transition-all"
+                                  aria-label="Edit name"
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
