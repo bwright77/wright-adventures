@@ -8,5 +8,8 @@
       "path": "/api/discovery/sync",
       "schedule": "0 7 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/discovery/sync.ts": { "maxDuration": 300 }
+  }
 }

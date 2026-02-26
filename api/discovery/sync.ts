@@ -3,6 +3,14 @@ import { createClient } from '@supabase/supabase-js'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 
+// Raise the function timeout ceiling (Vercel clamps to plan max: 60s Hobby, 300s Pro)
+export const config = { maxDuration: 300 }
+
+// Max new opportunities to process per run — prevents timeout on large batches.
+// Hobby plan cap is 60s; at ~5s/opp (Haiku + Sonnet) this leaves ~25s headroom.
+// The cron runs daily so any remainder is picked up the next day.
+const MAX_NEW_PER_RUN = 7
+
 // ── Supabase (service role — server-side only) ────────────────
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -270,8 +278,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const newIds = idArray.filter(id => !existingIds.has(id))
     stats.opportunities_deduplicated = idArray.length - newIds.length
 
+    // Cap per-run to avoid function timeout; remainder is picked up on next run
+    const batch = newIds.slice(0, MAX_NEW_PER_RUN)
+
     // ── Two-stage pipeline for each new opportunity ───────────────
-    for (const opportunityId of newIds) {
+    for (const opportunityId of batch) {
       try {
         // Fetch full detail: search results omit deadline, eligibility, description
         const detail = await fetchDetail(opportunityId)
