@@ -181,6 +181,8 @@ function DiscoveryCard() {
 
   const { mutate: runNow, isPending: isTriggering, error: runError } = useMutation({
     mutationFn: async () => {
+      // The sync endpoint returns 202 immediately (the function keeps running server-side).
+      // We don't await the full response body — polling picks up the running status.
       const res = await fetch('/api/discovery/sync', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
@@ -189,11 +191,9 @@ function DiscoveryCard() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error ?? `HTTP ${res.status}`)
       }
-      return res.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discovery_runs'] })
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
     },
   })
 

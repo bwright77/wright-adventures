@@ -247,6 +247,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const runId = run.id
+
+  // ── Respond immediately so the browser connection closes now ──
+  // The Vercel function keeps running until it returns or hits maxDuration.
+  // Returning 202 here prevents Chrome extensions from timing out on the
+  // long-lived fetch ("message channel closed before response received").
+  // The client polls discovery_runs for status — it doesn't need this body.
+  res.status(202).json({ run_id: runId, status: 'running' })
+
   const stats: RunStats = {
     opportunities_fetched: 0,
     opportunities_deduplicated: 0,
@@ -326,7 +334,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ...stats,
           error_log:    stats.error_log.length > 0 ? stats.error_log : null,
         }).eq('id', runId)
-        return res.status(200).json({ run_id: runId, status: 'cancelled', ...stats })
+        return // Response already sent — just stop processing
       }
 
       try {
@@ -423,8 +431,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error_log:      stats.error_log.length > 0 ? stats.error_log : null,
     }).eq('id', runId)
 
-    return res.status(200).json({ run_id: runId, status: 'completed', ...stats })
-
   } catch (err) {
     await supabase.from('discovery_runs').update({
       completed_at: new Date().toISOString(),
@@ -433,6 +439,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).eq('id', runId)
 
     console.error('Discovery sync fatal error:', err)
-    return res.status(500).json({ error: 'Discovery sync failed', run_id: runId })
   }
 }
