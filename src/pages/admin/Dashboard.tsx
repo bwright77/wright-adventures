@@ -10,15 +10,16 @@ import type { Opportunity, Task } from '../../lib/types'
 const INACTIVE_GRANT_STATUSES = ['grant_archived', 'grant_declined', 'grant_withdrawn']
 const INACTIVE_PARTNERSHIP_STATUSES = ['partnership_archived', 'partnership_declined', 'partnership_completed']
 
-function MetricCard({ label, value, sub, icon: Icon, accent }: {
+function MetricCard({ label, value, sub, icon: Icon, accent, to }: {
   label: string
   value: number | string
   sub?: string
   icon: LucideIcon
   accent: string
+  to?: string
 }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+  const inner = (
+    <>
       <div className="flex items-start justify-between mb-3">
         <span className="text-xs font-medium text-gray-400 uppercase tracking-[0.07em]">{label}</span>
         <div className={`w-8 h-8 rounded-lg ${accent} flex items-center justify-center`}>
@@ -27,8 +28,16 @@ function MetricCard({ label, value, sub, icon: Icon, accent }: {
       </div>
       <p className="text-3xl font-bold text-navy leading-none mb-1">{value}</p>
       {sub && <p className="text-xs text-gray-400">{sub}</p>}
-    </div>
+    </>
   )
+  if (to) {
+    return (
+      <Link to={to} className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-river/40 hover:shadow-sm transition-all">
+        {inner}
+      </Link>
+    )
+  }
+  return <div className="bg-white rounded-xl border border-gray-200 p-5">{inner}</div>
 }
 
 export function Dashboard() {
@@ -105,6 +114,7 @@ export function Dashboard() {
           sub="in pipeline"
           icon={DollarSign}
           accent="bg-river"
+          to="/admin/opportunities?tab=grant"
         />
         <MetricCard
           label="Partnerships"
@@ -112,6 +122,7 @@ export function Dashboard() {
           sub="active"
           icon={Users}
           accent="bg-trail"
+          to="/admin/opportunities?tab=partnership"
         />
         <MetricCard
           label="My Tasks"
@@ -119,6 +130,7 @@ export function Dashboard() {
           sub={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : 'all on track'}
           icon={CheckSquare}
           accent={overdueTasks.length > 0 ? 'bg-red-500' : 'bg-earth'}
+          to="/admin/tasks"
         />
         <MetricCard
           label="Total"
@@ -126,6 +138,7 @@ export function Dashboard() {
           sub="all opportunities"
           icon={Briefcase}
           accent="bg-navy"
+          to="/admin/opportunities"
         />
       </div>
 

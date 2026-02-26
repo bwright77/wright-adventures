@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Plus, Search, LayoutList, Columns3, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
@@ -337,7 +337,11 @@ function KanbanCol({
 export function Opportunities() {
   const queryClient  = useQueryClient()
   const { session }  = useAuth()
-  const [tab, setTab]       = useState<TabFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = ((searchParams.get('tab') ?? 'all') as TabFilter)
+  function setTab(t: TabFilter) {
+    setSearchParams(t === 'all' ? {} : { tab: t }, { replace: true })
+  }
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
   const [rescoringId, setRescoringId] = useState<string | null>(null)
