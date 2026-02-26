@@ -161,9 +161,9 @@ export function Opportunities() {
   )
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-navy">Opportunities</h1>
           <p className="text-sm text-gray-400 mt-0.5">{opportunities.length} total</p>
@@ -234,7 +234,7 @@ export function Opportunities() {
               Showing {kanbanType} pipeline — select Grants or Partnerships to switch.
             </p>
           )}
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {kanbanCols.map(col => (
               <KanbanCol
                 key={col.id}

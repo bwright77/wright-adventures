@@ -124,7 +124,7 @@ export function GrantChatPanel({ opportunityId }: Props) {
   const isBudgetExceeded = error?.message?.includes('402') || error?.message?.toLowerCase().includes('budget')
 
   return (
-    <div className="flex flex-col h-[600px]">
+    <div className="flex flex-col h-[500px] sm:h-[600px]">
       {/* Session picker */}
       {conversations.length > 0 && (
         <div className="flex flex-wrap gap-2 items-center mb-4">

@@ -124,7 +124,7 @@ function TokenBudgetCard() {
       {/* Edit limit */}
       <div className="border-t border-gray-100 pt-4">
         {editing ? (
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
             <input
               type="number"
               value={editLimit}
@@ -165,7 +165,7 @@ export function Settings() {
   const isAdmin = profile?.role === 'admin'
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-navy mb-1">Settings</h1>
       <p className="text-sm text-gray-400 mb-8">Application configuration and usage</p>
 

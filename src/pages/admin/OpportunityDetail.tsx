@@ -291,14 +291,14 @@ export function OpportunityDetail() {
   // ── Loading / not found ────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center py-20">
+      <div className="p-4 sm:p-6 lg:p-8 flex justify-center py-20">
         <div className="w-5 h-5 border-2 border-river border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
   if (!opportunity) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <p className="text-gray-400 text-sm">Opportunity not found.</p>
         <Link to="/admin/opportunities" className="text-sm text-river hover:underline mt-2 inline-block">
           ← Back to opportunities
@@ -312,7 +312,7 @@ export function OpportunityDetail() {
   const owner       = profiles.find(p => p.id === opportunity.owner_id)
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
       {/* Back */}
       <Link
         to="/admin/opportunities"
@@ -358,7 +358,7 @@ export function OpportunityDetail() {
       </div>
 
       {/* Quick facts + owner */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-8 text-sm text-gray-500">
+      <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-6 gap-y-2 mb-8 text-sm text-gray-500">
         {opportunity.primary_deadline && (
           <span className="flex items-center gap-1.5">
             <Calendar size={14} className="text-gray-400" />
@@ -433,7 +433,7 @@ export function OpportunityDetail() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-0 border-b border-gray-200 mb-6">
+      <div className="flex gap-0 border-b border-gray-200 mb-6 overflow-x-auto">
         <button
           onClick={() => setActiveTab('details')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${

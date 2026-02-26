@@ -167,7 +167,7 @@ export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: T
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em]">
           Tasks
           {open.length > 0 && (
@@ -187,7 +187,8 @@ export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: T
                 ? <Loader2 size={12} className="animate-spin" />
                 : <Wand2 size={12} />
               }
-              Generate from template
+              <span className="hidden sm:inline">Generate from template</span>
+              <span className="sm:hidden">From template</span>
             </button>
           )}
           <button
@@ -211,7 +212,7 @@ export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: T
             placeholder="Task title…"
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="date"
               value={newDue}

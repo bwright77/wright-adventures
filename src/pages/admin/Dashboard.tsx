@@ -79,9 +79,9 @@ export function Dashboard() {
   const firstName = profile?.full_name?.split(' ')[0]
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-navy">
             {firstName ? `Welcome, ${firstName}` : 'Dashboard'}
@@ -129,7 +129,7 @@ export function Dashboard() {
         />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Deadlines */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">

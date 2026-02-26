@@ -76,7 +76,7 @@ export function UserManagement() {
   const isAdmin = myProfile?.role === 'admin'
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-navy">Team</h1>
         <p className="text-sm text-gray-400 mt-0.5">{profiles.length} {profiles.length === 1 ? 'member' : 'members'}</p>
@@ -94,7 +94,7 @@ export function UserManagement() {
             </div>
           ) : (
             <form onSubmit={handleInvite} className="space-y-3">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   value={inviteEmail}

@@ -169,7 +169,7 @@ export function NewOpportunity() {
   const e = errors as Record<string, { message?: string }>
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
       {/* Back */}
       <Link
         to="/admin/opportunities"

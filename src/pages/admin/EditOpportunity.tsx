@@ -193,19 +193,19 @@ export function EditOpportunity() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center py-20">
+      <div className="p-4 sm:p-6 lg:p-8 flex justify-center py-20">
         <div className="w-5 h-5 border-2 border-river border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
   if (!opp) {
-    return <div className="p-8 text-sm text-gray-400">Opportunity not found.</div>
+    return <div className="p-4 sm:p-6 lg:p-8 text-sm text-gray-400">Opportunity not found.</div>
   }
 
   const e = errors as Record<string, { message?: string }>
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
       <Link
         to={`/admin/opportunities/${id}`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-navy mb-6 transition-colors"
