@@ -159,14 +159,22 @@ ${JSON.stringify(fields, null, 2)}`
 // ── Auth ──────────────────────────────────────────────────────
 
 async function isAdminJwt(jwt: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser(jwt)
-  if (!user) return false
-  const { data: profile } = await supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser(jwt)
+  if (!user) {
+    console.error('[sync] getUser failed:', authError?.message ?? 'no user returned')
+    return false
+  }
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
-  return profile?.role === 'admin'
+  if (!profile) {
+    console.error('[sync] profile lookup failed for', user.id, profileError?.message)
+    return false
+  }
+  console.log('[sync] user role:', profile.role)
+  return profile.role === 'admin'
 }
 
 // ── Handler ───────────────────────────────────────────────────
