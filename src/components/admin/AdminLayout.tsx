@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut, Settings, Menu, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { Logo } from '../Logo'
 
 const NAV_ITEMS = [
@@ -17,6 +19,28 @@ export function AdminLayout() {
   const isAdmin = profile?.role === 'admin'
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Poll latest discovery run for the cron status badge (admin only)
+  const { data: latestRun } = useQuery({
+    queryKey: ['discovery_runs', 'latest'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('discovery_runs')
+        .select('status, started_at')
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .single()
+      return data
+    },
+    enabled: isAdmin,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
+  })
+
+  const cronStatus = !latestRun ? null
+    : latestRun.status === 'running' ? 'running'
+    : latestRun.status === 'failed'  ? 'failed'
+    : null
 
   async function handleSignOut() {
     await signOut()
@@ -103,6 +127,25 @@ export function AdminLayout() {
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           <NavItems onNavigate={() => setSidebarOpen(false)} />
         </nav>
+
+        {/* Cron status badge — admin only, only when running or failed */}
+        {isAdmin && cronStatus && (
+          <div className="px-3 pb-2">
+            <button
+              onClick={() => { navigate('/admin/settings'); setSidebarOpen(false) }}
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs transition-colors ${
+                cronStatus === 'running'
+                  ? 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+                  : 'bg-red-500/10 text-red-300 hover:bg-red-500/20'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                cronStatus === 'running' ? 'bg-blue-400 animate-pulse' : 'bg-red-400'
+              }`} />
+              {cronStatus === 'running' ? 'Discovery running…' : 'Discovery run failed'}
+            </button>
+          </div>
+        )}
 
         {/* User */}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">

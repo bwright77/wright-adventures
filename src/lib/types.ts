@@ -28,6 +28,40 @@ export interface PipelineStatus {
   is_active: boolean
 }
 
+export interface ScoreDetail {
+  scores: {
+    mission_alignment: number
+    geographic_eligibility: number
+    applicant_eligibility: number
+    award_size_fit: number
+    population_alignment: number
+  }
+  weighted_score: number
+  auto_rejected: boolean
+  auto_reject_reason: string | null
+  rationale: string
+  red_flags: string[]
+  recommended_action: 'apply' | 'investigate' | 'skip'
+}
+
+export interface DiscoveryRun {
+  id: string
+  started_at: string
+  completed_at: string | null
+  triggered_by: 'cron' | 'manual'
+  status: 'running' | 'completed' | 'failed'
+  opportunities_fetched: number
+  opportunities_deduplicated: number
+  opportunities_detail_fetched: number
+  opportunities_auto_rejected: number
+  opportunities_below_threshold: number
+  opportunities_inserted: number
+  tokens_haiku: number | null
+  tokens_sonnet: number | null
+  error_log: Array<{ label: string; error: string; timestamp: string }> | null
+  org_profile_id: string | null
+}
+
 export interface Opportunity {
   id: string
   type_id: OpportunityTypeId
@@ -62,6 +96,15 @@ export interface Opportunity {
   created_by: string | null
   created_at: string
   updated_at: string
+  // Discovery fields (Phase 3 — ADR-002)
+  source: string | null
+  external_id: string | null
+  external_url: string | null
+  ai_match_score: number | null
+  ai_match_rationale: string | null
+  ai_score_detail: ScoreDetail | null
+  auto_discovered: boolean
+  discovered_at: string | null
   // Joined (optional)
   owner?: Profile
 }
