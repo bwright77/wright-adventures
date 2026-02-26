@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, DollarSign, Users, CheckSquare, Briefcase } from 'lucide-react'
+import { Plus, DollarSign, Users, CheckSquare, Briefcase, Sparkles, ArrowRight } from 'lucide-react'
 import { format, isAfter, addDays } from 'date-fns'
 import type { LucideIcon } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -85,6 +85,10 @@ export function Dashboard() {
     .sort((a, b) => new Date(a.primary_deadline!).getTime() - new Date(b.primary_deadline!).getTime())
     .slice(0, 5)
 
+  const discoveredOpps = opportunities
+    .filter(o => o.auto_discovered && o.status === 'grant_discovered')
+    .sort((a, b) => (b.ai_match_score ?? 0) - (a.ai_match_score ?? 0))
+
   const firstName = profile?.full_name?.split(' ')[0]
 
   return (
@@ -105,6 +109,59 @@ export function Dashboard() {
           New Opportunity
         </Link>
       </div>
+
+      {/* Discovered opportunities hero */}
+      {discoveredOpps.length > 0 && (
+        <div className="bg-gradient-to-br from-river/10 via-river/5 to-transparent border border-river/20 rounded-xl p-5 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles size={14} className="text-river shrink-0" />
+                <h2 className="text-sm font-semibold text-navy">
+                  {discoveredOpps.length === 1
+                    ? '1 new grant opportunity discovered'
+                    : `${discoveredOpps.length} new grant opportunities discovered`}
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mb-4 ml-5">
+                AI-scored from Simpler.Grants.gov — review and add the best ones to your pipeline.
+              </p>
+              <ul className="space-y-2 ml-5">
+                {discoveredOpps.slice(0, 3).map(o => {
+                  const s = o.ai_match_score
+                  const scoreColor = s === null
+                    ? 'bg-gray-100 text-gray-400'
+                    : s >= 7 ? 'bg-green-100 text-green-700'
+                    : s >= 5 ? 'bg-amber-100 text-amber-700'
+                    : 'bg-red-100 text-red-600'
+                  return (
+                    <li key={o.id} className="flex items-center gap-2.5 min-w-0">
+                      <span className={`shrink-0 text-xs font-bold px-1.5 py-0.5 rounded ${scoreColor}`}>
+                        {s !== null ? s.toFixed(1) : '—'}
+                      </span>
+                      <span className="text-sm text-navy font-medium truncate">{o.name}</span>
+                      {o.funder && (
+                        <span className="text-xs text-gray-400 truncate hidden sm:block">{o.funder}</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+              {discoveredOpps.length > 3 && (
+                <p className="text-xs text-gray-400 mt-2 ml-5">
+                  +{discoveredOpps.length - 3} more
+                </p>
+              )}
+            </div>
+            <Link
+              to="/admin/opportunities?tab=discovered"
+              className="shrink-0 self-start flex items-center gap-1.5 bg-river hover:bg-river/90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              Review <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
