@@ -91,7 +91,7 @@ export function AdminLayout() {
         >
           <Menu size={22} />
         </button>
-        <Logo dark className="h-6 w-auto" />
+        <Logo dark className="h-8 w-auto" />
         <div className="w-8 h-8 rounded-full bg-river/30 flex items-center justify-center text-white text-xs font-semibold">
           {initials}
         </div>
@@ -113,7 +113,7 @@ export function AdminLayout() {
       `}>
         {/* Logo + close button */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
-          <Logo dark className="h-7 w-auto" />
+          <Logo dark className="h-9 w-auto" />
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-1.5 text-white/40 hover:text-white rounded-lg transition-colors lg:hidden"
