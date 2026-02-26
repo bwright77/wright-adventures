@@ -29,7 +29,7 @@ export function AdminLayout() {
         .select('status, started_at')
         .order('started_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
       return data
     },
     enabled: isAdmin,
