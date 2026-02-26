@@ -148,7 +148,7 @@ ${JSON.stringify(raw, null, 2)}`
     prompt,
     maxTokens: 1024,
   })
-  stats.tokens_haiku += (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
+  stats.tokens_haiku += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ExtractedFields>(text)
 }
 
@@ -177,7 +177,7 @@ ${JSON.stringify(fields, null, 2)}`
     prompt,
     maxTokens: 1024,
   })
-  stats.tokens_sonnet += (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
+  stats.tokens_sonnet += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ScoreResult>(text)
 }
 
@@ -376,7 +376,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           continue
         }
 
-        if (score.weighted_score < 5.0) {
+        if (score.weighted_score < 3.5) {
           stats.opportunities_below_threshold++
           continue
         }

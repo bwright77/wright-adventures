@@ -174,7 +174,7 @@ function DiscoveryCard() {
       return data ?? []
     },
     refetchInterval: (query) => {
-      const hasActive = query.state.data?.some(r => r.status === 'running')
+      const hasActive = query.state.data?.some(r => r.status === 'running' || r.status === 'cancelling')
       return hasActive ? 5_000 : 30_000
     },
   })
@@ -220,7 +220,7 @@ function DiscoveryCard() {
   }
 
   const latestRun = runs[0]
-  const isRunning = latestRun?.status === 'running' || isTriggering
+  const isRunning = latestRun?.status === 'running' || latestRun?.status === 'cancelling' || isTriggering
 
   function RunStatusIcon({ status }: { status: DiscoveryRun['status'] }) {
     if (status === 'running')    return <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
