@@ -309,15 +309,17 @@ function DiscoveryCard() {
               {formatDistanceToNow(new Date(latestRun.started_at), { addSuffix: true })}
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-5 gap-2">
             {([
-              { label: 'Fetched',  value: latestRun.opportunities_fetched },
-              { label: 'New',      value: latestRun.opportunities_detail_fetched },
-              { label: 'Inserted', value: latestRun.opportunities_inserted },
-            ] as const).map(({ label, value }) => (
+              { label: 'Fetched',   value: latestRun.opportunities_fetched,        dim: false },
+              { label: 'New',       value: latestRun.opportunities_detail_fetched, dim: false },
+              { label: 'Rejected',  value: latestRun.opportunities_auto_rejected,  dim: latestRun.opportunities_auto_rejected === 0 },
+              { label: '< 5.0',     value: latestRun.opportunities_below_threshold, dim: latestRun.opportunities_below_threshold === 0 },
+              { label: 'Inserted',  value: latestRun.opportunities_inserted,        dim: false },
+            ] as const).map(({ label, value, dim }) => (
               <div key={label} className="text-center">
-                <p className="text-lg font-bold text-navy">{value}</p>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide">{label}</p>
+                <p className={`text-base font-bold ${dim ? 'text-gray-300' : 'text-navy'}`}>{value}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
               </div>
             ))}
           </div>
