@@ -256,11 +256,11 @@ function DiscoveryCard() {
             </span>
             <button
               onClick={() => cancelRun()}
-              disabled={isCancelling || latestRun?.status === 'cancelling'}
+              disabled={isCancelling}
               className="flex items-center gap-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
             >
               <Square size={11} fill="currentColor" />
-              {isCancelling || latestRun?.status === 'cancelling' ? 'Stopping…' : 'Stop'}
+              {isCancelling ? 'Stopping…' : latestRun?.status === 'cancelling' ? 'Force Stop' : 'Stop'}
             </button>
           </div>
         ) : (

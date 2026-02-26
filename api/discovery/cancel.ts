@@ -29,27 +29,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  // Find the most recent running run
+  // Find the most recent run that is still active (running or already signalled)
   const { data: run } = await supabase
     .from('discovery_runs')
-    .select('id')
-    .eq('status', 'running')
+    .select('id, status')
+    .in('status', ['running', 'cancelling'])
     .order('started_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
   if (!run) {
-    return res.status(404).json({ error: 'No running discovery run found' })
+    return res.status(404).json({ error: 'No active discovery run found' })
   }
+
+  // First click (running → cancelling): graceful signal — the sync loop will
+  // detect it and write 'cancelled' itself after finishing the current opportunity.
+  // Second click (cancelling → cancelled): force-cancel — the sync function has
+  // already terminated without detecting the signal (timeout or completion race).
+  const newStatus = run.status === 'running' ? 'cancelling' : 'cancelled'
+  const extraFields = newStatus === 'cancelled'
+    ? { completed_at: new Date().toISOString() }
+    : {}
 
   const { error } = await supabase
     .from('discovery_runs')
-    .update({ status: 'cancelling' })
+    .update({ status: newStatus, ...extraFields })
     .eq('id', run.id)
 
   if (error) {
     return res.status(500).json({ error: 'Failed to signal cancellation' })
   }
 
-  return res.status(200).json({ run_id: run.id, status: 'cancelling' })
+  return res.status(200).json({ run_id: run.id, status: newStatus })
 }
