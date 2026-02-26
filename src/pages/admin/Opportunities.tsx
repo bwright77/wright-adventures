@@ -30,8 +30,24 @@ const PARTNERSHIP_COLS = [
   { id: 'partnership_completed',   label: 'Completed'   },
 ]
 
+// Terminal statuses excluded from "active" pseudo-filter
+const INACTIVE_GRANT_STATUSES        = ['grant_archived', 'grant_declined', 'grant_withdrawn']
+const INACTIVE_PARTNERSHIP_STATUSES  = ['partnership_archived', 'partnership_declined', 'partnership_completed']
+
+// Full status lists (including terminal) for the filter dropdown
+const GRANT_STATUSES = [
+  ...GRANT_COLS,
+  { id: 'grant_withdrawn', label: 'Withdrawn' },
+  { id: 'grant_archived',  label: 'Archived'  },
+]
+const PARTNERSHIP_STATUSES = [
+  ...PARTNERSHIP_COLS,
+  { id: 'partnership_declined', label: 'Declined' },
+  { id: 'partnership_archived', label: 'Archived' },
+]
+
 const STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  [...GRANT_COLS, ...PARTNERSHIP_COLS, { id: 'grant_discovered', label: 'Discovered' }].map(s => [s.id, s.label])
+  [...GRANT_STATUSES, ...PARTNERSHIP_STATUSES, { id: 'grant_discovered', label: 'Discovered' }].map(s => [s.id, s.label])
 )
 
 const STATUS_COLORS: Record<string, string> = {
@@ -338,13 +354,37 @@ export function Opportunities() {
   const queryClient  = useQueryClient()
   const { session }  = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = ((searchParams.get('tab') ?? 'all') as TabFilter)
+  const tab          = (searchParams.get('tab')    ?? 'all') as TabFilter
+  const statusFilter =  searchParams.get('status') ?? ''
+
   function setTab(t: TabFilter) {
+    // Switching tabs clears status filter
     setSearchParams(t === 'all' ? {} : { tab: t }, { replace: true })
   }
+  function setStatus(s: string) {
+    const params: Record<string, string> = {}
+    if (tab !== 'all') params.tab = tab
+    if (s) params.status = s
+    setSearchParams(params, { replace: true })
+  }
+
+  const statusOptions = tab === 'partnership' ? PARTNERSHIP_STATUSES : GRANT_STATUSES
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
   const [rescoringId, setRescoringId] = useState<string | null>(null)
+
+  type SortKey = 'name' | 'type_id' | 'status' | 'primary_deadline'
+  const [sortKey, setSortKey] = useState<SortKey | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
 
   const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
     queryKey: ['opportunities'],
@@ -429,9 +469,29 @@ export function Opportunities() {
 
   const filtered = pipelineOpps.filter(o => {
     if (tab !== 'all' && o.type_id !== tab) return false
+    if (statusFilter === 'active') {
+      const inactive = o.type_id === 'partnership' ? INACTIVE_PARTNERSHIP_STATUSES : INACTIVE_GRANT_STATUSES
+      if (inactive.includes(o.status)) return false
+    } else if (statusFilter) {
+      if (o.status !== statusFilter) return false
+    }
     if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  const sorted = sortKey
+    ? [...filtered].sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1
+        if (sortKey === 'primary_deadline') {
+          const aT = a.primary_deadline ? new Date(a.primary_deadline).getTime() : Infinity
+          const bT = b.primary_deadline ? new Date(b.primary_deadline).getTime() : Infinity
+          return (aT - bT) * dir
+        }
+        const aV = (a[sortKey] ?? '').toString().toLowerCase()
+        const bV = (b[sortKey] ?? '').toString().toLowerCase()
+        return aV.localeCompare(bV) * dir
+      })
+    : filtered
 
   const kanbanType: OpportunityTypeId = tab === 'all' ? 'grant' : (tab as OpportunityTypeId)
   const kanbanCols = kanbanType === 'grant' ? GRANT_COLS : PARTNERSHIP_COLS
@@ -498,6 +558,20 @@ export function Opportunities() {
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40 transition-colors"
             />
           </div>
+        )}
+
+        {tab !== 'discovered' && view === 'table' && (
+          <select
+            value={statusFilter}
+            onChange={e => setStatus(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40 text-gray-600"
+          >
+            <option value="">All statuses</option>
+            <option value="active">Active only</option>
+            {statusOptions.map(s => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </select>
         )}
 
         {tab !== 'discovered' && (
@@ -567,14 +641,36 @@ export function Opportunities() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-[0.07em] px-5 py-3.5">Name</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-[0.07em] px-5 py-3.5 hidden sm:table-cell">Type</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-[0.07em] px-5 py-3.5">Status</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-[0.07em] px-5 py-3.5 hidden md:table-cell">Deadline</th>
+                {(
+                  [
+                    { key: 'name',              label: 'Name',     className: 'px-5 py-3.5' },
+                    { key: 'type_id',           label: 'Type',     className: 'px-5 py-3.5 hidden sm:table-cell' },
+                    { key: 'status',            label: 'Status',   className: 'px-5 py-3.5' },
+                    { key: 'primary_deadline',  label: 'Deadline', className: 'px-5 py-3.5 hidden md:table-cell' },
+                  ] as { key: SortKey; label: string; className: string }[]
+                ).map(({ key, label, className }) => {
+                  const active = sortKey === key
+                  return (
+                    <th key={key} className={`text-left text-xs font-medium uppercase tracking-[0.07em] ${className}`}>
+                      <button
+                        onClick={() => toggleSort(key)}
+                        className={`flex items-center gap-1 group ${active ? 'text-navy' : 'text-gray-400 hover:text-gray-600'}`}
+                      >
+                        {label}
+                        <span className={active ? 'text-navy' : 'text-gray-300 group-hover:text-gray-400'}>
+                          {active && sortDir === 'desc'
+                            ? <ChevronDown size={12} />
+                            : <ChevronUp size={12} />
+                          }
+                        </span>
+                      </button>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map(o => (
+              {sorted.map(o => (
                 <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
                     <Link

@@ -114,7 +114,7 @@ export function Dashboard() {
           sub="in pipeline"
           icon={DollarSign}
           accent="bg-river"
-          to="/admin/opportunities?tab=grant"
+          to="/admin/opportunities?tab=grant&status=active"
         />
         <MetricCard
           label="Partnerships"
@@ -122,7 +122,7 @@ export function Dashboard() {
           sub="active"
           icon={Users}
           accent="bg-trail"
-          to="/admin/opportunities?tab=partnership"
+          to="/admin/opportunities?tab=partnership&status=active"
         />
         <MetricCard
           label="My Tasks"

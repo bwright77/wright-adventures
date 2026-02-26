@@ -397,7 +397,7 @@ export function OpportunityDetail() {
             <p className="text-sm text-gray-600 leading-relaxed mb-4">{opportunity.description}</p>
           )}
           <DetailRow label="Deadline" value={opportunity.primary_deadline ? format(new Date(opportunity.primary_deadline), 'MMMM d, yyyy') : null} />
-          <DetailRow label="Source"   value={opportunity.source_url ? <a href={opportunity.source_url} target="_blank" rel="noopener noreferrer" className="text-river hover:underline truncate">{opportunity.source_url}</a> : null} />
+          <DetailRow label="Source"   value={opportunity.source_url ? <a href={opportunity.source_url} target="_blank" rel="noopener noreferrer" className="text-river hover:underline break-all">{opportunity.source_url}</a> : null} />
           <DetailRow label="Created"  value={format(new Date(opportunity.created_at), 'MMM d, yyyy')} />
         </div>
 
@@ -408,7 +408,7 @@ export function OpportunityDetail() {
           {isGrant ? (
             <>
               <DetailRow label="Funder"      value={opportunity.funder} />
-              <DetailRow label="Grant type"  value={opportunity.grant_type} />
+              <DetailRow label="Grant type"  value={opportunity.grant_type ? opportunity.grant_type.charAt(0).toUpperCase() + opportunity.grant_type.slice(1) : null} />
               <DetailRow label="Max amount"  value={opportunity.amount_max != null ? `$${opportunity.amount_max.toLocaleString()}` : null} />
               <DetailRow label="Requesting"  value={opportunity.amount_requested != null ? `$${opportunity.amount_requested.toLocaleString()}` : null} />
               <DetailRow label="Awarded"     value={opportunity.amount_awarded != null ? `$${opportunity.amount_awarded.toLocaleString()}` : null} />
