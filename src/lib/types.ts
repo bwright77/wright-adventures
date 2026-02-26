@@ -49,7 +49,7 @@ export interface DiscoveryRun {
   started_at: string
   completed_at: string | null
   triggered_by: 'cron' | 'manual'
-  status: 'running' | 'completed' | 'failed'
+  status: 'running' | 'cancelling' | 'cancelled' | 'completed' | 'failed'
   opportunities_fetched: number
   opportunities_deduplicated: number
   opportunities_detail_fetched: number

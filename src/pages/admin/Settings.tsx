@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, RefreshCw, Play, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Play, Square, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -197,6 +197,21 @@ function DiscoveryCard() {
     },
   })
 
+  const { mutate: cancelRun, isPending: isCancelling } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/discovery/cancel', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? `HTTP ${res.status}`)
+      }
+      return res.json()
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['discovery_runs'] }),
+  })
+
   function nextRunTime(): string {
     const now  = new Date()
     const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 7, 0, 0))
@@ -208,8 +223,10 @@ function DiscoveryCard() {
   const isRunning = latestRun?.status === 'running' || isTriggering
 
   function RunStatusIcon({ status }: { status: DiscoveryRun['status'] }) {
-    if (status === 'running')   return <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
-    if (status === 'completed') return <CheckCircle size={14} className="text-green-500 shrink-0" />
+    if (status === 'running')    return <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+    if (status === 'cancelling') return <div className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin shrink-0" />
+    if (status === 'completed')  return <CheckCircle size={14} className="text-green-500 shrink-0" />
+    if (status === 'cancelled')  return <Square size={14} className="text-gray-400 shrink-0" fill="currentColor" />
     return <XCircle size={14} className="text-red-500 shrink-0" />
   }
 
@@ -231,17 +248,30 @@ function DiscoveryCard() {
           <h2 className="text-sm font-semibold text-navy mb-1">Grant Discovery</h2>
           <p className="text-xs text-gray-400">Simpler.Grants.gov · 9 active queries</p>
         </div>
-        <button
-          onClick={() => runNow()}
-          disabled={isRunning}
-          className="flex items-center gap-1.5 text-xs font-medium text-white bg-river hover:bg-river/90 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {isRunning ? (
-            <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Running…</>
-          ) : (
-            <><Play size={12} /> Run Now</>
-          )}
-        </button>
+        {isRunning ? (
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              Running…
+            </span>
+            <button
+              onClick={() => cancelRun()}
+              disabled={isCancelling || latestRun?.status === 'cancelling'}
+              className="flex items-center gap-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Square size={11} fill="currentColor" />
+              {isCancelling || latestRun?.status === 'cancelling' ? 'Stopping…' : 'Stop'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => runNow()}
+            disabled={isRunning}
+            className="flex items-center gap-1.5 text-xs font-medium text-white bg-river hover:bg-river/90 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Play size={12} /> Run Now
+          </button>
+        )}
       </div>
 
       {runError && (
@@ -259,15 +289,20 @@ function DiscoveryCard() {
       {/* Latest run summary */}
       {latestRun && (
         <div className={`rounded-lg p-4 mb-4 border ${
-          latestRun.status === 'running'   ? 'bg-blue-50 border-blue-100' :
-          latestRun.status === 'completed' ? 'bg-green-50 border-green-100' :
-                                             'bg-red-50 border-red-100'
+          latestRun.status === 'running'    ? 'bg-blue-50 border-blue-100' :
+          latestRun.status === 'cancelling' ? 'bg-orange-50 border-orange-100' :
+          latestRun.status === 'cancelled'  ? 'bg-gray-50 border-gray-200' :
+          latestRun.status === 'completed'  ? 'bg-green-50 border-green-100' :
+                                              'bg-red-50 border-red-100'
         }`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <RunStatusIcon status={latestRun.status} />
               <span className="text-xs font-medium text-navy capitalize">
-                {latestRun.status === 'running' ? 'Running' : 'Last run'} · {latestRun.triggered_by}
+                {latestRun.status === 'running'    ? 'Running'
+                 : latestRun.status === 'cancelling' ? 'Stopping'
+                 : latestRun.status === 'cancelled'  ? 'Stopped'
+                 : 'Last run'} · {latestRun.triggered_by}
               </span>
             </div>
             <span className="text-xs text-gray-400">

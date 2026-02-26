@@ -164,6 +164,17 @@ ${JSON.stringify(fields, null, 2)}`
   return parseJson<ScoreResult>(text)
 }
 
+// ── Cancellation check ────────────────────────────────────────
+
+async function isCancelling(runId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('discovery_runs')
+    .select('status')
+    .eq('id', runId)
+    .maybeSingle()
+  return data?.status === 'cancelling'
+}
+
 // ── Auth ──────────────────────────────────────────────────────
 
 async function isAdminJwt(jwt: string): Promise<boolean> {
@@ -283,6 +294,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Two-stage pipeline for each new opportunity ───────────────
     for (const opportunityId of batch) {
+      // Check for cancellation signal before starting each opportunity
+      if (await isCancelling(runId)) {
+        await supabase.from('discovery_runs').update({
+          completed_at: new Date().toISOString(),
+          status:       'cancelled',
+          ...stats,
+          error_log:    stats.error_log.length > 0 ? stats.error_log : null,
+        }).eq('id', runId)
+        return res.status(200).json({ run_id: runId, status: 'cancelled', ...stats })
+      }
+
       try {
         // Fetch full detail: search results omit deadline, eligibility, description
         const detail = await fetchDetail(opportunityId)
