@@ -76,13 +76,13 @@ export const APPROACH_STEPS = [
 
 export const CASE_STUDIES = [
   {
-    tag: 'Youth Pathways',
-    tagColor: 'trail' as const,
-    title: 'Lincoln Hills Cares',
-    description: 'Developed sustainable funding strategy and program infrastructure for workforce pathways programs connecting underserved youth to careers in conservation and environmental stewardship at the historic Lincoln Hills site.',
+    tag: 'Brand & Technology',
+    tagColor: 'earth' as const,
+    title: 'Confluence Colorado',
+    description: 'Built Confluence Colorado\'s brand identity from the ground up — logo, visual language, and messaging — then designed and launched their website. We continue to manage their technology infrastructure and lead their grant management strategy, serving as an ongoing strategic and operational partner.',
     metrics: [
-      { value: '$700K+', label: 'Annual funding secured' },
-      { value: 'Ongoing', label: 'Multi-year partnership' },
+      { value: 'Full build', label: 'Brand, web & tech' },
+      { value: 'Ongoing', label: 'Strategy & tech partner' },
     ],
   },
   {
@@ -96,13 +96,13 @@ export const CASE_STUDIES = [
     ],
   },
   {
-    tag: 'Brand & Technology',
-    tagColor: 'earth' as const,
-    title: 'Confluence Colorado',
-    description: 'Built Confluence Colorado\'s brand identity from the ground up — logo, visual language, and messaging — then designed and launched their website. We continue to manage their technology infrastructure and lead their grant management strategy, serving as an ongoing strategic and operational partner.',
+    tag: 'Youth Pathways',
+    tagColor: 'trail' as const,
+    title: 'Lincoln Hills Cares',
+    description: 'Developed sustainable funding strategy and program infrastructure for workforce pathways programs connecting underserved youth to careers in conservation and environmental stewardship at the historic Lincoln Hills site.',
     metrics: [
-      { value: 'Full build', label: 'Brand, web & tech' },
-      { value: 'Ongoing', label: 'Strategy & tech partner' },
+      { value: '$700K+', label: 'Annual funding secured' },
+      { value: 'Youth & conservation', label: 'Workforce pathways' },
     ],
   },
 ] as const

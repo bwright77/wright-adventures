@@ -29,8 +29,9 @@ export function Hero() {
           </h1>
 
           <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-xl font-light">
-            Strategic consulting, AI-powered tools, and program design for environmental organizations
-            ready to scale their impact and grow the next generation of stewards.
+            Strategic consulting, fundraising support, AI-powered tools, and program design for community,
+            environmental, natural resource, and youth development organizations ready to scale their impact
+            and grow the next generation of stewards.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
