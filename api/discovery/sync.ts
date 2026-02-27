@@ -329,6 +329,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Cap per-run to avoid function timeout; remainder is picked up on next run
     const batch = newIds.slice(0, MAX_NEW_PER_RUN)
 
+    // ── Intermediate progress update ──────────────────────────────
+    // Write fetched/deduplicated counts now so the UI shows real numbers
+    // while the (slower) opportunity pipeline runs — not all zeros.
+    await supabase.from('discovery_runs').update({
+      opportunities_fetched:      stats.opportunities_fetched,
+      opportunities_deduplicated: stats.opportunities_deduplicated,
+    }).eq('id', runId)
+
     // ── Two-stage pipeline for each new opportunity ───────────────
     let wasCancelled = false
     let timedOut = false
