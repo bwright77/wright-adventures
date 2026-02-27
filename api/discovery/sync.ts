@@ -7,8 +7,9 @@ import { generateText } from 'ai'
 export const config = { maxDuration: 300 }
 
 // Max new opportunities to process per run — prevents timeout on large batches.
-// Hobby plan cap is 60s; at ~5s/opp (Haiku + Sonnet) this leaves ~25s headroom.
-// The cron runs daily so any remainder is picked up the next day.
+// Pro plan allows 300s; at ~10s/opp (detail fetch + Haiku + Sonnet) this
+// comfortably fits within the 250s soft deadline. Cron runs daily so any
+// remainder is picked up the next day.
 const MAX_NEW_PER_RUN = 7
 
 // ── Supabase (service role — server-side only) ────────────────
@@ -99,6 +100,7 @@ async function searchOpportunities(payload: unknown, pageOffset: number): Promis
       'X-Api-Key': process.env.SIMPLER_GRANTS_API_KEY!,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) {
     throw new Error(`Search API ${res.status}: ${await res.text()}`)
@@ -113,6 +115,7 @@ async function searchOpportunities(payload: unknown, pageOffset: number): Promis
 async function fetchDetail(opportunityId: string): Promise<unknown> {
   const res = await fetch(`${SIMPLER_GRANTS_BASE}/opportunities/${opportunityId}`, {
     headers: { 'X-Api-Key': process.env.SIMPLER_GRANTS_API_KEY! },
+    signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) {
     throw new Error(`Detail API ${res.status} for ${opportunityId}`)
@@ -147,6 +150,7 @@ ${JSON.stringify(raw, null, 2)}`
     model: anthropic('claude-haiku-4-5-20251001'),
     prompt,
     maxOutputTokens: 1024,
+    abortSignal: AbortSignal.timeout(30_000),
   })
   stats.tokens_haiku += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ExtractedFields>(text)
@@ -176,6 +180,7 @@ ${JSON.stringify(fields, null, 2)}`
     model: anthropic('claude-sonnet-4-6'),
     prompt,
     maxOutputTokens: 1024,
+    abortSignal: AbortSignal.timeout(60_000),
   })
   stats.tokens_sonnet += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ScoreResult>(text)
@@ -248,6 +253,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const runId = run.id
 
+  // Soft deadline: finalize the DB row with whatever progress we have before
+  // Vercel hard-kills the function at maxDuration (300s). The 50s buffer gives
+  // enough time to write the final update and return the HTTP response.
+  const runStart = Date.now()
+  const nearDeadline = () => Date.now() - runStart > 250_000
+
   const stats: RunStats = {
     opportunities_fetched: 0,
     opportunities_deduplicated: 0,
@@ -282,6 +293,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── Execute queries and collect unique opportunity IDs ────────
     const allIds = new Set<string>()
     for (const query of queries) {
+      if (nearDeadline()) break
       try {
         const { ids, totalPages } = await searchOpportunities(query.payload, query.current_page ?? 1)
         ids.forEach(id => allIds.add(id))
@@ -319,8 +331,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── Two-stage pipeline for each new opportunity ───────────────
     let wasCancelled = false
+    let timedOut = false
     for (const opportunityId of batch) {
-      // Check for cancellation signal before starting each opportunity
+      // Check deadline and cancellation before starting each opportunity
+      if (nearDeadline()) { timedOut = true; break }
       if (await isCancelling(runId)) {
         wasCancelled = true
         break
@@ -412,7 +426,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ── Finalize run record ───────────────────────────────────────
-    const finalStatus = wasCancelled ? 'cancelled' : 'completed'
+    const finalStatus = wasCancelled ? 'cancelled' : timedOut ? 'failed' : 'completed'
+    if (timedOut) {
+      stats.error_log.unshift({ label: 'timeout', error: 'Approaching Vercel maxDuration limit — partial results saved', timestamp: new Date().toISOString() })
+    }
     await supabase.from('discovery_runs').update({
       completed_at:   new Date().toISOString(),
       status:         finalStatus,
