@@ -146,7 +146,7 @@ ${JSON.stringify(raw, null, 2)}`
   const { text, usage } = await generateText({
     model: anthropic('claude-haiku-4-5-20251001'),
     prompt,
-    maxTokens: 1024,
+    maxOutputTokens: 1024,
   })
   stats.tokens_haiku += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ExtractedFields>(text)
@@ -175,7 +175,7 @@ ${JSON.stringify(fields, null, 2)}`
   const { text, usage } = await generateText({
     model: anthropic('claude-sonnet-4-6'),
     prompt,
-    maxTokens: 1024,
+    maxOutputTokens: 1024,
   })
   stats.tokens_sonnet += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
   return parseJson<ScoreResult>(text)
@@ -248,13 +248,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const runId = run.id
 
-  // ── Respond immediately so the browser connection closes now ──
-  // The Vercel function keeps running until it returns or hits maxDuration.
-  // Returning 202 here prevents Chrome extensions from timing out on the
-  // long-lived fetch ("message channel closed before response received").
-  // The client polls discovery_runs for status — it doesn't need this body.
-  res.status(202).json({ run_id: runId, status: 'running' })
-
   const stats: RunStats = {
     opportunities_fetched: 0,
     opportunities_deduplicated: 0,
@@ -325,16 +318,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const batch = newIds.slice(0, MAX_NEW_PER_RUN)
 
     // ── Two-stage pipeline for each new opportunity ───────────────
+    let wasCancelled = false
     for (const opportunityId of batch) {
       // Check for cancellation signal before starting each opportunity
       if (await isCancelling(runId)) {
-        await supabase.from('discovery_runs').update({
-          completed_at: new Date().toISOString(),
-          status:       'cancelled',
-          ...stats,
-          error_log:    stats.error_log.length > 0 ? stats.error_log : null,
-        }).eq('id', runId)
-        return // Response already sent — just stop processing
+        wasCancelled = true
+        break
       }
 
       try {
@@ -423,13 +412,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ── Finalize run record ───────────────────────────────────────
+    const finalStatus = wasCancelled ? 'cancelled' : 'completed'
     await supabase.from('discovery_runs').update({
       completed_at:   new Date().toISOString(),
-      status:         'completed',
+      status:         finalStatus,
       org_profile_id: orgProfile.id,
       ...stats,
       error_log:      stats.error_log.length > 0 ? stats.error_log : null,
     }).eq('id', runId)
+
+    return res.status(200).json({ run_id: runId, status: finalStatus })
 
   } catch (err) {
     await supabase.from('discovery_runs').update({
@@ -439,5 +431,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).eq('id', runId)
 
     console.error('Discovery sync fatal error:', err)
+    return res.status(500).json({ error: 'Discovery sync failed', run_id: runId })
   }
 }
