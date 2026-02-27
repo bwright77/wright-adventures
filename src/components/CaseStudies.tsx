@@ -4,11 +4,13 @@ import { CASE_STUDIES } from '../data/siteData'
 import lhcLogo from '../assets/images/lhc.png'
 import gwdLogo from '../assets/images/gwd.png'
 import ccLogo from '../assets/images/cc.png'
+import cmcLogo from '../assets/images/cmc.png'
 
 const ORG_LOGOS: Record<string, string> = {
   'Lincoln Hills Cares': lhcLogo,
   'GroundWork Denver': gwdLogo,
   'Confluence Colorado': ccLogo,
+  'Colorado Mountain Club': cmcLogo,
 }
 
 const TAG_COLORS = {

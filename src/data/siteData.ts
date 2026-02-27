@@ -105,6 +105,16 @@ export const CASE_STUDIES = [
       { value: 'Youth & conservation', label: 'Workforce pathways' },
     ],
   },
+  {
+    tag: 'Hiring & Operations',
+    tagColor: 'river' as const,
+    title: 'Colorado Mountain Club',
+    description: 'Supporting the Colorado Mountain Club across hiring, program direction, and program operations — helping one of the nation\'s leading mountain recreation organizations build staff capacity, sharpen program delivery, and navigate compliance and licensing requirements.',
+    metrics: [
+      { value: 'Active', label: 'Current engagement' },
+      { value: 'Hiring, ops & compliance', label: 'Full scope support' },
+    ],
+  },
 ] as const
 
 export const TEAM = [
