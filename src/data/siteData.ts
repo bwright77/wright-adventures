@@ -4,7 +4,7 @@
 
 export const BRAND = {
   name: 'Wright Adventures',
-  tagline: 'Nonprofit Advisory & Technology',
+  tagline: 'Empowering Organizations to Do More',
   email: 'info@wrightadventures.org',
   phone: '(303) 815-7613',
   phoneHref: 'tel:+13038157613',
