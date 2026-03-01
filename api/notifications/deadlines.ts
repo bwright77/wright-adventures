@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail } from './_mailer'
+import { sendEmail } from './_mailer.js'
 
 // ── Supabase (service role — server-side only) ────────────────
 const supabase = createClient(
