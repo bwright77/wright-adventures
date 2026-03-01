@@ -82,7 +82,7 @@ The OMP admin portal runs at `localhost:5173/admin`. Unauthenticated visits redi
 
 ## Deployment
 
-Deployed on Vercel at **https://wright-adventures.vercel.app/**
+Deployed at **https://wrightadventures.org/** (also: https://wright-adventures.vercel.app/)
 
 Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are configured in the Vercel project dashboard. Pushes to `main` deploy automatically.
 

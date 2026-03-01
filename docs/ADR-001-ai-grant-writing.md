@@ -10,7 +10,7 @@
 
 ## Context
 
-The OMP MVP is live at `https://wright-adventures.vercel.app/` — a React 19 + TypeScript + Vite SPA hosted on Vercel, backed by Supabase (PostgreSQL + Auth + Storage). The OMP is a **single-tenant application** — it serves the Wright Adventures internal team only and doubles as a demo for prospective partner organizations.
+The OMP MVP is live at `https://wrightadventures.org/` — a React 19 + TypeScript + Vite SPA hosted on Vercel, backed by Supabase (PostgreSQL + Auth + Storage). The OMP is a **single-tenant application** — it serves the Wright Adventures internal team only and doubles as a demo for prospective partner organizations.
 
 Phase 2 introduces AI-assisted grant writing as the highest-priority feature: freeform narrative draft generation with iterative chat-style refinement, powered by the Anthropic Claude API.
 
@@ -316,4 +316,4 @@ VITE_SUPABASE_ANON_KEY=
 - [Vercel AI SDK Docs](https://sdk.vercel.ai/docs)
 - [Anthropic Claude API Docs](https://docs.anthropic.com)
 - [Supabase RLS Guide](https://supabase.com/docs/guides/auth/row-level-security)
-- App: `https://wright-adventures.vercel.app/`
+- App: `https://wrightadventures.org/`

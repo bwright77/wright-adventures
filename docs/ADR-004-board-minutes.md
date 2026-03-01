@@ -3,7 +3,7 @@
 **Project:** Wright Adventures — Opportunity Management Platform (OMP)
 **Author:** Benjamin Wright, Director of Technology & Innovation
 **Date:** 2026-02-28
-**Status:** Proposed
+**Status:** Accepted
 **PRD Reference:** OMP PRD v2.0, Phase 2 — Collaboration & Intelligence / Phase 3 — Platform
 
 ---
@@ -53,7 +53,7 @@ Migration: `supabase/migrations/20260228100000_board_meetings.sql`
 ```sql
 CREATE TABLE board_meetings (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id            UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  -- org_id omitted: single-tenant app (Confluence Colorado); no organizations table
   meeting_date      DATE NOT NULL,
   meeting_start     TIME,
   meeting_end       TIME,
@@ -83,12 +83,14 @@ CREATE TABLE board_meetings (
 );
 
 -- Trigger to keep updated_at current
+-- Uses update_updated_at() defined in the grant discovery migration (20260226000000_grant_discovery.sql)
+-- moddatetime() is not available in this Supabase project
 CREATE TRIGGER board_meetings_updated_at
   BEFORE UPDATE ON board_meetings
-  FOR EACH ROW EXECUTE FUNCTION moddatetime(updated_at);
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- Index for org + date lookups (most common query pattern)
-CREATE INDEX board_meetings_org_date_idx ON board_meetings (org_id, meeting_date DESC);
+-- Index for date lookups
+CREATE INDEX board_meetings_date_idx ON board_meetings (meeting_date DESC);
 ```
 
 **RLS:**
@@ -239,7 +241,7 @@ Authentication: Supabase JWT required (same pattern as ADR-001/002). No unauthen
 
 #### 4. New Meeting Flow (UI)
 
-1. **Step 1 — Meeting Info:** Date, approximate start/end, location (pre-filled "Virtual (Google Meet)"), org (pre-selected for single-org users)
+1. **Step 1 — Meeting Info:** Date, approximate start/end, location (pre-filled "Virtual (Google Meet)")
 2. **Step 2 — Transcript:** File upload (`.vtt`, `.txt`) OR paste raw text. Character count shown. Max 500KB file / ~400,000 characters.
 3. **Submit** → creates `board_meetings` row, triggers `/api/board-minutes/extract`, shows processing state
 4. Redirect to detail page on completion
@@ -359,4 +361,4 @@ The signature line uses the `approved_by` name and `approved_at` date from the d
 - [OMP PRD v2.0](./OMP_PRD_v2) — Phase 2 / Phase 3 scope
 - Colorado Revised Statutes § 7-128-120 (Corporate Records)
 - Anthropic API Usage Policy (data handling): https://www.anthropic.com/legal/aup
-- App: `https://wright-adventures.vercel.app/`
+- App: `https://wrightadventures.org/`

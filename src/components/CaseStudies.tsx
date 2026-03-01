@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { CASE_STUDIES } from '../data/siteData'
 import lhcLogo from '../assets/images/lhc.png'
@@ -23,9 +23,24 @@ export function CaseStudies() {
   const [current, setCurrent] = useState(0)
   const total = CASE_STUDIES.length
   const touchStartX = useRef<number | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const next = useCallback(() => setCurrent(i => (i + 1) % total), [total])
   const prev = () => setCurrent(i => (i - 1 + total) % total)
-  const next = () => setCurrent(i => (i + 1) % total)
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(next, 10_000)
+  }, [next])
+
+  useEffect(() => {
+    resetTimer()
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [resetTimer])
+
+  const goTo = (i: number) => { setCurrent(i); resetTimer() }
+  const handlePrev = () => { prev(); resetTimer() }
+  const handleNext = () => { next(); resetTimer() }
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
@@ -34,7 +49,7 @@ export function CaseStudies() {
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return
     const delta = touchStartX.current - e.changedTouches[0].clientX
-    if (Math.abs(delta) > 40) delta > 0 ? next() : prev()
+    if (Math.abs(delta) > 40) delta > 0 ? handleNext() : handlePrev()
     touchStartX.current = null
   }
 
@@ -108,7 +123,7 @@ export function CaseStudies() {
               {CASE_STUDIES.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setCurrent(i)}
+                  onClick={() => goTo(i)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     i === current ? 'w-6 bg-navy' : 'w-2 bg-gray-300 hover:bg-gray-400'
                   }`}
@@ -120,14 +135,14 @@ export function CaseStudies() {
             {/* Prev / Next */}
             <div className="flex gap-2">
               <button
-                onClick={prev}
+                onClick={handlePrev}
                 className="p-2 rounded-full border border-gray-200 text-gray-400 hover:text-navy hover:border-navy transition-colors"
                 aria-label="Previous"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
-                onClick={next}
+                onClick={handleNext}
                 className="p-2 rounded-full border border-gray-200 text-gray-400 hover:text-navy hover:border-navy transition-colors"
                 aria-label="Next"
               >

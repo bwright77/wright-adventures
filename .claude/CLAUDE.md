@@ -11,7 +11,7 @@ Do not delete or move it.
 for the Wright Adventures team to track grants, partnerships, and strategic opportunities.
 Single-tenant. Doubles as a demo for prospective partner organizations.
 
-Live at: https://wright-adventures.vercel.app/
+Live at: https://wrightadventures.org/ (also: https://wright-adventures.vercel.app/)
 Repo: https://github.com/bwright77/wright-adventures
 
 ---

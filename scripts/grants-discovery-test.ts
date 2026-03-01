@@ -2,7 +2,7 @@
  * Wright Adventures — Grant Discovery: API Validation Script
  *
  * Tests Simpler.Grants.gov API (v1) with WA-relevant query strategies.
- * Run locally: npx tsx grants-discovery-test.ts
+ * Run locally: npx tsx scripts/grants-discovery-test.ts
  *
  * Requires: SIMPLER_GRANTS_API_KEY in environment
  * Get a free key at: https://simpler.grants.gov/developer

@@ -83,9 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     '',
     record.ai_match_rationale ? `Summary: ${record.ai_match_rationale}` : null,
     '',
-    `Review and approve: https://wright-adventures.vercel.app/admin/opportunities/${record.id}`,
+    `Review and approve: ${process.env.APP_URL}/admin/opportunities/${record.id}`,
     '',
-    `Update your notification preferences: https://wright-adventures.vercel.app/admin/settings`,
+    `Update your notification preferences: ${process.env.APP_URL}/admin/settings`,
   ].filter(Boolean).join('\n')
 
   // Send to each admin who hasn't opted out

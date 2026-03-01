@@ -120,10 +120,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         opp.funder ? `Funder: ${opp.funder}` : null,
         `Status: ${opp.status}`,
         '',
-        `View opportunity: https://wright-adventures.vercel.app/admin/opportunities/${opp.id}`,
+        `View opportunity: ${process.env.APP_URL}/admin/opportunities/${opp.id}`,
         '',
         `You're receiving this because you're the owner of this opportunity.`,
-        `Update your notification preferences: https://wright-adventures.vercel.app/admin/settings`,
+        `Update your notification preferences: ${process.env.APP_URL}/admin/settings`,
       ].filter(Boolean).join('\n')
 
       let success = false

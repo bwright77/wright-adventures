@@ -97,10 +97,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `Opportunity: ${opportunityName}`,
     '',
     record.opportunity_id
-      ? `View task: https://wright-adventures.vercel.app/admin/opportunities/${record.opportunity_id}`
+      ? `View task: ${process.env.APP_URL}/admin/opportunities/${record.opportunity_id}`
       : null,
     '',
-    `Update your notification preferences: https://wright-adventures.vercel.app/admin/settings`,
+    `Update your notification preferences: ${process.env.APP_URL}/admin/settings`,
   ].filter(Boolean).join('\n')
 
   let success = false

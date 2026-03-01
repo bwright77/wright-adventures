@@ -493,4 +493,4 @@ CRON_SECRET=<random secret, generated at deploy time>
 - [Simpler.Grants.gov Developer Portal](https://simpler.grants.gov/developer)
 - [Confluence Colorado Org Profile](./confluence-org-profile.ts)
 - [Grant Discovery Test Script](./grants-discovery-test.ts)
-- App: `https://wright-adventures.vercel.app/`
+- App: `https://wrightadventures.org/`
