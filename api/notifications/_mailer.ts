@@ -15,7 +15,12 @@ function createTransporter() {
   })
 }
 
-export async function sendEmail(to: string, subject: string, text: string): Promise<void> {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  text: string,
+  options?: { replyTo?: string },
+): Promise<void> {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     throw new Error('SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS required)')
   }
@@ -24,7 +29,7 @@ export async function sendEmail(to: string, subject: string, text: string): Prom
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
   await transporter.sendMail({
     from,
-    replyTo: process.env.SMTP_USER,  // replies go to the account inbox, not a no-reply
+    replyTo: options?.replyTo ?? process.env.SMTP_USER,  // replies go to the account inbox, not a no-reply
     to,
     subject,
     text,

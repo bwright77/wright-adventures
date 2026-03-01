@@ -12,16 +12,29 @@ export function Contact() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In production, wire this to a backend or form service (Formspree, Netlify Forms, etc.)
-    const subject = encodeURIComponent(`Partnership inquiry from ${formData.name} — ${formData.org}`)
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\nOrganization: ${formData.org}\nEmail: ${formData.email}\nOrg Type: ${formData.orgType}\nBiggest Challenge: ${formData.challenge}\n\nMessage:\n${formData.message}`
-    )
-    window.location.href = `mailto:${BRAND.email}?subject=${subject}&body=${body}`
-    setSubmitted(true)
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Something went wrong. Please try again.')
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputClass =
@@ -90,7 +103,7 @@ export function Contact() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">Thanks for reaching out</h3>
-                <p className="text-sm text-white/50">Your email client should have opened with the details pre-filled. We'll be in touch soon.</p>
+                <p className="text-sm text-white/50">Your message has been sent. We'll be in touch soon.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -167,9 +180,12 @@ export function Contact() {
                   onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
                 />
 
-                <button type="submit" className="btn-primary w-full justify-center mt-2">
-                  Start a conversation
-                  <ArrowRight size={16} />
+                {error && (
+                  <p className="text-sm text-red-400">{error}</p>
+                )}
+                <button type="submit" disabled={loading} className="btn-primary w-full justify-center mt-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {loading ? 'Sending…' : 'Start a conversation'}
+                  {!loading && <ArrowRight size={16} />}
                 </button>
               </form>
             )}
