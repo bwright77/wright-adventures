@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Briefcase, CheckSquare, Users, LogOut, Settings, Menu, X, ClipboardList } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { Logo } from '../Logo'
 
 const NAV_ITEMS = [
-  { to: '/admin',               label: 'Dashboard',     icon: LayoutDashboard, end: true,  adminOnly: false },
-  { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase,       end: false, adminOnly: false },
-  { to: '/admin/tasks',         label: 'My Tasks',      icon: CheckSquare,     end: false, adminOnly: false },
-  { to: '/admin/team',          label: 'Team',          icon: Users,           end: false, adminOnly: false },
-  { to: '/admin/settings',      label: 'Settings',      icon: Settings,        end: false, adminOnly: true  },
+  { to: '/admin',                label: 'Dashboard',     icon: LayoutDashboard, end: true,  adminOnly: false },
+  { to: '/admin/opportunities',  label: 'Opportunities', icon: Briefcase,       end: false, adminOnly: false },
+  { to: '/admin/tasks',          label: 'My Tasks',      icon: CheckSquare,     end: false, adminOnly: false },
+  { to: '/admin/board-meetings', label: 'Board Minutes', icon: ClipboardList,   end: false, adminOnly: false },
+  { to: '/admin/team',           label: 'Team',          icon: Users,           end: false, adminOnly: false },
+  { to: '/admin/settings',       label: 'Settings',      icon: Settings,        end: false, adminOnly: true  },
 ]
 
 export function AdminLayout() {
