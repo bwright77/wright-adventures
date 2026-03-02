@@ -9,11 +9,16 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/discovery/state-sync",
+      "schedule": "0 8 * * 1"
+    },
+    {
       "path": "/api/notifications/deadlines",
       "schedule": "0 9 * * *"
     }
   ],
   "functions": {
-    "api/discovery/sync.ts": { "maxDuration": 300 }
+    "api/discovery/sync.ts":       { "maxDuration": 300 },
+    "api/discovery/state-sync.ts": { "maxDuration": 300 }
   }
 }

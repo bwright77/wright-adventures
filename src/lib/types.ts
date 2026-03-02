@@ -50,6 +50,7 @@ export interface DiscoveryRun {
   completed_at: string | null
   triggered_by: 'cron' | 'manual'
   status: 'running' | 'cancelling' | 'cancelled' | 'completed' | 'failed'
+  source_type: 'federal' | 'state'   // Added ADR-005; DEFAULT 'federal' fills existing rows
   opportunities_fetched: number
   opportunities_deduplicated: number
   opportunities_detail_fetched: number
@@ -60,6 +61,28 @@ export interface DiscoveryRun {
   tokens_sonnet: number | null
   error_log: Array<{ label: string; error: string; timestamp: string }> | null
   org_profile_id: string | null
+}
+
+// ── State & Local Discovery (ADR-005) ─────────────────────────
+
+export interface DiscoverySource {
+  id:                     string
+  label:                  string
+  source_type:            string    // 'state' | 'local' | 'foundation' | 'federal_api'
+  funder_name:            string
+  url:                    string
+  enabled:                boolean
+  check_frequency:        string    // 'daily' | 'weekly' | 'monthly'
+  eligibility_notes:      string | null
+  relevance_notes:        string | null
+  source_proximity_bonus: number    // NUMERIC(3,1); Supabase JS returns as string, coerce at use site
+  last_content_hash:      string | null
+  last_fetched_at:        string | null
+  last_changed_at:        string | null
+  last_error:             string | null
+  consecutive_errors:     number
+  created_at:             string
+  updated_at:             string
 }
 
 export interface Opportunity {

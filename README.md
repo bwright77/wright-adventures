@@ -1,4 +1,4 @@
-# Wright Adventures — Nonprofit Advisory & Technology
+# Wright Adventures — Empowering Organizations to Do More
 
 Production-ready website and internal Opportunity Management Platform (OMP) for Wright Adventures, a nonprofit consultancy combining strategic consulting, AI-powered tools, and hands-on program design for conservation nonprofits, youth programs, and watershed groups.
 
