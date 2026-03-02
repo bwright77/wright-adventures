@@ -124,7 +124,7 @@ export function Dashboard() {
                 </h2>
               </div>
               <p className="text-xs text-gray-500 mb-4 ml-5">
-                AI-scored from Simpler.Grants.gov — review and add the best ones to your pipeline.
+                AI-scored from federal and state sources — review and add the best ones to your pipeline.
               </p>
               <ul className="space-y-2 ml-5">
                 {discoveredOpps.slice(0, 3).map(o => {
