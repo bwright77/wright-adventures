@@ -155,7 +155,7 @@ function ScoreDrawer({ opp }: { opp: Opportunity }) {
           className="inline-flex items-center gap-1.5 text-xs text-river hover:underline"
         >
           <ExternalLink size={12} />
-          View on Simpler.Grants.gov
+          View on {(() => { try { return new URL(opp.external_url).hostname.replace(/^www\./, '') } catch { return 'source' } })()}
         </a>
       )}
     </div>
