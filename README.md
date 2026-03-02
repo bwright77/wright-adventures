@@ -2,6 +2,10 @@
 
 Production-ready website and internal Opportunity Management Platform (OMP) for Wright Adventures, a nonprofit consultancy combining strategic consulting, AI-powered tools, and hands-on program design for conservation nonprofits, youth programs, and watershed groups.
 
+Live at: **https://wrightadventures.org/** (also: https://wright-adventures.vercel.app/)
+
+---
+
 ## Tech Stack
 
 **Marketing site**
@@ -17,6 +21,15 @@ Production-ready website and internal Opportunity Management Platform (OMP) for 
 - **TanStack Query** — server state and caching
 - **react-hook-form + zod** — form validation
 - **date-fns** — deadline and offset calculations
+- **Vercel AI SDK** (`useChat`) — streaming AI responses
+- **docx** — DOCX export for board meeting minutes
+
+**API / serverless**
+- **Vercel Serverless Functions** (`/api/**`) — proxy layer for AI and notifications
+- **Anthropic SDK** (`claude-sonnet-4-6`, `claude-haiku-4-5`) — grant writing + grant discovery
+- **nodemailer** — email notifications (deadline reminders, task assignments)
+
+---
 
 ## Brand Tokens (Tailwind)
 
@@ -29,32 +42,65 @@ Production-ready website and internal Opportunity Management Platform (OMP) for 
 
 Font: **Jost** (loaded from Google Fonts)
 
+---
+
 ## Environment Setup
 
-Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
+Copy `.env.example` to `.env.local` and fill in your values:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Both values are in your Supabase project under **Settings → API**:
+### Frontend (`.env.local` + Vercel dashboard)
+
+These are exposed to the browser via `VITE_` prefix:
 
 ```
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_ANON_KEY=your-publishable-key-here
+VITE_SUPABASE_ANON_KEY=your-anon-publishable-key-here
 ```
 
-> Supabase renamed keys: `anon` → **publishable**, `service_role` → **secret**. Use the publishable key here.
+Both values are in your Supabase project under **Settings → API**.
+
+> Supabase renamed keys: `anon` → **publishable**, `service_role` → **secret**.
+
+### Server-side (Vercel dashboard only — never commit)
+
+These are used exclusively by `/api/*` serverless functions:
+
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Same URL as above, no `VITE_` prefix |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — bypasses RLS |
+| `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| `SIMPLER_GRANTS_API_KEY` | From [simpler.grants.gov/developer](https://simpler.grants.gov/developer) — federal grant discovery |
+| `CRON_SECRET` | Random secret securing cron endpoints — `openssl rand -hex 32` |
+| `APP_URL` | Public base URL, e.g. `https://wrightadventures.org` — used in email links |
+| `SMTP_HOST` | Outbound mail server hostname |
+| `SMTP_PORT` | Mail server port (`587` for TLS, `465` for SSL) |
+| `SMTP_USER` | SMTP account username |
+| `SMTP_PASS` | SMTP account password |
+| `SMTP_FROM` | From address for outgoing email |
+| `SUPABASE_WEBHOOK_SECRET` | Shared secret for validating Supabase Database Webhooks |
+
+---
 
 ## Database Setup
 
-Run the migration in the **Supabase SQL editor** (or via `supabase db push` with the CLI):
+Run migrations in order via the **Supabase SQL editor** or `supabase db push`:
 
 ```
-supabase/migrations/20260224000000_initial_schema.sql
+supabase/migrations/20260224000000_initial_schema.sql       # tables, RLS, seed data
+supabase/migrations/20260225000000_ai_grant_writing.sql     # AI chat history + token budget
+supabase/migrations/20260227000000_grant_discovery.sql      # federal grant discovery runs
+supabase/migrations/20260228000000_notifications.sql        # notification preferences
+supabase/migrations/20260228100000_board_meetings.sql       # board meeting minutes
+supabase/migrations/20260302000000_state_discovery_sources.sql  # state/local grant sources
+supabase/migrations/20260302000001_fix_goco_url.sql         # GOCO source URL fix
 ```
 
-This creates all tables, RLS policies, and seeds the two opportunity types (Grant, Partnership) and both default task templates.
+---
 
 ## Google OAuth Setup
 
@@ -69,6 +115,19 @@ This creates all tables, RLS policies, and seeds the two opportunity types (Gran
 
 Google credentials live in Supabase (server-side) — they do **not** go in `.env.local`.
 
+---
+
+## Supabase Webhook Setup
+
+Two webhooks must be configured manually in **Supabase Dashboard → Database → Webhooks**:
+
+| Event | Table | Endpoint | Header |
+|---|---|---|---|
+| INSERT on `tasks` | `tasks` | `POST /api/notifications/task-assigned` | `x-supabase-webhook-secret: <SUPABASE_WEBHOOK_SECRET>` |
+| INSERT on `opportunities` | `opportunities` | `POST /api/notifications/opportunity-discovered` | `x-supabase-webhook-secret: <SUPABASE_WEBHOOK_SECRET>` |
+
+---
+
 ## Development
 
 ```bash
@@ -80,85 +139,92 @@ npm run preview    # Preview production build locally
 
 The OMP admin portal runs at `localhost:5173/admin`. Unauthenticated visits redirect to `/login`.
 
+---
+
 ## Deployment
 
-Deployed at **https://wrightadventures.org/** (also: https://wright-adventures.vercel.app/)
+Deployed at **https://wrightadventures.org/** — pushes to `main` deploy automatically via Vercel.
 
-Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are configured in the Vercel project dashboard. Pushes to `main` deploy automatically.
+Vercel Cron jobs (configured in `vercel.json`):
+
+| Schedule | Endpoint | Purpose |
+|---|---|---|
+| Daily 7:00 AM UTC | `/api/discovery/sync` | Federal grant discovery (Simpler.Grants.gov) |
+| Mondays 8:00 AM UTC | `/api/discovery/state-sync` | State & local grant discovery |
+| Daily 9:00 AM UTC | `/api/notifications/deadlines` | Deadline reminder emails |
+
+---
 
 ## Project Structure
 
 ```
+api/
+├── ai/
+│   ├── chat.ts                   # Streaming AI chat (Vercel AI SDK)
+│   └── usage.ts                  # Token budget stats
+├── board-minutes/
+│   └── extract.ts                # Transcript → structured minutes (Claude)
+├── discovery/
+│   ├── sync.ts                   # Federal grant discovery cron
+│   ├── state-sync.ts             # State/local grant discovery cron
+│   ├── state-utils.ts            # Pure utility functions (hashing, dedup)
+│   ├── score.ts                  # Opportunity relevance scoring
+│   └── cancel.ts                 # Cancel in-progress discovery run
+├── notifications/
+│   ├── _mailer.ts                # Shared nodemailer helper
+│   ├── deadlines.ts              # Daily deadline reminder cron
+│   ├── task-assigned.ts          # Webhook: task assigned notification
+│   └── opportunity-discovered.ts # Webhook: new opportunity notification
+└── contact.ts                    # Contact form handler
+
 src/
 ├── components/
 │   ├── admin/
-│   │   ├── AdminLayout.tsx     # Navy sidebar + Outlet (OMP shell)
-│   │   └── ProtectedRoute.tsx  # Auth guard — redirects to /login
-│   ├── Navbar.tsx
-│   ├── Hero.tsx
-│   ├── ProofBar.tsx
-│   ├── Services.tsx
-│   ├── Approach.tsx            # Crossfading background between field photos
-│   ├── CaseStudies.tsx
-│   ├── Team.tsx                # Icon-based team cards
-│   ├── Values.tsx
-│   ├── Contact.tsx
-│   ├── Footer.tsx
-│   └── Logo.tsx
+│   │   ├── AdminLayout.tsx       # Navy sidebar + Outlet (OMP shell)
+│   │   └── ProtectedRoute.tsx    # Auth guard — redirects to /login
+│   └── [marketing components]
 ├── contexts/
-│   └── AuthContext.tsx         # Supabase auth session + profile
+│   └── AuthContext.tsx           # Supabase auth session + profile
 ├── data/
-│   └── siteData.ts             # ALL marketing site content lives here
-├── hooks/
-│   └── useFadeIn.ts
+│   └── siteData.ts               # ALL marketing site content lives here
 ├── lib/
-│   ├── supabase.ts             # Supabase client singleton
-│   └── types.ts                # TypeScript types matching DB schema
+│   ├── supabase.ts               # Supabase client singleton
+│   ├── types.ts                  # TypeScript types matching DB schema
+│   └── boardMinutes/
+│       ├── extractionPrompt.ts   # Claude prompt for minutes extraction
+│       └── exportDocx.ts         # DOCX export helper
 ├── pages/
 │   ├── admin/
-│   │   ├── Dashboard.tsx       # Metrics + upcoming deadlines + my tasks
-│   │   ├── Opportunities.tsx   # Filterable table (All / Grants / Partnerships)
-│   │   ├── OpportunityDetail.tsx # Detail view with type-specific fields
-│   │   └── MyTasks.tsx         # Personal task list with one-click complete
+│   │   ├── Dashboard.tsx         # Metrics + upcoming deadlines + my tasks
+│   │   ├── Opportunities.tsx     # Filterable table (All / Grants / Partnerships)
+│   │   ├── OpportunityDetail.tsx # Detail view with AI Draft Assistant tab
+│   │   ├── MyTasks.tsx           # Personal task list
+│   │   ├── BoardMeetings.tsx     # Board minutes list
+│   │   ├── BoardMeetingNew.tsx   # Upload transcript + extract
+│   │   ├── BoardMeetingDetail.tsx # Review / edit / approve / export
+│   │   └── Settings.tsx          # Notification prefs, discovery sources
 │   ├── Home.tsx
-│   └── Login.tsx               # Email/password + Google OAuth
-├── App.tsx                     # PublicLayout + /login + /admin/* routes
-├── main.tsx                    # QueryClient + AuthProvider wrappers
+│   └── Login.tsx                 # Email/password + Google OAuth
+├── App.tsx                       # Routes
+├── main.tsx                      # QueryClient + AuthProvider
 └── index.css
 
 supabase/
-└── migrations/
-    └── 20260224000000_initial_schema.sql  # Full schema, RLS, seed data
+└── migrations/                   # Run in filename order (see Database Setup above)
+
+docs/
+├── ADR-001-ai-grant-writing.md
+├── ADR-002-grant-discovery.md
+├── ADR-003-email-notifications.md
+├── ADR-004-board-meeting-minutes.md
+└── ADR-005-state-local-grant-discovery.md
+
+scripts/
+└── state-discovery-test.ts       # Dry-run test: npx tsx scripts/state-discovery-test.ts
 ```
+
+---
 
 ## Customization
 
-All copy, stats, services, team bios, and values live in `src/data/siteData.ts`. Edit that one file to update any text without touching components.
-
-Contact form currently opens mailto:. To add a backend, update `handleSubmit` in `Contact.tsx` to POST to Formspree, Netlify Forms, or a custom API.
-
-## Next Steps
-
-### OMP — Immediate (unblock login)
-- [ ] Set up Google OAuth in Supabase (Authentication → Providers → Google)
-- [ ] Create first user account in Supabase (Authentication → Users → Invite user)
-- [ ] Update your profile row in the `profiles` table: set `full_name` and `role = 'admin'`
-
-### OMP — Sprint 1 (core features)
-- [ ] Opportunity creation form (`/admin/opportunities/new`) with type-specific fields
-- [ ] Status pipeline transitions with validation and activity log entries
-- [ ] Auto-generated task lists from default templates on status change
-- [ ] Task editing (reassign, reschedule, change status)
-- [ ] Document upload to Supabase Storage per opportunity
-
-### OMP — Sprint 2 (collaboration)
-- [ ] Pipeline (Kanban) view with drag-and-drop status updates
-- [ ] Email deadline reminders via Supabase Edge Functions + SendGrid
-- [ ] CSV import for bulk opportunity ingestion
-- [ ] User management page (invite team, set roles)
-
-### Marketing Site
-- [ ] Wire contact form to backend service (Formspree or Supabase Edge Function)
-- [ ] Set up analytics (Plausible or GA4)
-- [ ] Create OG image and favicon from logo mark
-- [ ] Add blog / Field Notes section for SEO
+All copy, stats, services, team bios, and values live in `src/data/siteData.ts`. Edit that one file to update any marketing text without touching components.
