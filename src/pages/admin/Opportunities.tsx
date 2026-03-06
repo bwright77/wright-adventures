@@ -22,17 +22,15 @@ const GRANT_COLS = [
 ]
 const PARTNERSHIP_COLS = [
   { id: 'partnership_prospecting', label: 'Prospecting' },
-  { id: 'partnership_outreach',    label: 'Outreach'    },
+  { id: 'partnership_qualifying',  label: 'Qualifying'  },
+  { id: 'partnership_discovery',   label: 'Discovery'   },
+  { id: 'partnership_proposal',    label: 'Proposal'    },
   { id: 'partnership_negotiating', label: 'Negotiating' },
-  { id: 'partnership_formalizing', label: 'Formalizing' },
-  { id: 'partnership_active',      label: 'Active'      },
-  { id: 'partnership_on_hold',     label: 'On Hold'     },
-  { id: 'partnership_completed',   label: 'Completed'   },
 ]
 
 // Terminal statuses excluded from "active" pseudo-filter
 const INACTIVE_GRANT_STATUSES        = ['grant_archived', 'grant_declined', 'grant_withdrawn']
-const INACTIVE_PARTNERSHIP_STATUSES  = ['partnership_archived', 'partnership_declined', 'partnership_completed']
+const INACTIVE_PARTNERSHIP_STATUSES  = ['partnership_closed_won', 'partnership_closed_lost']
 
 // Full status lists (including terminal) for the filter dropdown
 const GRANT_STATUSES = [
@@ -42,8 +40,8 @@ const GRANT_STATUSES = [
 ]
 const PARTNERSHIP_STATUSES = [
   ...PARTNERSHIP_COLS,
-  { id: 'partnership_declined', label: 'Declined' },
-  { id: 'partnership_archived', label: 'Archived' },
+  { id: 'partnership_closed_won',  label: 'Closed-Won'  },
+  { id: 'partnership_closed_lost', label: 'Closed-Lost' },
 ]
 
 const STATUS_LABELS: Record<string, string> = Object.fromEntries(
@@ -55,9 +53,8 @@ const STATUS_COLORS: Record<string, string> = {
   grant_submitted:        'bg-river-50 text-river',
   grant_declined:         'bg-red-50 text-red-600',
   grant_withdrawn:        'bg-gray-100 text-gray-500',
-  partnership_active:     'bg-trail-50 text-trail',
-  partnership_completed:  'bg-gray-100 text-gray-500',
-  partnership_declined:   'bg-red-50 text-red-600',
+  partnership_closed_won:  'bg-trail-50 text-trail',
+  partnership_closed_lost: 'bg-red-50 text-red-600',
 }
 
 // ── Score badge (ADR-002: green 7–10, amber 5–6, red 1–4) ────
