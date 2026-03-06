@@ -307,6 +307,31 @@ export interface ScrapeResult {
   raw_excerpt: string
 }
 
+// ── AI Solution Advisor (ADR-007) ────────────────────────────
+
+export interface AdvisorRecommendedService {
+  service: string
+  rationale: string
+  priority: 'primary' | 'secondary'
+}
+
+export interface AdvisorRecommendation {
+  fit_score: 1 | 2 | 3 | 4 | 5 | null
+  fit_rationale: string
+  recommended_services: AdvisorRecommendedService[]
+  talking_points: string[]
+  open_questions: string[]
+  watch_outs: string[]
+  generated_at: string
+}
+
+export interface AdvisorResponse {
+  recommendation?: AdvisorRecommendation
+  cached: boolean
+  error?: string
+  message?: string
+}
+
 // ── Board Meetings (ADR-004) ──────────────────────────────────
 
 export type BoardMeetingStatus = 'draft' | 'under_review' | 'approved'

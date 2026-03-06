@@ -12,6 +12,7 @@ import { TaskPanel } from '../../components/admin/TaskPanel'
 import { GrantChatPanel } from '../../components/admin/GrantChatPanel'
 import { ContactsPanel } from '../../components/admin/ContactsPanel'
 import { InteractionsLog } from '../../components/admin/InteractionsLog'
+import { PartnershipAdvisorPanel } from '../../components/admin/PartnershipAdvisorPanel'
 import type {
   Opportunity, ActivityEntry, Profile,
   PartnershipDetails, PartnershipStageTask,
@@ -359,7 +360,7 @@ export function OpportunityDetail() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  type TabId = 'details' | 'contacts' | 'interactions' | 'ai'
+  type TabId = 'details' | 'contacts' | 'interactions' | 'advisor' | 'ai'
   const [activeTab, setActiveTab] = useState<TabId>('details')
 
   const { data: opportunity, isLoading } = useQuery<Opportunity>({
@@ -774,6 +775,20 @@ export function OpportunityDetail() {
           </button>
         )}
 
+        {isPartnership && (
+          <button
+            onClick={() => setActiveTab('advisor')}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
+              activeTab === 'advisor'
+                ? 'border-trail text-trail'
+                : 'border-transparent text-gray-500 hover:text-navy'
+            }`}
+          >
+            <Sparkles size={13} />
+            AI Advisor
+          </button>
+        )}
+
         {isGrant && (
           <button
             onClick={() => setActiveTab('ai')}
@@ -816,6 +831,12 @@ export function OpportunityDetail() {
       {activeTab === 'interactions' && isPartnership && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <InteractionsLog opportunityId={id!} />
+        </div>
+      )}
+
+      {activeTab === 'advisor' && isPartnership && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <PartnershipAdvisorPanel opportunityId={id!} />
         </div>
       )}
 
