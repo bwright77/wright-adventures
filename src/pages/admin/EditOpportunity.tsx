@@ -8,7 +8,9 @@ import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Opportunity, GrantType, PartnershipType } from '../../lib/types'
+import { ScrapePanel } from '../../components/admin/ScrapePanel'
+import type { ScrapedFields } from '../../components/admin/ScrapePanel'
+import type { Opportunity, GrantType, PartnershipType, PartnershipDetails, CompanySize } from '../../lib/types'
 
 // ── Schemas (same shape as NewOpportunity) ────────────────────
 const baseSchema = z.object({
@@ -37,6 +39,12 @@ const partnershipSchema = baseSchema.extend({
   partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other']).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
+  // partnership_details fields
+  org_size:         z.enum(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']).optional(),
+  pain_points:      z.string().optional(),
+  tech_stack_notes: z.string().optional(),
+  next_action:      z.string().optional(),
+  next_action_date: z.string().optional(),
 })
 
 type AnyOppForm = z.infer<typeof grantSchema> | z.infer<typeof partnershipSchema>
@@ -99,15 +107,44 @@ export function EditOpportunity() {
 
   const isGrant = opp?.type_id === 'grant'
 
+  const { data: partnershipDetails } = useQuery<PartnershipDetails | null>({
+    queryKey: ['partnership-details', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('partnership_details')
+        .select('*')
+        .eq('opportunity_id', id!)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
+    enabled: !!id && !isGrant,
+  })
+
   const schema = isGrant ? grantSchema : partnershipSchema
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<AnyOppForm>({
       resolver: zodResolver(schema),
-      values: opp ? buildDefaults(opp) : undefined,
+      values: opp ? buildDefaults(opp, partnershipDetails ?? null) : undefined,
     })
 
-  function buildDefaults(o: Opportunity) {
+  const sourceUrl = watch('source_url') ?? ''
+
+  function handleScrapeApply(fields: ScrapedFields) {
+    const sv = setValue as (key: string, value: unknown) => void
+    if (fields.name)             sv('name', fields.name)
+    if (fields.description)      sv('description', fields.description)
+    if (fields.partner_org)      sv('partner_org', fields.partner_org)
+    if (fields.primary_contact)  sv('primary_contact', fields.primary_contact)
+    if (fields.contact_email)    sv('contact_email', fields.contact_email)
+    if (fields.estimated_value)  sv('estimated_value', fields.estimated_value)
+    if (fields.tags)             sv('tags', fields.tags)
+    if (fields.pain_points)      sv('pain_points', fields.pain_points)
+    if (fields.tech_stack_notes) sv('tech_stack_notes', fields.tech_stack_notes)
+  }
+
+  function buildDefaults(o: Opportunity, pd: PartnershipDetails | null = null) {
     const base = {
       name:             o.name,
       description:      o.description ?? '',
@@ -136,6 +173,11 @@ export function EditOpportunity() {
       partnership_type: o.partnership_type ?? undefined,
       estimated_value:  o.estimated_value != null ? String(o.estimated_value) : '',
       alignment_notes:  o.alignment_notes ?? '',
+      org_size:         pd?.org_size ?? undefined,
+      pain_points:      pd?.pain_points ?? '',
+      tech_stack_notes: pd?.tech_stack_notes ?? '',
+      next_action:      pd?.next_action ?? '',
+      next_action_date: toDateInput(pd?.next_action_date),
     }
   }
 
@@ -180,6 +222,23 @@ export function EditOpportunity() {
       .eq('id', id!)
 
     if (error) { setSubmitError(error.message); return }
+
+    // Save partnership_details fields
+    if (!isGrant) {
+      const v = values as z.infer<typeof partnershipSchema>
+      const detailsPayload: Record<string, unknown> = {
+        org_size:         v.org_size || null,
+        pain_points:      v.pain_points || null,
+        tech_stack_notes: v.tech_stack_notes || null,
+        next_action:      v.next_action || null,
+        next_action_date: v.next_action_date ? new Date(v.next_action_date).toISOString() : null,
+        updated_at:       new Date().toISOString(),
+      }
+      await supabase
+        .from('partnership_details')
+        .update(detailsPayload)
+        .eq('opportunity_id', id!)
+    }
 
     await supabase.from('activity_log').insert({
       opportunity_id: id,
@@ -246,6 +305,9 @@ export function EditOpportunity() {
                 <Input {...register('source_url')} type="url" placeholder="https://…" error={e.source_url?.message} />
               </div>
             </div>
+            {!isGrant && (
+              <ScrapePanel sourceUrl={sourceUrl} onApply={handleScrapeApply} />
+            )}
             <div>
               <Label>Tags</Label>
               <Input {...register('tags')} placeholder="watershed, youth, federal (comma-separated)" />
@@ -305,7 +367,24 @@ export function EditOpportunity() {
                 <div><Label>Contact phone</Label><Input {...register('contact_phone' as never)} placeholder="(555) 000-0000" /></div>
                 <div><Label>Estimated value ($)</Label><Input {...register('estimated_value' as never)} type="number" min="0" placeholder="0" /></div>
               </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Organization size</Label>
+                  <Select {...register('org_size' as never)}>
+                    <option value="">Select…</option>
+                    {(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'] as CompanySize[]).map(s => (
+                      <option key={s} value={s}>{s} employees</option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
               <div><Label>Alignment notes</Label><Textarea {...register('alignment_notes' as never)} placeholder="How this aligns with our mission…" /></div>
+              <div><Label>Key pain points</Label><Textarea {...register('pain_points' as never)} placeholder="Core problems this org is trying to solve…" /></div>
+              <div><Label>Technology systems</Label><Input {...register('tech_stack_notes' as never)} placeholder="Salesforce, Google Workspace, …" /></div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div><Label>Next action</Label><Input {...register('next_action' as never)} placeholder="Send intro email, schedule call…" /></div>
+                <div><Label>Next action date</Label><Input {...register('next_action_date' as never)} type="date" /></div>
+              </div>
             </div>
           )}
         </div>

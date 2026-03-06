@@ -220,6 +220,93 @@ export interface NotificationLog {
   email_to: string
 }
 
+// ── Partnership CRM (ADR-006) ─────────────────────────────────
+
+export type CompanySize = '1-10' | '11-50' | '51-200' | '201-500' | '501-1000' | '1000+'
+export type DealConfidence = 'low' | 'medium' | 'high'
+export type QualificationStatus = 'unqualified' | 'partially_qualified' | 'qualified'
+export type InteractionType =
+  | 'call' | 'meeting' | 'email' | 'message' | 'demo'
+  | 'proposal_sent' | 'contract_sent' | 'note' | 'other'
+export type InteractionDirection = 'inbound' | 'outbound' | 'internal'
+
+export interface PartnershipDetails {
+  opportunity_id: string
+  qualification_status: QualificationStatus
+  qualification_notes: string | null
+  pain_points: string | null
+  next_action: string | null
+  next_action_date: string | null
+  confidence: DealConfidence | null
+  expected_close_date: string | null
+  lost_reason: string | null
+  org_size: CompanySize | null
+  tech_stack_notes: string | null
+  ai_solution_summary: string | null
+  ai_solution_updated_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PartnershipContact {
+  id: string
+  opportunity_id: string
+  full_name: string
+  title: string | null
+  email: string | null
+  phone: string | null
+  linkedin_url: string | null
+  is_primary: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PartnershipInteraction {
+  id: string
+  opportunity_id: string
+  contact_id: string | null
+  interaction_type: InteractionType
+  direction: InteractionDirection
+  subject: string | null
+  notes: string
+  occurred_at: string
+  logged_by: string | null
+  created_at: string
+  updated_at: string
+  // Joined (optional)
+  contact?: Pick<PartnershipContact, 'id' | 'full_name'>
+  logger?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+}
+
+export interface PartnershipStageTask {
+  id: string
+  stage_id: string
+  title: string
+  assignee_role: 'owner' | 'contributor' | 'leadership'
+  days_after_entry: number
+  sort_order: number
+  created_at: string
+}
+
+export interface ScrapeResult {
+  extracted: {
+    organization_name?: string
+    primary_contact_name?: string
+    primary_contact_title?: string
+    contact_email?: string
+    project_description?: string
+    estimated_budget?: number
+    timeline_notes?: string
+    technology_systems_mentioned?: string
+    key_pain_points?: string
+    partnership_type_hint?: string
+    tags?: string[]
+  }
+  confidence: 'high' | 'medium' | 'low'
+  raw_excerpt: string
+}
+
 // ── Board Meetings (ADR-004) ──────────────────────────────────
 
 export type BoardMeetingStatus = 'draft' | 'under_review' | 'approved'

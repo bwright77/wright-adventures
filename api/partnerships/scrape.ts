@@ -1,0 +1,147 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { createClient } from '@supabase/supabase-js'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { generateText } from 'ai'
+
+// ── Clients ───────────────────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+// ── HTML → plain text ─────────────────────────────────────────
+function extractPageText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 20000)
+}
+
+// ── Extraction prompt ─────────────────────────────────────────
+const SYSTEM = `You are a structured data extraction assistant. Given web page text for a
+nonprofit RFP, consulting engagement, or partnership opportunity, extract key fields and
+return them as a JSON object. Only include fields you are confident about — omit fields
+where the information is missing or ambiguous. Never invent data.`
+
+function buildPrompt(pageText: string): string {
+  return `Extract the following fields from this web page text. Return a single JSON object
+with only the fields you can confidently identify. Omit any field where the information
+is absent or unclear.
+
+Fields to extract:
+- organization_name: string — the name of the organization issuing the RFP or seeking a partner
+- primary_contact_name: string — the name of the main contact person
+- primary_contact_title: string — their title or role
+- contact_email: string — their email address
+- project_description: string — a clear description of the project, problem, or engagement scope (2-4 sentences)
+- estimated_budget: number — the project budget or contract value in USD (number only, no $)
+- timeline_notes: string — key dates, deadlines, or project timeline information
+- technology_systems_mentioned: string — any technology platforms, software, or systems mentioned (comma-separated)
+- key_pain_points: string — the core problems or challenges the organization is trying to solve
+- partnership_type_hint: string — one of: rfp, mou, joint_program, coalition, referral, in_kind, other
+- tags: array of strings — 3-6 short topic tags relevant to this opportunity (e.g. "technology-consulting", "youth-development")
+
+Return ONLY a valid JSON object. No markdown, no explanation, no code blocks.
+
+PAGE TEXT:
+${pageText}`
+}
+
+// ── Main handler ──────────────────────────────────────────────
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // ── Auth ────────────────────────────────────────────────────
+  const jwt = req.headers.authorization?.replace('Bearer ', '')
+  if (!jwt) return res.status(401).json({ error: 'Unauthorized' })
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(jwt)
+  if (authError || !user) return res.status(401).json({ error: 'Unauthorized' })
+
+  // ── Validate request body ───────────────────────────────────
+  const { url } = req.body as { url?: string }
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'url is required' })
+  }
+
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(url)
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return res.status(400).json({ error: 'URL must use http or https' })
+    }
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' })
+  }
+
+  // ── Fetch page ──────────────────────────────────────────────
+  let html: string
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 12000)
+    const response = await fetch(parsedUrl.toString(), {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; WrightAdventuresBot/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+    })
+    clearTimeout(timeout)
+    if (!response.ok) {
+      return res.status(422).json({ error: `Page returned ${response.status}` })
+    }
+    html = await response.text()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Fetch failed'
+    return res.status(422).json({ error: `Could not fetch URL: ${msg}` })
+  }
+
+  const pageText = extractPageText(html)
+  const rawExcerpt = pageText.slice(0, 500)
+
+  // ── Haiku extraction ────────────────────────────────────────
+  let extracted: Record<string, unknown> = {}
+  let confidence: 'high' | 'medium' | 'low' = 'low'
+
+  try {
+    const { text } = await generateText({
+      model: anthropic('claude-haiku-4-5-20251001'),
+      system: SYSTEM,
+      messages: [{ role: 'user', content: buildPrompt(pageText) }],
+      maxTokens: 1024,
+    })
+
+    try {
+      extracted = JSON.parse(text.trim())
+    } catch {
+      // Haiku returned something unparseable — return empty extraction
+      extracted = {}
+    }
+
+    // Confidence based on how many fields were extracted
+    const fieldCount = Object.keys(extracted).length
+    confidence = fieldCount >= 6 ? 'high' : fieldCount >= 3 ? 'medium' : 'low'
+  } catch (err) {
+    // AI call failed — still return empty extraction rather than 500
+    console.error('Haiku extraction error:', err)
+    extracted = {}
+  }
+
+  return res.status(200).json({
+    extracted,
+    confidence,
+    raw_excerpt: rawExcerpt,
+  })
+}
