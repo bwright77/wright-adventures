@@ -244,6 +244,7 @@ export interface PartnershipDetails {
   tech_stack_notes: string | null
   ai_solution_summary: string | null
   ai_solution_updated_at: string | null
+  logo_url: string | null
   created_at: string
   updated_at: string
 }
@@ -302,6 +303,7 @@ export interface ScrapeResult {
     key_pain_points?: string
     partnership_type_hint?: string
     tags?: string[]
+    logo_url?: string
   }
   confidence: 'high' | 'medium' | 'low'
   raw_excerpt: string

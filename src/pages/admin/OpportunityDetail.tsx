@@ -575,7 +575,16 @@ export function OpportunityDetail() {
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
+        <div className="flex items-start gap-4">
+          {isPartnership && partnershipDetails?.logo_url && (
+            <img
+              src={partnershipDetails.logo_url}
+              alt=""
+              className="w-12 h-12 rounded-lg object-contain bg-white border border-gray-200 p-1 shrink-0 mt-1"
+              onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
+          <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${
               isGrant ? 'bg-river-50 text-river' : 'bg-trail-50 text-trail'
@@ -596,6 +605,7 @@ export function OpportunityDetail() {
           </div>
           <h1 className="text-2xl font-bold text-navy">{opportunity.name}</h1>
           {orgOrFunder && <p className="text-sm text-gray-400 mt-1">{orgOrFunder}</p>}
+          </div>
         </div>
         <Link
           to={`/admin/opportunities/${id}/edit`}

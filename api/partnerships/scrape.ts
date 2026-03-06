@@ -11,6 +11,43 @@ const supabase = createClient(
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+// ── Logo extraction ───────────────────────────────────────────
+function extractLogoUrl(html: string, baseUrl: string): string | null {
+  const base = new URL(baseUrl)
+  const origin = base.origin
+
+  function resolve(href: string): string {
+    try {
+      return new URL(href, origin).href
+    } catch {
+      return href
+    }
+  }
+
+  // 1. og:image
+  const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+  if (ogImage?.[1]) return resolve(ogImage[1])
+
+  // 2. apple-touch-icon
+  const touchIcon = html.match(/<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i)
+    ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']apple-touch-icon["']/i)
+  if (touchIcon?.[1]) return resolve(touchIcon[1])
+
+  // 3. PNG icon
+  const pngIcon = html.match(/<link[^>]+rel=["']icon["'][^>]+type=["']image\/png["'][^>]+href=["']([^"']+)["']/i)
+    ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+type=["']image\/png["'][^>]+rel=["']icon["']/i)
+  if (pngIcon?.[1]) return resolve(pngIcon[1])
+
+  // 4. shortcut icon
+  const shortcutIcon = html.match(/<link[^>]+rel=["']shortcut icon["'][^>]+href=["']([^"']+)["']/i)
+    ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']shortcut icon["']/i)
+  if (shortcutIcon?.[1]) return resolve(shortcutIcon[1])
+
+  // 5. Google Favicon fallback
+  return `https://www.google.com/s2/favicons?domain=${base.hostname}&sz=64`
+}
+
 // ── HTML → plain text ─────────────────────────────────────────
 function extractPageText(html: string): string {
   return html
@@ -110,6 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const pageText = extractPageText(html)
   const rawExcerpt = pageText.slice(0, 500)
+  const logoUrl = extractLogoUrl(html, url)
 
   // ── Haiku extraction ────────────────────────────────────────
   let extracted: Record<string, unknown> = {}
@@ -138,6 +176,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Haiku extraction error:', err)
     extracted = {}
   }
+
+  if (logoUrl) extracted.logo_url = logoUrl
 
   return res.status(200).json({
     extracted,

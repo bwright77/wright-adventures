@@ -7,6 +7,10 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Opportunity, OpportunityTypeId, ScoreDetail } from '../../lib/types'
 
+type OpportunityWithLogo = Opportunity & {
+  partnership_details?: { logo_url: string | null } | null
+}
+
 type TabFilter = 'all' | OpportunityTypeId | 'discovered'
 type ViewMode  = 'table' | 'kanban'
 
@@ -383,15 +387,15 @@ export function Opportunities() {
     }
   }
 
-  const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
+  const { data: opportunities = [], isLoading } = useQuery<OpportunityWithLogo[]>({
     queryKey: ['opportunities'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*')
+        .select('*, partnership_details(logo_url)')
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data ?? []
+      return (data ?? []) as OpportunityWithLogo[]
     },
   })
 
@@ -670,15 +674,39 @@ export function Opportunities() {
               {sorted.map(o => (
                 <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
-                    <Link
-                      to={`/admin/opportunities/${o.id}`}
-                      className="text-sm font-medium text-navy hover:text-river transition-colors"
-                    >
-                      {o.name}
-                    </Link>
-                    {(o.funder ?? o.partner_org) && (
-                      <p className="text-xs text-gray-400 mt-0.5">{o.funder ?? o.partner_org}</p>
-                    )}
+                    <div className="flex items-center gap-2.5">
+                      {o.type_id === 'partnership' && (() => {
+                        const logo = o.partnership_details?.logo_url
+                        const initials = (o.partner_org ?? o.name).charAt(0).toUpperCase()
+                        return logo ? (
+                          <img
+                            src={logo}
+                            alt=""
+                            className="w-7 h-7 rounded object-contain bg-gray-50 border border-gray-100 shrink-0"
+                            onError={(ev) => {
+                              const img = ev.target as HTMLImageElement
+                              img.style.display = 'none'
+                              if (img.nextElementSibling) (img.nextElementSibling as HTMLElement).style.display = 'flex'
+                            }}
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-[11px] font-semibold text-gray-400">
+                            {initials}
+                          </div>
+                        )
+                      })()}
+                      <div>
+                        <Link
+                          to={`/admin/opportunities/${o.id}`}
+                          className="text-sm font-medium text-navy hover:text-river transition-colors"
+                        >
+                          {o.name}
+                        </Link>
+                        {(o.funder ?? o.partner_org) && (
+                          <p className="text-xs text-gray-400 mt-0.5">{o.funder ?? o.partner_org}</p>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-5 py-4 hidden sm:table-cell">
                     <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded capitalize ${

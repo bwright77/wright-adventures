@@ -45,6 +45,7 @@ const partnershipSchema = baseSchema.extend({
   tech_stack_notes: z.string().optional(),
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
+  logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
 })
 
 type AnyOppForm = z.infer<typeof grantSchema> | z.infer<typeof partnershipSchema>
@@ -130,6 +131,7 @@ export function EditOpportunity() {
     })
 
   const sourceUrl = watch('source_url') ?? ''
+  const logoUrl   = (watch as (k: string) => string | undefined)('logo_url') ?? ''
 
   function handleScrapeApply(fields: ScrapedFields) {
     const sv = setValue as (key: string, value: unknown) => void
@@ -142,6 +144,7 @@ export function EditOpportunity() {
     if (fields.tags)             sv('tags', fields.tags)
     if (fields.pain_points)      sv('pain_points', fields.pain_points)
     if (fields.tech_stack_notes) sv('tech_stack_notes', fields.tech_stack_notes)
+    if (fields.logo_url)         sv('logo_url', fields.logo_url)
   }
 
   function buildDefaults(o: Opportunity, pd: PartnershipDetails | null = null) {
@@ -178,6 +181,7 @@ export function EditOpportunity() {
       tech_stack_notes: pd?.tech_stack_notes ?? '',
       next_action:      pd?.next_action ?? '',
       next_action_date: toDateInput(pd?.next_action_date),
+      logo_url:         pd?.logo_url ?? '',
     }
   }
 
@@ -232,6 +236,7 @@ export function EditOpportunity() {
         tech_stack_notes: v.tech_stack_notes || null,
         next_action:      v.next_action || null,
         next_action_date: v.next_action_date ? new Date(v.next_action_date).toISOString() : null,
+        logo_url:         v.logo_url || null,
         updated_at:       new Date().toISOString(),
       }
       await supabase
@@ -381,6 +386,21 @@ export function EditOpportunity() {
               <div><Label>Alignment notes</Label><Textarea {...register('alignment_notes' as never)} placeholder="How this aligns with our mission…" /></div>
               <div><Label>Key pain points</Label><Textarea {...register('pain_points' as never)} placeholder="Core problems this org is trying to solve…" /></div>
               <div><Label>Technology systems</Label><Input {...register('tech_stack_notes' as never)} placeholder="Salesforce, Google Workspace, …" /></div>
+              <div>
+                <Label>Organization logo URL</Label>
+                <div className="flex items-center gap-2">
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt=""
+                      className="w-8 h-8 rounded object-contain bg-gray-50 border border-gray-200 shrink-0"
+                      onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  )}
+                  <Input {...register('logo_url' as never)} placeholder="https://example.org/logo.png" className="flex-1" />
+                </div>
+                {e.logo_url && <p className="text-xs text-red-500 mt-1">{e.logo_url.message}</p>}
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label>Next action</Label><Input {...register('next_action' as never)} placeholder="Send intro email, schedule call…" /></div>
                 <div><Label>Next action date</Label><Input {...register('next_action_date' as never)} type="date" /></div>

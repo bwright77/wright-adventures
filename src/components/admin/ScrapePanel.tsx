@@ -14,6 +14,7 @@ export interface ScrapedFields {
   tags?: string
   pain_points?: string
   tech_stack_notes?: string
+  logo_url?: string
 }
 
 // Labels shown in the review panel
@@ -104,6 +105,7 @@ export function ScrapePanel({ sourceUrl, onApply }: ScrapePanelProps) {
       pain_points:      e.key_pain_points || undefined,
       tech_stack_notes: e.technology_systems_mentioned || undefined,
       tags:             e.tags?.join(', ') || undefined,
+      logo_url:         e.logo_url || undefined,
     }
   }
 
@@ -174,6 +176,14 @@ export function ScrapePanel({ sourceUrl, onApply }: ScrapePanelProps) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center gap-2">
+              {result.extracted.logo_url && (
+                <img
+                  src={result.extracted.logo_url}
+                  alt=""
+                  className="w-6 h-6 rounded object-contain bg-white border border-gray-200 shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
               <span className="text-xs font-semibold text-gray-700">Extracted fields</span>
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${CONFIDENCE_STYLES[result.confidence]}`}>
                 {result.confidence} confidence

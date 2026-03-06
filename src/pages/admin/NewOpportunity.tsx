@@ -48,6 +48,7 @@ const partnershipSchema = baseSchema.extend({
   tech_stack_notes: z.string().optional(),
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
+  logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
 })
 
 const schema = z.discriminatedUnion('type_id', [grantSchema, partnershipSchema])
@@ -123,6 +124,7 @@ export function NewOpportunity() {
 
   const typeId   = watch('type_id') as OpportunityTypeId
   const sourceUrl = watch('source_url') ?? ''
+  const logoUrl   = (watch as (k: string) => string | undefined)('logo_url') ?? ''
 
   function handleScrapeApply(fields: ScrapedFields) {
     const sv = setValue as (key: string, value: unknown) => void
@@ -135,6 +137,7 @@ export function NewOpportunity() {
     if (fields.tags)             sv('tags', fields.tags)
     if (fields.pain_points)      sv('pain_points', fields.pain_points)
     if (fields.tech_stack_notes) sv('tech_stack_notes', fields.tech_stack_notes)
+    if (fields.logo_url)         sv('logo_url', fields.logo_url)
   }
 
   async function onSubmit(values: FormValues) {
@@ -193,6 +196,7 @@ export function NewOpportunity() {
       if (values.tech_stack_notes) detailsPayload.tech_stack_notes = values.tech_stack_notes
       if (values.next_action)      detailsPayload.next_action      = values.next_action
       if (values.next_action_date) detailsPayload.next_action_date = new Date(values.next_action_date).toISOString()
+      if (values.logo_url)         detailsPayload.logo_url         = values.logo_url
       if (Object.keys(detailsPayload).length > 0) {
         await supabase
           .from('partnership_details')
@@ -382,6 +386,23 @@ export function NewOpportunity() {
               <div>
                 <Label>Technology systems</Label>
                 <Input {...register('tech_stack_notes' as never)} placeholder="Salesforce, Google Workspace, …" />
+              </div>
+              <div>
+                <Label>Organization logo URL</Label>
+                <div className="flex items-center gap-2">
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt=""
+                      className="w-8 h-8 rounded object-contain bg-gray-50 border border-gray-200 shrink-0"
+                      onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  )}
+                  <Input {...register('logo_url' as never)} placeholder="https://example.org/logo.png" className="flex-1" />
+                </div>
+                {e.logo_url && (
+                  <p className="text-xs text-red-500 mt-1">{e.logo_url.message}</p>
+                )}
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
