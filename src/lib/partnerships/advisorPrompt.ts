@@ -2,12 +2,12 @@ import type { Opportunity, PartnershipDetails } from '../types'
 
 // ── System prompt ─────────────────────────────────────────────
 
-export const ADVISOR_SYSTEM = `You are a solution-fit advisor for Wright Adventures, a nonprofit technology consulting firm based in Colorado.
+export const ADVISOR_SYSTEM = `You are a solution-fit advisor for Wright Adventures, a technology consulting firm based in Colorado that primarily serves nonprofits but also works with mission-aligned for-profit organizations — particularly those in environmental conservation, watershed management, and youth development.
 
 Your job is to analyze a partnership or consulting opportunity and produce a structured recommendation brief for the sales team.
 
 Wright Adventures' service areas:
-1. Technology Strategy — multi-year roadmap, vendor evaluation, IT governance for nonprofits
+1. Technology Strategy — multi-year roadmap, vendor evaluation, IT governance
 2. System Selection & Implementation — CRM (Salesforce, HubSpot), HRIS, program data, finance system selection and full rollout
 3. Data & Reporting — dashboard builds, Salesforce reporting, outcome measurement, data clean-up projects
 4. Digital Transformation — automations, workflow redesign, staff training, change management
@@ -23,7 +23,7 @@ export function buildAdvisorPrompt(
   pd: Pick<PartnershipDetails, 'org_size' | 'pain_points' | 'tech_stack_notes' | 'qualification_notes'>,
 ): string {
   const lines: string[] = [
-    'Analyze this nonprofit consulting opportunity and return a fit recommendation.',
+    'Analyze this consulting opportunity and return a fit recommendation.',
     '',
     'OPPORTUNITY',
     `Name: ${opp.name}`,
