@@ -24,7 +24,7 @@ const baseSchema = z.object({
 
 const grantSchema = baseSchema.extend({
   funder:            z.string().optional(),
-  grant_type:        z.enum(['federal', 'state', 'foundation', 'corporate', 'other']).optional(),
+  grant_type:        z.enum(['federal', 'state', 'foundation', 'corporate', 'other']).or(z.literal('')).optional(),
   amount_max:        z.string().optional(),
   amount_requested:  z.string().optional(),
   loi_deadline:      z.string().optional(),
@@ -37,11 +37,11 @@ const partnershipSchema = baseSchema.extend({
   primary_contact:  z.string().optional(),
   contact_email:    z.string().email('Enter a valid email').or(z.literal('')).optional(),
   contact_phone:    z.string().optional(),
-  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other']).optional(),
+  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other']).or(z.literal('')).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
   // partnership_details fields
-  org_size:         z.enum(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']).optional(),
+  org_size:         z.enum(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']).or(z.literal('')).optional(),
   pain_points:      z.string().optional(),
   tech_stack_notes: z.string().optional(),
   next_action:      z.string().optional(),
