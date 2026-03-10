@@ -7,6 +7,7 @@ import { Plus, Star, Pencil, Trash2, Linkedin, Mail, Phone, X, Check } from 'luc
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { PartnershipContact } from '../../lib/types'
+import { normalizePhone, toTelHref } from '../../lib/phone'
 
 // ── Schema ────────────────────────────────────────────────────
 const contactSchema = z.object({
@@ -98,7 +99,7 @@ function ContactCard({
         )}
         {contact.phone && (
           <a
-            href={`tel:${contact.phone}`}
+            href={toTelHref(contact.phone)}
             className="flex items-center gap-1 text-xs text-gray-500 hover:text-river transition-colors"
           >
             <Phone size={11} />
@@ -150,7 +151,7 @@ function ContactFormPanel({
         full_name:    data.full_name,
         title:        data.title || null,
         email:        data.email || null,
-        phone:        data.phone || null,
+        phone:        data.phone ? normalizePhone(data.phone) || null : null,
         linkedin_url: data.linkedin_url || null,
         notes:        data.notes || null,
       }

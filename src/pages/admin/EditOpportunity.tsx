@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
 import type { Opportunity, GrantType, PartnershipType, PartnershipDetails, CompanySize } from '../../lib/types'
+import { normalizePhone } from '../../lib/phone'
 
 // ── Schemas (same shape as NewOpportunity) ────────────────────
 const baseSchema = z.object({
@@ -215,7 +216,7 @@ export function EditOpportunity() {
       payload.partner_org      = v.partner_org || null
       payload.primary_contact  = v.primary_contact || null
       payload.contact_email    = v.contact_email || null
-      payload.contact_phone    = v.contact_phone || null
+      payload.contact_phone    = v.contact_phone ? normalizePhone(v.contact_phone) || null : null
       payload.partnership_type = v.partnership_type || null
       payload.estimated_value  = v.estimated_value ? Number(v.estimated_value) : null
       payload.alignment_notes  = v.alignment_notes || null

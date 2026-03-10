@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Wand2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import type { ScrapeResult } from '../../lib/types'
+import { normalizePhone } from '../../lib/phone'
 
 // Fields the caller can receive and apply to the form
 export interface ScrapedFields {
@@ -104,7 +105,7 @@ export function ScrapePanel({ sourceUrl, onApply }: ScrapePanelProps) {
         ? `${e.primary_contact_name}${e.primary_contact_title ? ` (${e.primary_contact_title})` : ''}`
         : undefined,
       contact_email:    e.contact_email || undefined,
-      contact_phone:    e.contact_phone || undefined,
+      contact_phone:    e.contact_phone ? normalizePhone(e.contact_phone) || undefined : undefined,
       estimated_value:  e.estimated_budget != null ? String(e.estimated_budget) : undefined,
       pain_points:      e.key_pain_points || undefined,
       tech_stack_notes: e.technology_systems_mentioned || undefined,

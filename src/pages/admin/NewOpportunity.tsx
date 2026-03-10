@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
 import type { OpportunityTypeId, GrantType, PartnershipType, CompanySize } from '../../lib/types'
+import { normalizePhone } from '../../lib/phone'
 
 // ── Shared fields ─────────────────────────────────────────────
 const baseSchema = z.object({
@@ -172,7 +173,7 @@ export function NewOpportunity() {
       payload.partner_org      = values.partner_org || null
       payload.primary_contact  = values.primary_contact || null
       payload.contact_email    = values.contact_email || null
-      payload.contact_phone    = values.contact_phone || null
+      payload.contact_phone    = values.contact_phone ? normalizePhone(values.contact_phone) || null : null
       payload.partnership_type = values.partnership_type || null
       payload.estimated_value  = values.estimated_value ? Number(values.estimated_value) : null
       payload.alignment_notes  = values.alignment_notes || null

@@ -18,6 +18,7 @@ import type {
   PartnershipDetails, PartnershipStageTask,
   DealConfidence, QualificationStatus,
 } from '../../lib/types'
+import { toTelHref } from '../../lib/phone'
 
 // ── Pipeline config ───────────────────────────────────────────
 const GRANT_STAGES = [
@@ -723,7 +724,7 @@ export function OpportunityDetail() {
               <DetailRow label="Partner org"   value={opportunity.partner_org} />
               <DetailRow label="Contact"       value={opportunity.primary_contact} />
               <DetailRow label="Email"         value={opportunity.contact_email} />
-              <DetailRow label="Phone"         value={opportunity.contact_phone} />
+              <DetailRow label="Phone"         value={opportunity.contact_phone ? <a href={toTelHref(opportunity.contact_phone)} className="hover:text-river transition-colors">{opportunity.contact_phone}</a> : null} />
               <DetailRow label="Type"          value={opportunity.partnership_type} />
               <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(new Date(opportunity.agreement_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(new Date(opportunity.renewal_date), 'MMM d, yyyy') : null} />
