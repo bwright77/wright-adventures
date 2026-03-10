@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft } from 'lucide-react'
-import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
@@ -83,7 +82,7 @@ function Select({ error, children, ...props }: React.SelectHTMLAttributes<HTMLSe
 // ── Helpers ───────────────────────────────────────────────────
 function toDateInput(iso: string | null | undefined): string {
   if (!iso) return ''
-  try { return format(new Date(iso), 'yyyy-MM-dd') } catch { return '' }
+  return iso.slice(0, 10) // take YYYY-MM-DD directly — avoids UTC→local shift
 }
 
 // ── Main component ────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, isAfter } from 'date-fns'
+import { parseLocalDate } from '../../lib/dates'
 import { CheckCircle2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -45,7 +46,7 @@ function TaskRow({ task, onComplete }: { task: Task; onComplete: (id: string) =>
       <div className="flex items-center gap-3 shrink-0">
         {task.due_date && (
           <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-            {format(new Date(task.due_date), 'MMM d')}
+            {format(parseLocalDate(task.due_date), 'MMM d')}
           </span>
         )}
         <span className={`text-xs font-medium px-2 py-0.5 rounded ${STATUS_STYLE[task.status] ?? 'bg-gray-100 text-gray-500'}`}>

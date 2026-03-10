@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, CheckCircle2, Circle, Loader2, Wand2 } from 'lucide-react'
 import { format, isAfter, addDays } from 'date-fns'
+import { parseLocalDate } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Task, OpportunityTypeId } from '../../lib/types'
@@ -51,7 +52,7 @@ function TaskRow({
       </div>
       {task.due_date && (
         <span className={`text-xs shrink-0 ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-          {format(new Date(task.due_date), 'MMM d')}
+          {format(parseLocalDate(task.due_date), 'MMM d')}
         </span>
       )}
     </div>

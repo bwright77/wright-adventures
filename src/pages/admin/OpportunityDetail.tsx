@@ -19,6 +19,7 @@ import type {
   DealConfidence, QualificationStatus,
 } from '../../lib/types'
 import { toTelHref } from '../../lib/phone'
+import { parseLocalDate } from '../../lib/dates'
 
 // ── Pipeline config ───────────────────────────────────────────
 const GRANT_STAGES = [
@@ -676,7 +677,7 @@ export function OpportunityDetail() {
         {opportunity.primary_deadline && (
           <span className="flex items-center gap-1.5">
             <Calendar size={14} className="text-gray-400" />
-            {format(new Date(opportunity.primary_deadline), 'MMM d, yyyy')}
+            {format(parseLocalDate(opportunity.primary_deadline), 'MMM d, yyyy')}
           </span>
         )}
         {opportunity.tags.length > 0 && (
@@ -721,7 +722,7 @@ export function OpportunityDetail() {
           {opportunity.description && (
             <p className="text-sm text-gray-600 leading-relaxed mb-4">{opportunity.description}</p>
           )}
-          <DetailRow label="Deadline" value={opportunity.primary_deadline ? format(new Date(opportunity.primary_deadline), 'MMMM d, yyyy') : null} />
+          <DetailRow label="Deadline" value={opportunity.primary_deadline ? format(parseLocalDate(opportunity.primary_deadline), 'MMMM d, yyyy') : null} />
           <DetailRow label="Source"   value={opportunity.source_url ? <a href={opportunity.source_url} target="_blank" rel="noopener noreferrer" className="text-river hover:underline break-all">{opportunity.source_url}</a> : null} />
           <DetailRow label="Created"  value={format(new Date(opportunity.created_at), 'MMM d, yyyy')} />
           {/* Partnership extension fields */}
@@ -737,7 +738,7 @@ export function OpportunityDetail() {
                 {partnershipDetails.next_action}
                 {partnershipDetails.next_action_date && (
                   <span className="text-gray-400 ml-1.5">
-                    · {format(new Date(partnershipDetails.next_action_date), 'MMM d')}
+                    · {format(parseLocalDate(partnershipDetails.next_action_date), 'MMM d')}
                   </span>
                 )}
               </span>
@@ -756,7 +757,7 @@ export function OpportunityDetail() {
               <DetailRow label="Max amount"  value={opportunity.amount_max != null ? `$${opportunity.amount_max.toLocaleString()}` : null} />
               <DetailRow label="Requesting"  value={opportunity.amount_requested != null ? `$${opportunity.amount_requested.toLocaleString()}` : null} />
               <DetailRow label="Awarded"     value={opportunity.amount_awarded != null ? `$${opportunity.amount_awarded.toLocaleString()}` : null} />
-              <DetailRow label="LOI due"     value={opportunity.loi_deadline ? format(new Date(opportunity.loi_deadline), 'MMM d, yyyy') : null} />
+              <DetailRow label="LOI due"     value={opportunity.loi_deadline ? format(parseLocalDate(opportunity.loi_deadline), 'MMM d, yyyy') : null} />
               <DetailRow label="CFDA #"      value={opportunity.cfda_number} />
               <DetailRow label="Eligibility" value={opportunity.eligibility_notes} />
             </>
@@ -767,8 +768,8 @@ export function OpportunityDetail() {
               <DetailRow label="Email"         value={opportunity.contact_email} />
               <DetailRow label="Phone"         value={opportunity.contact_phone ? <a href={toTelHref(opportunity.contact_phone)} className="hover:text-river transition-colors">{opportunity.contact_phone}</a> : null} />
               <DetailRow label="Type"          value={opportunity.partnership_type} />
-              <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(new Date(opportunity.agreement_date), 'MMM d, yyyy') : null} />
-              <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(new Date(opportunity.renewal_date), 'MMM d, yyyy') : null} />
+              <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(parseLocalDate(opportunity.agreement_date), 'MMM d, yyyy') : null} />
+              <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(parseLocalDate(opportunity.renewal_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Est. value"    value={opportunity.estimated_value != null ? `$${opportunity.estimated_value.toLocaleString()}` : null} />
               <DetailRow label="Alignment"     value={opportunity.alignment_notes} />
               {partnershipDetails?.org_size && (

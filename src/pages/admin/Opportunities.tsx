@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Plus, Search, LayoutList, Columns3, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
+import { parseLocalDate } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Opportunity, OpportunityTypeId, ScoreDetail, DealConfidence } from '../../lib/types'
@@ -235,7 +236,7 @@ function DiscoveredTable({
 
                   {/* Deadline */}
                   <td className="px-5 py-4 text-sm text-gray-500 hidden md:table-cell">
-                    {opp.primary_deadline ? format(new Date(opp.primary_deadline), 'MMM d, yyyy') : '—'}
+                    {opp.primary_deadline ? format(parseLocalDate(opp.primary_deadline), 'MMM d, yyyy') : '—'}
                   </td>
 
                   {/* Actions */}
@@ -304,7 +305,7 @@ function KanbanCard({ opp }: { opp: Opportunity }) {
       {org && <p className="text-xs text-gray-400 mt-0.5 truncate">{org}</p>}
       {opp.primary_deadline && (
         <p className="text-xs text-gray-400 mt-2">
-          {format(new Date(opp.primary_deadline), 'MMM d')}
+          {format(parseLocalDate(opp.primary_deadline), 'MMM d')}
         </p>
       )}
     </Link>
@@ -727,7 +728,7 @@ export function Opportunities() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 hidden md:table-cell">
-                    {o.primary_deadline ? format(new Date(o.primary_deadline), 'MMM d, yyyy') : '—'}
+                    {o.primary_deadline ? format(parseLocalDate(o.primary_deadline), 'MMM d, yyyy') : '—'}
                   </td>
                 </tr>
               ))}

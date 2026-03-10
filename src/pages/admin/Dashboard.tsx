@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Plus, DollarSign, Users, CheckSquare, Briefcase, Sparkles, ArrowRight } from 'lucide-react'
 import { format, isAfter, addDays } from 'date-fns'
+import { parseLocalDate } from '../../lib/dates'
 import type { LucideIcon } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -226,7 +227,7 @@ export function Dashboard() {
                     </Link>
                   </div>
                   <span className="text-xs text-gray-400 shrink-0">
-                    {format(new Date(o.primary_deadline!), 'MMM d')}
+                    {format(parseLocalDate(o.primary_deadline!), 'MMM d')}
                   </span>
                 </li>
               ))}
