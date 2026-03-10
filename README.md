@@ -196,7 +196,12 @@ src/
 │   │   ├── InteractionsLog.tsx       # Partnership interaction history
 │   │   ├── PartnershipAdvisorPanel.tsx # AI solution recommendation panel
 │   │   ├── QualificationTracker.tsx  # Qualification status + scoring
-│   │   └── ScrapePanel.tsx           # Scrape & Fill from URL
+│   │   ├── ScrapePanel.tsx           # Scrape & Fill from URL
+│   │   └── analytics/
+│   │       ├── MetricCard.tsx        # KPI summary card
+│   │       ├── FunnelBar.tsx         # Horizontal stage bar (shared)
+│   │       ├── GrantFunnel.tsx       # Grant stage funnel + metrics
+│   │       └── PartnershipFunnel.tsx # Partnership stage funnel + metrics
 │   └── [marketing components]
 ├── contexts/
 │   └── AuthContext.tsx               # Supabase auth session + profile
@@ -205,6 +210,7 @@ src/
 ├── lib/
 │   ├── supabase.ts                   # Supabase client singleton
 │   ├── types.ts                      # TypeScript types matching DB schema
+│   ├── analytics.ts                  # Pure pipeline metric computation (ADR-008)
 │   ├── boardMinutes/
 │   │   ├── extractionPrompt.ts       # Claude prompt for minutes extraction
 │   │   └── exportDocx.ts             # DOCX export helper
@@ -217,6 +223,7 @@ src/
 │   │   ├── OpportunityDetail.tsx     # Detail view with pipeline stepper + AI tabs
 │   │   ├── NewOpportunity.tsx        # Create grant or partnership
 │   │   ├── EditOpportunity.tsx       # Edit with Scrape & Fill
+│   │   ├── Analytics.tsx             # Pipeline analytics — funnel + KPIs (ADR-008)
 │   │   ├── MyTasks.tsx               # Personal task list
 │   │   ├── BoardMeetings.tsx         # Board minutes list
 │   │   ├── BoardMeetingNew.tsx       # Upload transcript + extract
@@ -239,7 +246,8 @@ docs/
 ├── ADR-004-board-minutes.md
 ├── ADR-005-state-local-grant-discovery.md
 ├── ADR-006-partnership-sales-pipeline.md
-└── ADR-007-ai-solution-advisor.md
+├── ADR-007-ai-solution-advisor.md
+└── ADR-008-pipeline-analytics.md
 
 scripts/
 └── state-discovery-test.ts       # Dry-run test: npx tsx scripts/state-discovery-test.ts

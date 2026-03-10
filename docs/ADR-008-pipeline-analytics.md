@@ -3,7 +3,7 @@
 **Project:** Wright Adventures — Opportunity Management Platform (OMP)
 **Author:** Benjamin Wright, Director of Technology & Innovation
 **Date:** 2026-03-10
-**Status:** Draft
+**Status:** Implemented — 2026-03-10
 **PRD Reference:** OMP PRD v2.0, Phase 3 — Platform Expansion
 **Depends on:** ADR-001 (Grants), ADR-006 (Partnership Pipeline)
 
@@ -98,18 +98,18 @@ Each bar shows:
 `/admin/analytics` — new page, auth-gated, visible to all roles
 
 ### Data sources
-Reuse the existing `['opportunities']` query with the `partnership_details(logo_url, confidence, estimated_value)` join already added in ADR partner-logos. Extend the select to include `confidence` and preserve `estimated_value`.
-
-Actually, `estimated_value` is already on `opportunities`. `confidence` needs to come from `partnership_details`. Update the opportunities query select from:
+The existing `['opportunities']` query in `Opportunities.tsx` was extended from:
 ```
 *, partnership_details(logo_url)
 ```
 to:
 ```
-*, partnership_details(logo_url, confidence)
+*, partnership_details(logo_url, confidence, next_action_date)
 ```
 
-No new queries. All metric computation is pure TypeScript functions operating on the in-memory array.
+`next_action_date` was added (beyond the original spec) because the "deals at risk" metric requires it, and it lives on `partnership_details`. Both `Analytics.tsx` and `Opportunities.tsx` use the same `['opportunities']` TanStack Query key — no double fetch.
+
+All metric computation is pure TypeScript functions in `src/lib/analytics.ts` operating on the in-memory array.
 
 ### Component structure
 
@@ -167,8 +167,8 @@ Keeping computation out of components makes the logic testable and the component
 2. **`src/components/admin/analytics/`** — `MetricCard`, `FunnelBar`, `GrantFunnel`, `PartnershipFunnel`
 3. **`src/pages/admin/Analytics.tsx`** — page shell with tab switcher and summary bar
 4. **`src/App.tsx`** — add `/admin/analytics` route
-5. **`src/components/admin/AdminLayout.tsx`** — add "Analytics" nav item (BarChart2 icon, between Opportunities and My Tasks)
-6. **Update opportunities query** in `Opportunities.tsx` to include `confidence` in the partnership_details join (already needed by the analytics page via shared query cache)
+5. **`src/components/admin/AdminLayout.tsx`** — add "Analytics" nav item (BarChart2 icon, between My Tasks and Board Minutes)
+6. **Update opportunities query** in `Opportunities.tsx` to include `confidence` and `next_action_date` in the partnership_details join
 
 ---
 
