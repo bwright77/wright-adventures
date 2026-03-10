@@ -26,7 +26,7 @@ Live at: **https://wrightadventures.org/** (also: https://wright-adventures.verc
 
 **API / serverless**
 - **Vercel Serverless Functions** (`/api/**`) — proxy layer for AI and notifications
-- **Anthropic SDK** (`claude-sonnet-4-6`, `claude-haiku-4-5`) — grant writing + grant discovery
+- **Anthropic SDK** (`claude-sonnet-4-6`, `claude-haiku-4-5`) — grant writing, grant discovery, partnership advisor
 - **nodemailer** — email notifications (deadline reminders, task assignments)
 
 ---
@@ -91,13 +91,20 @@ These are used exclusively by `/api/*` serverless functions:
 Run migrations in order via the **Supabase SQL editor** or `supabase db push`:
 
 ```
-supabase/migrations/20260224000000_initial_schema.sql       # tables, RLS, seed data
-supabase/migrations/20260225000000_ai_grant_writing.sql     # AI chat history + token budget
-supabase/migrations/20260227000000_grant_discovery.sql      # federal grant discovery runs
-supabase/migrations/20260228000000_notifications.sql        # notification preferences
-supabase/migrations/20260228100000_board_meetings.sql       # board meeting minutes
-supabase/migrations/20260302000000_state_discovery_sources.sql  # state/local grant sources
-supabase/migrations/20260302000001_fix_goco_url.sql         # GOCO source URL fix
+supabase/migrations/20260224000000_initial_schema.sql            # tables, RLS, seed data
+supabase/migrations/20260225000000_ai_grant_writing.sql          # AI chat history + token budget
+supabase/migrations/20260226000000_grant_discovery.sql           # federal grant discovery runs
+supabase/migrations/20260226000001_admin_profile_policy.sql      # admin profile RLS fix
+supabase/migrations/20260226000002_confluence_grants_seed.sql    # Confluence grant seed data
+supabase/migrations/20260226000003_discovery_run_cancel_status.sql
+supabase/migrations/20260226000004_discovery_query_pagination.sql
+supabase/migrations/20260228000000_notifications.sql             # notification preferences
+supabase/migrations/20260228100000_board_meetings.sql            # board meeting minutes
+supabase/migrations/20260302000000_state_discovery_sources.sql   # state/local grant sources
+supabase/migrations/20260302000001_fix_goco_url.sql              # GOCO source URL fix
+supabase/migrations/20260304000000_rls_lookup_tables.sql         # RLS on lookup tables
+supabase/migrations/20260306000000_partnership_pipeline.sql      # partnership CRM pipeline
+supabase/migrations/20260306000001_partner_logos.sql             # logo_url on partnership_details
 ```
 
 ---
@@ -175,38 +182,51 @@ api/
 │   ├── deadlines.ts              # Daily deadline reminder cron
 │   ├── task-assigned.ts          # Webhook: task assigned notification
 │   └── opportunity-discovered.ts # Webhook: new opportunity notification
+├── partnerships/
+│   ├── recommend.ts              # AI solution advisor (Claude Sonnet)
+│   └── scrape.ts                 # URL → structured fields (Claude Haiku)
 └── contact.ts                    # Contact form handler
 
 src/
 ├── components/
 │   ├── admin/
-│   │   ├── AdminLayout.tsx       # Navy sidebar + Outlet (OMP shell)
-│   │   └── ProtectedRoute.tsx    # Auth guard — redirects to /login
+│   │   ├── AdminLayout.tsx           # Navy sidebar + Outlet (OMP shell)
+│   │   ├── ProtectedRoute.tsx        # Auth guard — redirects to /login
+│   │   ├── ContactsPanel.tsx         # Partnership contacts tab
+│   │   ├── InteractionsLog.tsx       # Partnership interaction history
+│   │   ├── PartnershipAdvisorPanel.tsx # AI solution recommendation panel
+│   │   ├── QualificationTracker.tsx  # Qualification status + scoring
+│   │   └── ScrapePanel.tsx           # Scrape & Fill from URL
 │   └── [marketing components]
 ├── contexts/
-│   └── AuthContext.tsx           # Supabase auth session + profile
+│   └── AuthContext.tsx               # Supabase auth session + profile
 ├── data/
-│   └── siteData.ts               # ALL marketing site content lives here
+│   └── siteData.ts                   # ALL marketing site content lives here
 ├── lib/
-│   ├── supabase.ts               # Supabase client singleton
-│   ├── types.ts                  # TypeScript types matching DB schema
-│   └── boardMinutes/
-│       ├── extractionPrompt.ts   # Claude prompt for minutes extraction
-│       └── exportDocx.ts         # DOCX export helper
+│   ├── supabase.ts                   # Supabase client singleton
+│   ├── types.ts                      # TypeScript types matching DB schema
+│   ├── boardMinutes/
+│   │   ├── extractionPrompt.ts       # Claude prompt for minutes extraction
+│   │   └── exportDocx.ts             # DOCX export helper
+│   └── partnerships/
+│       └── advisorPrompt.ts          # Reference prompt for AI advisor
 ├── pages/
 │   ├── admin/
-│   │   ├── Dashboard.tsx         # Metrics + upcoming deadlines + my tasks
-│   │   ├── Opportunities.tsx     # Filterable table (All / Grants / Partnerships)
-│   │   ├── OpportunityDetail.tsx # Detail view with AI Draft Assistant tab
-│   │   ├── MyTasks.tsx           # Personal task list
-│   │   ├── BoardMeetings.tsx     # Board minutes list
-│   │   ├── BoardMeetingNew.tsx   # Upload transcript + extract
-│   │   ├── BoardMeetingDetail.tsx # Review / edit / approve / export
-│   │   └── Settings.tsx          # Notification prefs, discovery sources
+│   │   ├── Dashboard.tsx             # Metrics + upcoming deadlines + my tasks
+│   │   ├── Opportunities.tsx         # Filterable table/kanban (Grants / Partnerships)
+│   │   ├── OpportunityDetail.tsx     # Detail view with pipeline stepper + AI tabs
+│   │   ├── NewOpportunity.tsx        # Create grant or partnership
+│   │   ├── EditOpportunity.tsx       # Edit with Scrape & Fill
+│   │   ├── MyTasks.tsx               # Personal task list
+│   │   ├── BoardMeetings.tsx         # Board minutes list
+│   │   ├── BoardMeetingNew.tsx       # Upload transcript + extract
+│   │   ├── BoardMeetingDetail.tsx    # Review / edit / approve / export
+│   │   ├── Settings.tsx              # Notification prefs, discovery sources
+│   │   └── Team.tsx                  # Team member directory
 │   ├── Home.tsx
-│   └── Login.tsx                 # Email/password + Google OAuth
-├── App.tsx                       # Routes
-├── main.tsx                      # QueryClient + AuthProvider
+│   └── Login.tsx                     # Email/password + Google OAuth
+├── App.tsx                           # Routes
+├── main.tsx                          # QueryClient + AuthProvider
 └── index.css
 
 supabase/
@@ -214,10 +234,12 @@ supabase/
 
 docs/
 ├── ADR-001-ai-grant-writing.md
-├── ADR-002-grant-discovery.md
+├── ADR-002-grant-discovery-pipeline.md
 ├── ADR-003-email-notifications.md
-├── ADR-004-board-meeting-minutes.md
-└── ADR-005-state-local-grant-discovery.md
+├── ADR-004-board-minutes.md
+├── ADR-005-state-local-grant-discovery.md
+├── ADR-006-partnership-sales-pipeline.md
+└── ADR-007-ai-solution-advisor.md
 
 scripts/
 └── state-discovery-test.ts       # Dry-run test: npx tsx scripts/state-discovery-test.ts
