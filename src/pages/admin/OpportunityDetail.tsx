@@ -1,8 +1,8 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Calendar, Tag, ChevronDown, Pencil, UserCircle, Sparkles,
-  Check, CheckCircle2,
+  Check, CheckCircle2, Trash2,
 } from 'lucide-react'
 import { format, formatDistanceToNow, addDays } from 'date-fns'
 import { useState } from 'react'
@@ -359,10 +359,12 @@ function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
 export function OpportunityDetail() {
   const { id }      = useParams<{ id: string }>()
   const { user } = useAuth()
+  const navigate    = useNavigate()
   const queryClient = useQueryClient()
 
   type TabId = 'details' | 'contacts' | 'interactions' | 'advisor' | 'ai'
-  const [activeTab, setActiveTab] = useState<TabId>('details')
+  const [activeTab, setActiveTab]       = useState<TabId>('details')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { data: opportunity, isLoading } = useQuery<Opportunity>({
     queryKey: ['opportunity', id],
@@ -535,6 +537,17 @@ export function OpportunityDetail() {
     },
   })
 
+  const { mutate: deleteOpportunity, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('opportunities').delete().eq('id', id!)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+      navigate('/admin/opportunities')
+    },
+  })
+
   // ── Loading / not found ────────────────────────────────────
   if (isLoading) {
     return (
@@ -608,13 +621,41 @@ export function OpportunityDetail() {
           {orgOrFunder && <p className="text-sm text-gray-400 mt-1">{orgOrFunder}</p>}
           </div>
         </div>
-        <Link
-          to={`/admin/opportunities/${id}/edit`}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-2 transition-colors shrink-0"
-        >
-          <Pencil size={13} />
-          Edit
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            to={`/admin/opportunities/${id}/edit`}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-2 transition-colors"
+          >
+            <Pencil size={13} />
+            Edit
+          </Link>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <span className="text-xs text-red-700 font-medium">Delete?</span>
+              <button
+                onClick={() => deleteOpportunity()}
+                disabled={isDeleting}
+                className="text-xs font-semibold text-red-600 hover:text-red-800 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting…' : 'Yes'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-lg px-3 py-2 transition-colors"
+            >
+              <Trash2 size={13} />
+              Delete
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Pipeline stepper */}
