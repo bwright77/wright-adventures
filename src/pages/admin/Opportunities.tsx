@@ -5,10 +5,14 @@ import { Plus, Search, LayoutList, Columns3, ChevronDown, ChevronUp, ExternalLin
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Opportunity, OpportunityTypeId, ScoreDetail } from '../../lib/types'
+import type { Opportunity, OpportunityTypeId, ScoreDetail, DealConfidence } from '../../lib/types'
 
 type OpportunityWithLogo = Opportunity & {
-  partnership_details?: { logo_url: string | null } | null
+  partnership_details?: {
+    logo_url: string | null
+    confidence: DealConfidence | null
+    next_action_date: string | null
+  } | null
 }
 
 type TabFilter = 'all' | OpportunityTypeId | 'discovered'
@@ -392,7 +396,7 @@ export function Opportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url)')
+        .select('*, partnership_details(logo_url, confidence, next_action_date)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithLogo[]
