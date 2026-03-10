@@ -28,6 +28,7 @@ const FIELD_LABELS: { key: keyof ScrapedFields; label: string }[] = [
   { key: 'pain_points',        label: 'Key pain points' },
   { key: 'tech_stack_notes',   label: 'Technology systems' },
   { key: 'tags',               label: 'Tags' },
+  { key: 'logo_url',           label: 'Organization logo' },
 ]
 
 const CONFIDENCE_STYLES = {
@@ -215,7 +216,16 @@ export function ScrapePanel({ sourceUrl, onApply }: ScrapePanelProps) {
                   <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide block">
                     {label}
                   </span>
-                  <span className="text-sm text-navy line-clamp-2">{mappedFields![key]}</span>
+                  {key === 'logo_url' ? (
+                    <img
+                      src={mappedFields![key]!}
+                      alt=""
+                      className="mt-1 w-8 h-8 rounded object-contain bg-white border border-gray-200"
+                      onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  ) : (
+                    <span className="text-sm text-navy line-clamp-2">{mappedFields![key]}</span>
+                  )}
                 </div>
               </label>
             ))}
