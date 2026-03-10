@@ -133,6 +133,7 @@ export function NewOpportunity() {
     if (fields.partner_org)      sv('partner_org', fields.partner_org)
     if (fields.primary_contact)  sv('primary_contact', fields.primary_contact)
     if (fields.contact_email)    sv('contact_email', fields.contact_email)
+    if (fields.contact_phone)    sv('contact_phone', fields.contact_phone)
     if (fields.estimated_value)  sv('estimated_value', fields.estimated_value)
     if (fields.tags)             sv('tags', fields.tags)
     if (fields.pain_points)      sv('pain_points', fields.pain_points)

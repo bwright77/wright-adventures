@@ -10,6 +10,7 @@ export interface ScrapedFields {
   partner_org?: string
   primary_contact?: string
   contact_email?: string
+  contact_phone?: string
   estimated_value?: string
   tags?: string
   pain_points?: string
@@ -24,6 +25,7 @@ const FIELD_LABELS: { key: keyof ScrapedFields; label: string }[] = [
   { key: 'description',        label: 'Description' },
   { key: 'primary_contact',    label: 'Primary contact' },
   { key: 'contact_email',      label: 'Contact email' },
+  { key: 'contact_phone',      label: 'Phone number' },
   { key: 'estimated_value',    label: 'Estimated value' },
   { key: 'pain_points',        label: 'Key pain points' },
   { key: 'tech_stack_notes',   label: 'Technology systems' },
@@ -102,6 +104,7 @@ export function ScrapePanel({ sourceUrl, onApply }: ScrapePanelProps) {
         ? `${e.primary_contact_name}${e.primary_contact_title ? ` (${e.primary_contact_title})` : ''}`
         : undefined,
       contact_email:    e.contact_email || undefined,
+      contact_phone:    e.contact_phone || undefined,
       estimated_value:  e.estimated_budget != null ? String(e.estimated_budget) : undefined,
       pain_points:      e.key_pain_points || undefined,
       tech_stack_notes: e.technology_systems_mentioned || undefined,

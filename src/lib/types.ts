@@ -296,6 +296,7 @@ export interface ScrapeResult {
     primary_contact_name?: string
     primary_contact_title?: string
     contact_email?: string
+    contact_phone?: string
     project_description?: string
     estimated_budget?: number
     timeline_notes?: string

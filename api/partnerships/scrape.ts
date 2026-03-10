@@ -65,10 +65,11 @@ function extractPageText(html: string): string {
 }
 
 // ── Extraction prompt ─────────────────────────────────────────
-const SYSTEM = `You are a structured data extraction assistant. Given web page text for a
-nonprofit RFP, consulting engagement, or partnership opportunity, extract key fields and
-return them as a JSON object. Only include fields you are confident about — omit fields
-where the information is missing or ambiguous. Never invent data.`
+const SYSTEM = `You are a structured data extraction assistant. Given web page text for an
+organization — whether a nonprofit, government agency, foundation, or for-profit company —
+extract key contact and opportunity fields and return them as a JSON object. Only include
+fields you are confident about — omit fields where the information is missing or ambiguous.
+Never invent data.`
 
 function buildPrompt(pageText: string): string {
   return `Extract the following fields from this web page text. Return a single JSON object
@@ -76,17 +77,18 @@ with only the fields you can confidently identify. Omit any field where the info
 is absent or unclear.
 
 Fields to extract:
-- organization_name: string — the name of the organization issuing the RFP or seeking a partner
+- organization_name: string — the name of the organization
 - primary_contact_name: string — the name of the main contact person
 - primary_contact_title: string — their title or role
 - contact_email: string — their email address
-- project_description: string — a clear description of the project, problem, or engagement scope (2-4 sentences)
+- contact_phone: string — their phone number
+- project_description: string — a clear description of the organization, project, or engagement scope (2-4 sentences)
 - estimated_budget: number — the project budget or contract value in USD (number only, no $)
 - timeline_notes: string — key dates, deadlines, or project timeline information
 - technology_systems_mentioned: string — any technology platforms, software, or systems mentioned (comma-separated)
 - key_pain_points: string — the core problems or challenges the organization is trying to solve
 - partnership_type_hint: string — one of: rfp, mou, joint_program, coalition, referral, in_kind, other
-- tags: array of strings — 3-6 short topic tags relevant to this opportunity (e.g. "technology-consulting", "youth-development")
+- tags: array of strings — 3-6 short topic tags relevant to this opportunity (e.g. "technology-consulting", "renewable-energy")
 
 Return ONLY a valid JSON object. No markdown, no explanation, no code blocks.
 
@@ -162,9 +164,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     try {
-      extracted = JSON.parse(text.trim())
+      // Strip markdown code fences Haiku sometimes adds despite instructions
+      const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '')
+      extracted = JSON.parse(cleaned)
     } catch {
       // Haiku returned something unparseable — return empty extraction
+      console.error('JSON parse failed. Raw Haiku response:', text)
       extracted = {}
     }
 
