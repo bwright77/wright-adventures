@@ -22,7 +22,7 @@ const MAX_PAGE_TEXT_CHARS = 100_000
 
 // Minimum weighted_score (after proximity bonus) to insert a discovered
 // opportunity. Same threshold philosophy as the federal pipeline.
-const SCORE_THRESHOLD = 5.0
+const SCORE_THRESHOLD = 6.0
 
 // Sources auto-disable after this many consecutive fetch/processing failures.
 const AUTO_DISABLE_AFTER = 3

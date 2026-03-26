@@ -311,7 +311,6 @@ CREATE POLICY "discovery_runs_admin_read" ON discovery_runs
 
 -- -----------------------------------------------------------------------------
 -- 8. Seed initial org profile (Confluence Colorado)
--- Prompt text references confluence-org-profile.ts — update after confirming EIN
 -- -----------------------------------------------------------------------------
 
 INSERT INTO org_profiles (org_name, is_active, profile_json, prompt_text) VALUES (
@@ -320,7 +319,7 @@ INSERT INTO org_profiles (org_name, is_active, profile_json, prompt_text) VALUES
   '{
     "legal_name": "Confluence Colorado",
     "tax_status": "501(c)(3)",
-    "ein": "TBD",
+    "ein": "88-1757678",
     "founded_year": 2022,
     "headquarters": {"city": "Denver", "state": "Colorado"},
     "geographic_focus": ["Denver, Colorado", "South Platte River corridor", "Front Range, Colorado", "Southwestern United States"],

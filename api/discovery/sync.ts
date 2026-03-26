@@ -387,7 +387,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           continue
         }
 
-        if (score.weighted_score < 3.5) {
+        if (score.weighted_score < 6) {
           stats.opportunities_below_threshold++
           continue
         }
