@@ -87,6 +87,29 @@ function TextArea({
   )
 }
 
+// For single-string fields inside repeated items: buffers local state while typing
+// so queryClient.setQueryData re-renders don't reset the cursor position.
+function BufferedTextArea({
+  value, onChange, rows = 3, placeholder,
+}: { value: string; onChange: (v: string) => void; rows?: number; placeholder?: string }) {
+  const [raw, setRaw] = useState(value ?? '')
+  const prevValue = useRef(value)
+  if (prevValue.current !== value) {
+    prevValue.current = value
+    setRaw(value ?? '')
+  }
+  return (
+    <textarea
+      value={raw}
+      onChange={e => setRaw(e.target.value)}
+      onBlur={() => { if (raw !== value) onChange(raw) }}
+      rows={rows}
+      placeholder={placeholder}
+      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20 resize-y"
+    />
+  )
+}
+
 // For string-array fields (one item per line): keeps raw local state while typing
 // so spaces and mid-line edits aren't destroyed by the trim+filter on every keystroke.
 function ArrayTextArea({
@@ -541,7 +564,7 @@ export function BoardMeetingDetail() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Summary</label>
-                    <TextArea
+                    <BufferedTextArea
                       value={report.summary}
                       onChange={v => {
                         const updated = [...activeData.reports]
