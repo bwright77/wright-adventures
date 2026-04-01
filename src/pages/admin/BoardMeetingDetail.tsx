@@ -87,6 +87,32 @@ function TextArea({
   )
 }
 
+// For string-array fields (one item per line): keeps raw local state while typing
+// so spaces and mid-line edits aren't destroyed by the trim+filter on every keystroke.
+function ArrayTextArea({
+  value, onChange, rows = 3, placeholder,
+}: { value: string[]; onChange: (v: string[]) => void; rows?: number; placeholder?: string }) {
+  const [raw, setRaw] = useState(() => value.join('\n'))
+
+  // Sync in when the prop changes from outside (e.g. initial data load)
+  const prevValue = useRef(value)
+  if (prevValue.current !== value) {
+    prevValue.current = value
+    setRaw(value.join('\n'))
+  }
+
+  return (
+    <textarea
+      value={raw}
+      onChange={e => setRaw(e.target.value)}
+      onBlur={() => onChange(raw.split('\n').map(s => s.trim()).filter(Boolean))}
+      rows={rows}
+      placeholder={placeholder}
+      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20 resize-y"
+    />
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────
 
 export function BoardMeetingDetail() {
@@ -387,39 +413,30 @@ export function BoardMeetingDetail() {
           {/* Attendance */}
           <Section title="Attendance">
             <FieldRow label="Directors Present">
-              <TextArea
-                value={(activeData.attendance?.directors_present ?? []).join('\n')}
+              <ArrayTextArea
+                value={activeData.attendance?.directors_present ?? []}
                 onChange={v => updateField({
-                  attendance: {
-                    ...activeData.attendance,
-                    directors_present: v.split('\n').map(s => s.trim()).filter(Boolean),
-                  },
+                  attendance: { ...activeData.attendance, directors_present: v },
                 })}
                 rows={3}
                 placeholder="One name per line"
               />
             </FieldRow>
             <FieldRow label="Directors Absent">
-              <TextArea
-                value={(activeData.attendance?.directors_absent ?? []).join('\n')}
+              <ArrayTextArea
+                value={activeData.attendance?.directors_absent ?? []}
                 onChange={v => updateField({
-                  attendance: {
-                    ...activeData.attendance,
-                    directors_absent: v.split('\n').map(s => s.trim()).filter(Boolean),
-                  },
+                  attendance: { ...activeData.attendance, directors_absent: v },
                 })}
                 rows={2}
                 placeholder="One name per line (leave blank if none)"
               />
             </FieldRow>
             <FieldRow label="Guests">
-              <TextArea
-                value={(activeData.attendance?.guests ?? []).join('\n')}
+              <ArrayTextArea
+                value={activeData.attendance?.guests ?? []}
                 onChange={v => updateField({
-                  attendance: {
-                    ...activeData.attendance,
-                    guests: v.split('\n').map(s => s.trim()).filter(Boolean),
-                  },
+                  attendance: { ...activeData.attendance, guests: v },
                 })}
                 rows={2}
                 placeholder="One name per line (leave blank if none)"
