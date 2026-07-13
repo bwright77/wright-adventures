@@ -5,15 +5,16 @@ import lhcLogo from '../assets/images/lhc.png'
 import gwdLogo from '../assets/images/gwd.png'
 import ccLogo from '../assets/images/cc.png'
 import cmcLogo from '../assets/images/cmc.png'
+import pfbLogo from '../assets/images/pfb.png'
 import bbspLogo from '../assets/images/bbsp.svg'
 import kadyLogo from '../assets/images/kady.svg'
 
-const ORG_LOGOS: Record<string, string> = {
+const ORG_LOGOS: Record<string, string | string[]> = {
   'Lincoln Hills Cares': lhcLogo,
   'GroundWork Denver': gwdLogo,
   'Confluence Colorado': ccLogo,
   'Colorado Mountain Club': cmcLogo,
-  'PeopleForBikes — Better Bike Share Partnership': bbspLogo,
+  'PeopleForBikes — Better Bike Share Partnership': [pfbLogo, bbspLogo],
   'Kady Youth Sheep Camp': kadyLogo,
 }
 
@@ -85,11 +86,19 @@ export function CaseStudies() {
                 >
                   <div className="p-7 pb-0">
                     {ORG_LOGOS[study.title] && (
-                      <img
-                        src={ORG_LOGOS[study.title]}
-                        alt={study.title}
-                        className="h-10 w-auto object-contain mb-5"
-                      />
+                      <div className="flex items-center gap-4 mb-5">
+                        {(Array.isArray(ORG_LOGOS[study.title])
+                          ? ORG_LOGOS[study.title] as string[]
+                          : [ORG_LOGOS[study.title] as string]
+                        ).map((logo, i) => (
+                          <img
+                            key={i}
+                            src={logo}
+                            alt={study.title}
+                            className="h-10 w-auto object-contain"
+                          />
+                        ))}
+                      </div>
                     )}
                     <span
                       className={`inline-block text-[0.72rem] font-semibold uppercase tracking-[0.1em] px-2.5 py-1 rounded mb-4 ${TAG_COLORS[study.tagColor]}`}
