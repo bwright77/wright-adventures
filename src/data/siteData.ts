@@ -76,6 +76,16 @@ export const APPROACH_STEPS = [
 
 export const CASE_STUDIES = [
   {
+    tag: 'Digital Legacy & Archive',
+    tagColor: 'river' as const,
+    title: 'PeopleForBikes — Better Bike Share Partnership',
+    description: 'When the Better Bike Share Partnership reached its 2026 sunset after twelve years of shared-micromobility equity work, Wright Adventures preserved the entire legacy — permanently. We designed and built a custom retrospective site and a companion print Impact Report, then migrated a 500+ story archive with every original link intact, all backed by four years of fully-funded managed hosting so a decade of public knowledge stays live and findable.',
+    metrics: [
+      { value: '500+ stories', label: 'Archived permanently' },
+      { value: '4 years', label: 'Hosting fully funded' },
+    ],
+  },
+  {
     tag: 'Brand & Technology',
     tagColor: 'earth' as const,
     title: 'Confluence Colorado',
@@ -86,13 +96,23 @@ export const CASE_STUDIES = [
     ],
   },
   {
-    tag: 'Conservation & Community',
+    tag: 'Hiring & Operations',
     tagColor: 'river' as const,
-    title: 'GroundWork Denver',
-    description: 'Built grant strategy and program design capacity for urban youth conservation and community health programs, creating pathways that connect young people to environmental careers and community leadership.',
+    title: 'Colorado Mountain Club',
+    description: 'Supporting the Colorado Mountain Club across hiring, program direction, and program operations — helping one of the nation\'s leading mountain recreation organizations build staff capacity, sharpen program delivery, and navigate compliance and licensing requirements.',
     metrics: [
-      { value: '$3M+', label: 'Total funds raised' },
-      { value: 'Youth & watershed', label: 'Dual-impact programs' },
+      { value: 'Active', label: 'Current engagement' },
+      { value: 'Hiring, ops & compliance', label: 'Full scope support' },
+    ],
+  },
+  {
+    tag: 'Brand & Digital Advocacy',
+    tagColor: 'trail' as const,
+    title: 'River Sisters · Hermanas del Río',
+    description: 'Wright Adventures partners with the River Sisters Congreso — a bilingual, community-led coalition advancing recognition for Colorado\'s rivers — to build a brand identity, a bilingual website, and a sustainable social and advocacy engine. We produce and build; the coalition\'s cultural leadership holds every approval, and the community artist owns the mark.',
+    metrics: [
+      { value: 'Community-led', label: 'Artist-owned identity' },
+      { value: 'Bilingual', label: 'Brand, web & advocacy' },
     ],
   },
   {
@@ -106,13 +126,23 @@ export const CASE_STUDIES = [
     ],
   },
   {
-    tag: 'Hiring & Operations',
-    tagColor: 'river' as const,
-    title: 'Colorado Mountain Club',
-    description: 'Supporting the Colorado Mountain Club across hiring, program direction, and program operations — helping one of the nation\'s leading mountain recreation organizations build staff capacity, sharpen program delivery, and navigate compliance and licensing requirements.',
+    tag: 'Partnership & Capacity',
+    tagColor: 'earth' as const,
+    title: 'Kady Youth Sheep Camp',
+    description: 'Wright Adventures provides the administrative, financial, and digital backbone for the Kady Youth Sheep Camp, a Diné youth apprenticeship in Teec Nos Pos, Arizona that teaches traditional lifeways through raising Navajo-Churro sheep. We serve as fiscal partner, build and steward the program\'s web presence, and support its fundraising and grant strategy — with the community holding final say over how its story is told.',
     metrics: [
-      { value: 'Active', label: 'Current engagement' },
-      { value: 'Hiring, ops & compliance', label: 'Full scope support' },
+      { value: 'Fiscal partner', label: 'Administrative backbone' },
+      { value: 'Brand & web', label: 'Digital presence built' },
+    ],
+  },
+  {
+    tag: 'Conservation & Community',
+    tagColor: 'river' as const,
+    title: 'GroundWork Denver',
+    description: 'Built grant strategy and program design capacity for urban youth conservation and community health programs, creating pathways that connect young people to environmental careers and community leadership.',
+    metrics: [
+      { value: '$3M+', label: 'Total funds raised' },
+      { value: 'Youth & watershed', label: 'Dual-impact programs' },
     ],
   },
 ] as const
