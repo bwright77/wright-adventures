@@ -5,12 +5,16 @@ import lhcLogo from '../assets/images/lhc.png'
 import gwdLogo from '../assets/images/gwd.png'
 import ccLogo from '../assets/images/cc.png'
 import cmcLogo from '../assets/images/cmc.png'
+import bbspLogo from '../assets/images/bbsp.svg'
+import kadyLogo from '../assets/images/kady.svg'
 
 const ORG_LOGOS: Record<string, string> = {
   'Lincoln Hills Cares': lhcLogo,
   'GroundWork Denver': gwdLogo,
   'Confluence Colorado': ccLogo,
   'Colorado Mountain Club': cmcLogo,
+  'PeopleForBikes — Better Bike Share Partnership': bbspLogo,
+  'Kady Youth Sheep Camp': kadyLogo,
 }
 
 const TAG_COLORS = {
