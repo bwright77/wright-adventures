@@ -5,6 +5,7 @@ import lhcLogo from '../assets/images/lhc.png'
 import gwdLogo from '../assets/images/gwd.png'
 import ccLogo from '../assets/images/cc.png'
 import cmcLogo from '../assets/images/cmc.png'
+import pfbMark from '../assets/images/pfb-mark.png'
 import pfbLogo from '../assets/images/pfb.png'
 import bbspLogo from '../assets/images/bbsp.svg'
 import kadyLogo from '../assets/images/kady.svg'
@@ -14,7 +15,7 @@ const ORG_LOGOS: Record<string, string | string[]> = {
   'GroundWork Denver': gwdLogo,
   'Confluence Colorado': ccLogo,
   'Colorado Mountain Club': cmcLogo,
-  'PeopleForBikes — Better Bike Share Partnership': [pfbLogo, bbspLogo],
+  'PeopleForBikes — Better Bike Share Partnership': [pfbMark, pfbLogo, bbspLogo],
   'Kady Youth Sheep Camp': kadyLogo,
 }
 
