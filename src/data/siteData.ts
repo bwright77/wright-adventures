@@ -81,8 +81,8 @@ export const CASE_STUDIES = [
     title: 'PeopleForBikes — Better Bike Share Partnership',
     description: 'When the Better Bike Share Partnership reached its 2026 sunset after twelve years of shared-micromobility equity work, Wright Adventures preserved the entire legacy — permanently. We designed and built a custom retrospective site and a companion print Impact Report, then migrated a 500+ story archive with every original link intact, all backed by four years of fully-funded managed hosting so a decade of public knowledge stays live and findable.',
     metrics: [
-      { value: '500+ stories', label: 'Archived permanently' },
-      { value: '4 years', label: 'Hosting fully funded' },
+      { value: '12 years', label: 'Of impact secured' },
+      { value: 'Web + print', label: 'Custom impact story built' },
     ],
   },
   {
