@@ -79,6 +79,7 @@ export const CASE_STUDIES = [
     tag: 'Digital Legacy & Archive',
     tagColor: 'river' as const,
     title: 'PeopleForBikes — Better Bike Share Partnership',
+    url: 'https://betterbikeshare.org',
     description: 'When the Better Bike Share Partnership reached its 2026 sunset after twelve years of shared-micromobility equity work, Wright Adventures preserved the entire legacy — permanently. We designed and built a custom retrospective site and a companion print Impact Report, then migrated a 500+ story archive with every original link intact, all backed by four years of fully-funded managed hosting so a decade of public knowledge stays live and findable.',
     metrics: [
       { value: '12 years', label: 'Of impact secured' },
@@ -129,6 +130,7 @@ export const CASE_STUDIES = [
     tag: 'Partnership & Capacity',
     tagColor: 'earth' as const,
     title: 'Kady Youth Sheep Camp',
+    url: 'https://kadysheepcamp.org',
     description: 'Wright Adventures provides the administrative, financial, and digital backbone for the Kady Youth Sheep Camp, a Diné youth apprenticeship in Teec Nos Pos, Arizona that teaches traditional lifeways through raising Navajo-Churro sheep. We serve as fiscal partner, build and steward the program\'s web presence, and support its fundraising and grant strategy — with the community holding final say over how its story is told.',
     metrics: [
       { value: 'Fiscal partner', label: 'Administrative backbone' },

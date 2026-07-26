@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { CASE_STUDIES } from '../data/siteData'
 import lhcLogo from '../assets/images/lhc.png'
 import gwdLogo from '../assets/images/gwd.png'
@@ -23,6 +23,13 @@ const TAG_COLORS = {
   trail: 'bg-trail-50 text-trail',
   river: 'bg-river-50 text-river',
   earth: 'bg-earth-50 text-earth',
+} as const
+
+// Top accent bar, keyed to the same tagColor as the badge.
+const ACCENT_COLORS = {
+  trail: 'bg-trail',
+  river: 'bg-river',
+  earth: 'bg-earth',
 } as const
 
 export function CaseStudies() {
@@ -71,8 +78,9 @@ export function CaseStudies() {
 
         <div className="mt-12 relative">
           {/* Carousel track */}
+          {/* pb-8 leaves room for the card's drop shadow, which overflow-hidden would otherwise clip */}
           <div
-            className="overflow-hidden rounded-xl"
+            className="overflow-hidden rounded-xl pb-8"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
@@ -80,11 +88,18 @@ export function CaseStudies() {
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${current * 100}%)` }}
             >
-              {CASE_STUDIES.map(study => (
+              {CASE_STUDIES.map((study, slide) => {
+                const url = 'url' in study ? study.url : undefined
+                return (
                 <div
                   key={study.title}
-                  className="min-w-full bg-white border border-gray-200 rounded-xl overflow-hidden"
+                  // Off-screen slides stay in the DOM; keep their links out of the tab order.
+                  inert={slide !== current}
+                  aria-hidden={slide !== current}
+                  className="min-w-full bg-white border border-gray-200/70 rounded-xl overflow-hidden relative shadow-[0_2px_4px_rgba(0,70,103,0.04),0_18px_48px_-18px_rgba(0,70,103,0.28)]"
                 >
+                  <div className={`h-1 w-full ${ACCENT_COLORS[study.tagColor]}`} />
+
                   <div className="p-7 pb-0">
                     {ORG_LOGOS[study.title] && (
                       <div className="flex items-center gap-4 mb-5">
@@ -106,7 +121,25 @@ export function CaseStudies() {
                     >
                       {study.tag}
                     </span>
-                    <h3 className="text-xl font-semibold text-navy mb-2">{study.title}</h3>
+                    <h3 className="text-xl font-semibold text-navy mb-2">
+                      {url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${study.title} — visit site (opens in a new tab)`}
+                          className="group/link inline-flex items-center gap-1.5 hover:text-river transition-colors"
+                        >
+                          {study.title}
+                          <ExternalLink
+                            size={15}
+                            className="text-gray-400 shrink-0 transition-colors group-hover/link:text-river"
+                          />
+                        </a>
+                      ) : (
+                        study.title
+                      )}
+                    </h3>
                   </div>
 
                   <div className="px-7 pb-6">
@@ -126,12 +159,13 @@ export function CaseStudies() {
                     ))}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-2">
             {/* Dots */}
             <div className="flex gap-2">
               {CASE_STUDIES.map((_, i) => (
