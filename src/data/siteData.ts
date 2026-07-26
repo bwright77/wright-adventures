@@ -90,6 +90,7 @@ export const CASE_STUDIES = [
     tag: 'Brand & Technology',
     tagColor: 'earth' as const,
     title: 'Confluence Colorado',
+    url: 'https://www.confluenceco.org',
     description: 'Built Confluence Colorado\'s brand identity from the ground up — logo, visual language, and messaging — then designed and launched their website. We continue to manage their technology infrastructure and lead their grant management strategy, serving as an ongoing strategic and operational partner.',
     metrics: [
       { value: 'Full build', label: 'Brand, web & tech' },
