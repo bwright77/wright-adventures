@@ -12,7 +12,7 @@ export function Analytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url, confidence, next_action_date)')
+        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithDetails[]
@@ -57,9 +57,9 @@ export function Analytics() {
             accent="river"
           />
           <MetricCard
-            label="Weighted Pipeline"
-            value={fmtCurrency(partnershipMetrics.weightedPipeline)}
-            sub="by confidence"
+            label="Contributed"
+            value={fmtCurrency(partnershipMetrics.contributedValue)}
+            sub={`${partnershipMetrics.contributedCount} portfolio / pro-bono`}
           />
         </div>
       )}

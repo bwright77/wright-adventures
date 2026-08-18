@@ -153,7 +153,7 @@ export function Opportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url, confidence, next_action_date)')
+        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithLogo[]

@@ -6,7 +6,9 @@ import type { FitAssessment } from './discovery/fitRubric'
 export type UserRole = 'admin' | 'manager' | 'member' | 'viewer'
 export type OpportunityTypeId = 'partnership' | 'lead'
 export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
-export type PartnershipType = 'mou' | 'joint_program' | 'coalition' | 'referral' | 'in_kind' | 'other'
+export type PartnershipType =
+  | 'mou' | 'joint_program' | 'coalition' | 'referral' | 'in_kind'
+  | 'strategic_alliance' | 'other'
 export type DocType =
   | 'proposal' | 'budget' | 'loi' | 'agreement' | 'supporting'
   | 'award_letter' | 'report' | 'correspondence' | 'other'
@@ -209,8 +211,14 @@ export type InteractionType =
   | 'proposal_sent' | 'contract_sent' | 'note' | 'other'
 export type InteractionDirection = 'inbound' | 'outbound' | 'internal'
 
+/** How an engagement is priced. Non-paid work is excluded from sales metrics. */
+export type EngagementNature = 'paid' | 'reduced_rate' | 'portfolio' | 'pro_bono'
+
 export interface PartnershipDetails {
   opportunity_id: string
+  engagement_nature: EngagementNature
+  /** NUMERIC — Supabase JS returns a string. Coerce with Number(). */
+  list_value: number | null
   qualification_status: QualificationStatus
   qualification_notes: string | null
   pain_points: string | null

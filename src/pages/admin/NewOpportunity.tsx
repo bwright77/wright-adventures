@@ -28,7 +28,7 @@ const partnershipSchema = baseSchema.extend({
   primary_contact:  z.string().optional(),
   contact_email:    z.string().email('Enter a valid email').or(z.literal('')).optional(),
   contact_phone:    z.string().optional(),
-  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other']).or(z.literal('')).optional(),
+  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'strategic_alliance', 'other']).or(z.literal('')).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
   // partnership_details fields
@@ -38,6 +38,8 @@ const partnershipSchema = baseSchema.extend({
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
+  engagement_nature: z.enum(['paid', 'reduced_rate', 'portfolio', 'pro_bono']).optional(),
+  list_value:        z.string().optional(),
 })
 
 const schema = partnershipSchema
@@ -176,6 +178,8 @@ export function NewOpportunity() {
       if (values.next_action)      detailsPayload.next_action      = values.next_action
       if (values.next_action_date) detailsPayload.next_action_date = new Date(values.next_action_date).toISOString()
       if (values.logo_url)         detailsPayload.logo_url         = values.logo_url
+      if (values.engagement_nature) detailsPayload.engagement_nature = values.engagement_nature
+      if (values.list_value)        detailsPayload.list_value        = Number(values.list_value)
       if (Object.keys(detailsPayload).length > 0) {
         await supabase
           .from('partnership_details')
@@ -276,6 +280,20 @@ export function NewOpportunity() {
                 <div>
                   <Label>Estimated value ($)</Label>
                   <Input {...register('estimated_value' as never)} type="number" min="0" placeholder="0" />
+                </div>
+                <div>
+                  <Label>Engagement nature</Label>
+                  <Select {...register('engagement_nature' as never)}>
+                    <option value="paid">Paid — full rate</option>
+                    <option value="reduced_rate">Reduced rate — discounted</option>
+                    <option value="portfolio">Portfolio — nominal fee</option>
+                    <option value="pro_bono">Pro bono — no fee</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Value at standard rate ($)</Label>
+                  <Input {...register('list_value' as never)} type="number" min="0" placeholder="0" />
+                  <p className="mt-1 text-xs text-gray-400">Before any discount. For pro-bono and portfolio work this is the contributed value.</p>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">

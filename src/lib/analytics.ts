@@ -4,7 +4,7 @@
 // ============================================================
 
 import { differenceInDays } from 'date-fns'
-import type { Opportunity, DealConfidence } from './types'
+import type { Opportunity, DealConfidence, EngagementNature } from './types'
 
 // Opportunity extended with partnership_details fields needed for analytics
 export type OpportunityWithDetails = Opportunity & {
@@ -12,7 +12,19 @@ export type OpportunityWithDetails = Opportunity & {
     logo_url: string | null
     confidence: DealConfidence | null
     next_action_date: string | null
+    engagement_nature?: EngagementNature | null
+    list_value?: number | string | null   // NUMERIC arrives as a string
   } | null
+}
+
+// Portfolio and pro-bono engagements are real work but not sales outcomes.
+// Counting them would put win rate at 80% off four $0 deals and drag average
+// deal size to nothing, so they are excluded from the commercial metrics and
+// reported separately as contributed value.
+const NON_COMMERCIAL: ReadonlySet<string> = new Set(['portfolio', 'pro_bono'])
+
+function isCommercial(o: OpportunityWithDetails): boolean {
+  return !NON_COMMERCIAL.has(o.partnership_details?.engagement_nature ?? 'paid')
 }
 
 // ── Stage definitions ─────────────────────────────────────────
@@ -53,6 +65,8 @@ export interface PartnershipMetrics {
   totalPipelineValue: number
   stages: PartnershipStageStat[]
   winRate: number | null
+  contributedValue: number
+  contributedCount: number
   avgDealAgeDays: number | null
   weightedPipeline: number
   dealsAtRisk: number
@@ -65,7 +79,16 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
   const partnerships  = opps.filter(o => o.type_id === 'partnership')
   const active        = partnerships.filter(o => !CLOSED_PARTNERSHIP_STATUSES.has(o.status))
   const activeCount   = active.length
-  const totalPipelineValue = active.reduce((s, o) => s + (o.estimated_value ?? 0), 0)
+  const totalPipelineValue = active.filter(isCommercial).reduce((s, o) => s + (o.estimated_value ?? 0), 0)
+
+  // What the portfolio and pro-bono work would have been worth at standard rate.
+  const contributedValue = partnerships
+    .filter(o => !isCommercial(o))
+    .reduce((sum, o) => {
+      const listed = o.partnership_details?.list_value
+      return sum + (listed != null ? Number(listed) : (o.estimated_value ?? 0))
+    }, 0)
+  const contributedCount = partnerships.filter(o => !isCommercial(o)).length
 
   const total = partnerships.length
   const stages: PartnershipStageStat[] = PARTNERSHIP_STAGES.map(stage => {
@@ -80,8 +103,9 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
     return { id: stage.id, label: stage.label, count, totalValue, weightedValue, pct: total > 0 ? Math.round((count / total) * 100) : 0 }
   })
 
-  const closedWon   = partnerships.filter(o => o.status === 'partnership_closed_won').length
-  const closedLost  = partnerships.filter(o => o.status === 'partnership_closed_lost').length
+  const commercial  = partnerships.filter(isCommercial)
+  const closedWon   = commercial.filter(o => o.status === 'partnership_closed_won').length
+  const closedLost  = commercial.filter(o => o.status === 'partnership_closed_lost').length
   const closedTotal = closedWon + closedLost
   const winRate     = closedTotal > 0 ? Math.round((closedWon / closedTotal) * 100) : null
 
@@ -107,7 +131,8 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
     confidenceCounts[conf]++
   }
 
-  return { activeCount, totalPipelineValue, stages, winRate, avgDealAgeDays, weightedPipeline, dealsAtRisk, confidenceCounts }
+  return { activeCount, totalPipelineValue, stages, winRate, avgDealAgeDays,
+           weightedPipeline, dealsAtRisk, confidenceCounts, contributedValue, contributedCount }
 }
 
 // ── Shared utility ────────────────────────────────────────────

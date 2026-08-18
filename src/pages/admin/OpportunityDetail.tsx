@@ -20,6 +20,15 @@ import type {
 import { toTelHref } from '../../lib/phone'
 import { parseLocalDate } from '../../lib/dates'
 
+// How the engagement is priced (ADR: engagement_nature). Non-paid work is real
+// work but is kept out of the sales metrics — see src/lib/analytics.ts.
+const ENGAGEMENT_LABELS: Record<string, string> = {
+  paid:         'Paid — full rate',
+  reduced_rate: 'Reduced rate',
+  portfolio:    'Portfolio — nominal fee',
+  pro_bono:     'Pro bono',
+}
+
 // ── Pipeline config ───────────────────────────────────────────
 
 // ADR-006 — new 7-stage sales pipeline
@@ -704,6 +713,8 @@ export function OpportunityDetail() {
               <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(parseLocalDate(opportunity.agreement_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(parseLocalDate(opportunity.renewal_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Est. value"    value={opportunity.estimated_value != null ? `$${opportunity.estimated_value.toLocaleString()}` : null} />
+              <DetailRow label="Engagement"    value={ENGAGEMENT_LABELS[partnershipDetails?.engagement_nature ?? 'paid'] ?? null} />
+              <DetailRow label="At std. rate"  value={partnershipDetails?.list_value != null ? `$${Number(partnershipDetails.list_value).toLocaleString()}` : null} />
               <DetailRow label="Alignment"     value={opportunity.alignment_notes} />
               {partnershipDetails?.org_size && (
                 <DetailRow label="Org size" value={partnershipDetails.org_size} />

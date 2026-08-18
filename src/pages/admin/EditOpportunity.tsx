@@ -26,7 +26,7 @@ const partnershipSchema = baseSchema.extend({
   primary_contact:  z.string().optional(),
   contact_email:    z.string().email('Enter a valid email').or(z.literal('')).optional(),
   contact_phone:    z.string().optional(),
-  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other']).or(z.literal('')).optional(),
+  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'strategic_alliance', 'other']).or(z.literal('')).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
   // partnership_details fields
@@ -36,6 +36,8 @@ const partnershipSchema = baseSchema.extend({
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
+  engagement_nature: z.enum(['paid', 'reduced_rate', 'portfolio', 'pro_bono']).optional(),
+  list_value:        z.string().optional(),
 })
 
 type AnyOppForm = z.infer<typeof partnershipSchema>
@@ -160,6 +162,8 @@ export function EditOpportunity() {
       next_action:      pd?.next_action ?? '',
       next_action_date: toDateInput(pd?.next_action_date),
       logo_url:         pd?.logo_url ?? '',
+      engagement_nature: pd?.engagement_nature ?? 'paid',
+      list_value:        pd?.list_value != null ? String(pd.list_value) : '',
     }
   }
 
@@ -206,6 +210,8 @@ export function EditOpportunity() {
         next_action:      v.next_action || null,
         next_action_date: v.next_action_date ? new Date(v.next_action_date).toISOString() : null,
         logo_url:         v.logo_url || null,
+        engagement_nature: v.engagement_nature || 'paid',
+        list_value:        v.list_value ? Number(v.list_value) : null,
         updated_at:       new Date().toISOString(),
       }
       await supabase
@@ -311,6 +317,20 @@ export function EditOpportunity() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label>Contact phone</Label><Input {...register('contact_phone' as never)} placeholder="(555) 000-0000" /></div>
                 <div><Label>Estimated value ($)</Label><Input {...register('estimated_value' as never)} type="number" min="0" placeholder="0" /></div>
+                <div>
+                  <Label>Engagement nature</Label>
+                  <Select {...register('engagement_nature' as never)}>
+                    <option value="paid">Paid — full rate</option>
+                    <option value="reduced_rate">Reduced rate — discounted</option>
+                    <option value="portfolio">Portfolio — nominal fee</option>
+                    <option value="pro_bono">Pro bono — no fee</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Value at standard rate ($)</Label>
+                  <Input {...register('list_value' as never)} type="number" min="0" placeholder="0" />
+                  <p className="mt-1 text-xs text-gray-400">Before any discount. For pro-bono and portfolio work this is the contributed value.</p>
+                </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
