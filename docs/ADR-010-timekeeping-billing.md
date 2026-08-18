@@ -1,204 +1,267 @@
-# ADR-010: Timekeeping & Billing
+# ADR-010: Timekeeping, Billing & Invoicing
 
 **Project:** Wright Adventures — Opportunity Management Platform (OMP)
 **Author:** Benjamin Wright, Director of Technology & Innovation
-**Date:** 2026-08-11
+**Date:** 2026-08-18 (rewritten from the 2026-08-11 draft)
 **Status:** Proposed
-**Depends on:** ADR-006 (Partnership Pipeline)
-**Companion:** ADR-009 (OMP Split) — independent; may run in parallel
+**Depends on:** ADR-006 (Partnership Pipeline), engagement_nature migration (2026-08-18)
+**Driving requirement:** the Colorado Mountain Club SOW, if signed
 
 ---
 
 ## Context
 
-ADR-009 narrows the WA platform to partnership/business-development tracking. That leaves a
-gap on the other side of the deal: once a partnership reaches `partnership_closed_won`, the
-platform has nothing to say about delivering or billing the work.
+The OMP tracks opportunities up to the point of winning them and then stops. There is no way
+to log an hour, draw down a retainer, or produce an invoice.
 
-WA is a consultancy. The work it sells is hours, and those hours are billed against rates that
-vary by person, client, and engagement — plus retainers drawn down over time and expenses
-passed through. Today none of that is tracked in the platform.
+That becomes urgent rather than theoretical if CMC signs. Its SOW starts **August 24**, is
+**invoiced in advance**, and the first invoice is **due on signature** — so the very first
+obligation of the engagement is one this system cannot meet.
 
-This ADR adds a full billing loop: **time → rates → invoices → payments**, with retainers and
-expenses.
+### The CMC terms are the specification
 
-### Why a `clients` table rather than reusing `opportunities`
+This ADR is scoped by one real contract rather than by a general theory of billing. Every
+mechanic below comes from the signed-form SOW:
 
-A partnership `opportunity` is a *deal* — it has a pipeline stage, a confidence score, and it
-ends. A client is a *relationship* — it has billing details, payment terms, rates, and an
-accounts-receivable balance that outlives any single deal.
+| Term | Value |
+|---|---|
+| Fee | $6,000/month · **$24,000 total** |
+| Rate | **$150 partner rate** against a $170 standard rate |
+| Commitment | **40 hours/month, 160 total** |
+| Banking | **"Hours bank across the term and may be drawn ahead, to a ceiling of 60 in any month"** |
+| Invoicing | **Monthly retainer, invoiced in advance.** First due on signature; subsequent net 15 |
+| Overage | Beyond 160, at $150/hr, **on written approval before the work is performed** |
+| Term | Four months from signature, continuing month to month if both parties want it |
+| Ending early | **"Any retainer paid for hours not worked is refunded"** |
+| Checkpoints | Written progress review at end of **Month 1 and Month 2** — hours used, deliverables completed |
 
-Conflating them would mean a closed-won opportunity can never close, because invoicing against
-it keeps it alive. So: a new `clients` table, with an optional FK back to the opportunity that
-won it, and a **"Convert to client"** action on closed-won partnerships.
+Four of those break the naive model in the earlier draft of this ADR:
+
+1. **Banked hours across a term, not per month.** A month where 25 hours are used does not
+   forfeit 15; they remain available. The balance is a term-level ledger.
+2. **A monthly ceiling of 60 that is a constraint, not an entitlement.** It caps draw-ahead. It
+   is a warning condition, not a billing line.
+3. **Invoiced in advance.** Invoices are not generated *from* time entries. The money precedes
+   the work, and the time entries draw against it.
+4. **Refund on early termination.** Requires hours-purchased and hours-worked to be
+   independently known at any moment.
+
+A time-and-materials model — collect entries, sum them, invoice in arrears — models none of
+this. BBSP, by contrast, was a flat fee ($6,525 against a $10,875 list, a 40% discount) with
+no hours drawn at all. The schema must hold both without pretending they are the same.
 
 ---
 
 ## Decision
 
-Nine new tables in WA's Supabase project, four new routes, and a client-side PDF pipeline.
+### Engagements, not projects
+
+A won partnership becomes an **engagement**: the unit that has a fee, a term, a rate, and
+possibly a retainer. Attached to the `opportunities` row that won it, so the pipeline history
+survives, and separate from it, because an opportunity closes and an engagement runs.
+
+`billing_model` is the discriminator, and it decides which mechanics apply:
+
+- **`retainer`** — CMC. Periodic fee paid in advance, hours drawn against a term balance.
+- **`fixed_fee`** — BBSP. One agreed sum, optionally invoiced in stages. Hours logged for
+  margin analysis but not billed.
+- **`hourly`** — billed in arrears from approved time entries.
+- **`non_billable`** — pro-bono and portfolio work (Kady, River Sisters, Mo'Betta). Time is
+  logged so contributed value is measured rather than estimated, and never invoiced.
+
+That last one matters: `engagement_nature` already distinguishes pro-bono work for reporting,
+and `list_value` currently holds a **hand-estimated** FMV. Logging hours against non-billable
+engagements would let contributed value be computed from actuals instead.
+
+### The retainer is a ledger, not a balance field
+
+A single `hours_remaining` column would be wrong the first time anything is corrected or
+refunded. Instead, an append-only ledger of entitlements and draws:
+
+- **Credit** — a retainer period begins, granting hours (CMC: 40/month, ×4 = 160)
+- **Debit** — a billable time entry draws hours
+- **Adjustment** — a written change order, a correction, a refund on termination
+
+Balance is the sum. Every number in a checkpoint report or a refund calculation is then
+derivable and auditable, and a correction is a new row rather than a mutated total.
+
+**Draw-ahead falls out for free.** Hours are granted per period but drawn against the term, so
+using 55 in month one simply leaves less later. The 60/hour monthly ceiling is enforced as a
+check at entry time — a warning surfaced in the UI, and a hard stop only if the engagement is
+configured to enforce it.
+
+### Invoices are documents, not derived views
+
+An invoice, once sent, is a statement of fact. It does not change because a time entry was
+later edited. So invoices carry their own immutable line items and a snapshot of the rate,
+and a retainer invoice is generated **from the schedule**, not from time.
+
+Corrections are made by **voiding and reissuing**, never by editing a sent invoice.
 
 ### Schema
 
-**`clients`** — billable organizations
-`id`, `name`, `legal_name`, `billing_email`, `billing_address`, `tax_id`,
-`opportunity_id` (nullable → `opportunities`), `payment_terms` (`net_15|net_30|net_60|due_on_receipt`),
-`status` (`active|inactive`), `notes`, `created_by`, `created_at`, `updated_at`
-
-**`projects`** — engagements within a client
-`id`, `client_id`, `name`, `code`, `billing_type` (`hourly|fixed_fee|retainer`),
-`fixed_fee_amount`, `budget_hours`, `budget_amount`, `start_date`, `end_date`,
-`status` (`active|paused|complete`), `opportunity_id` (nullable)
-
-**`rates`** — resolved most-specific-first
-`id`, `user_id` (nullable), `client_id` (nullable), `project_id` (nullable),
-`hourly_rate`, `effective_from`, `effective_to` (nullable), `created_by`
-
-Resolution order, first match wins:
-
 ```
-user + project  →  project  →  user + client  →  client  →  user  →  global (all NULL)
+engagements
+  id, opportunity_id → opportunities, client_name, billing_model,
+  standard_rate, contract_rate,            -- CMC: 170 / 150, for discount reporting
+  total_fee, currency,
+  term_start, term_end, term_months,
+  committed_hours,                          -- 160
+  hours_per_period, max_hours_per_period,   -- 40 / 60
+  payment_terms,                            -- 'due_on_signature' | 'net_15' | 'net_30'
+  invoice_in_advance boolean,
+  status                                    -- draft|active|paused|complete|terminated
+
+retainer_periods                            -- one per month for CMC
+  id, engagement_id, period_start, period_end,
+  hours_granted, fee, invoice_id → invoices, status
+
+retainer_ledger                             -- append-only
+  id, engagement_id, entry_type,            -- credit|debit|adjustment
+  hours numeric(8,2), time_entry_id, retainer_period_id,
+  note, created_by, created_at
+
+time_entries
+  id, engagement_id, user_id, entry_date,
+  minutes integer,                          -- integer minutes, never decimal hours
+  description, billable boolean,
+  rate_applied numeric(10,2),               -- snapshot when invoiced
+  invoice_id, locked boolean
+
+invoices
+  id, engagement_id, invoice_number unique,  -- WA-2026-0001, gap-free via sequence
+  issue_date, due_date, period_start, period_end,
+  subtotal, discount, tax, total, amount_paid,
+  status,                                    -- draft|sent|partial|paid|overdue|void
+  sent_at, paid_at, pdf_storage_path
+
+invoice_line_items
+  id, invoice_id, line_type,                 -- retainer|time|expense|fixed_fee|adjustment
+  description, quantity, unit_rate, amount, sort_order
+
+payments
+  id, invoice_id, amount, payment_date, method, reference
 ```
 
-…filtered to rows where `entry_date` falls within `[effective_from, effective_to)`. This is
-the single trickiest piece of logic in the ADR and belongs in one pure, unit-tested function —
-`src/lib/billing/resolveRate.ts` — following the `api/discovery/state-utils.ts` precedent of
-keeping testable logic free of Supabase and network calls.
+**Money is `NUMERIC`; time is integer minutes.** `0.1 + 0.2 !== 0.3` is not an acceptable
+failure mode on a billable hour. And **Supabase JS returns NUMERIC as a string** — the
+`proximity_bonus` lesson from ADR-005 and `list_value` from this month. One `toMoney()` helper,
+not scattered `Number()` calls.
 
-**`time_entries`**
-`id`, `user_id`, `client_id`, `project_id` (nullable), `task_id` (nullable → `tasks`),
-`entry_date`, `minutes` (INTEGER), `description`, `billable` (BOOLEAN),
-`rate_applied` (NUMERIC, NULL until invoiced), `invoice_id` (nullable), `created_at`, `updated_at`
-
-**`expenses`**
-`id`, `client_id`, `project_id` (nullable), `user_id`, `expense_date`, `amount`,
-`category`, `description`, `billable`, `markup_pct`, `receipt_storage_path` (nullable),
-`invoice_id` (nullable)
-
-**`retainers`**
-`id`, `client_id`, `project_id` (nullable), `amount`, `period_start`, `period_end`,
-`rollover_unused` (BOOLEAN), `status` (`active|exhausted|expired`), `notes`
-
-**`invoices`**
-`id`, `client_id`, `invoice_number` (UNIQUE), `period_start`, `period_end`, `issue_date`,
-`due_date`, `subtotal`, `discount`, `tax_rate`, `tax_amount`, `total`, `amount_paid`,
-`status` (`draft|sent|partial|paid|overdue|void`), `notes`, `terms`, `sent_at`, `paid_at`,
-`pdf_storage_path`, `created_by`
-
-**`invoice_line_items`**
-`id`, `invoice_id`, `line_type` (`time|expense|fixed_fee|retainer_credit|adjustment`),
-`description`, `quantity`, `unit_rate`, `amount`, `sort_order`,
-`time_entry_id` (nullable), `expense_id` (nullable)
-
-**`payments`**
-`id`, `invoice_id`, `amount`, `payment_date`, `method` (`check|ach|card|other`),
-`reference`, `notes`, `recorded_by`
-
-### Money and time representation
-
-- **All money is `NUMERIC(12,2)`.** Never float.
-- **`@supabase/supabase-js` returns NUMERIC as a string.** This bit us in ADR-005 with
-  `proximity_bonus`; the fix there was `Number()` at every use site. Do the same here, and
-  prefer a single `toMoney()` helper over scattered coercion — with nine tables of money
-  columns, ad-hoc `Number()` calls will be missed.
-- **Time is stored as INTEGER minutes**, not decimal hours. `0.1 + 0.2 !== 0.3` is not an
-  acceptable failure mode on a billable hour. Format to `h:mm` at the UI edge only.
-
-### Invoice numbering
-
-Sequential and gap-free, formatted `WA-2026-0001`. Use a Postgres **sequence** plus a
-generation function — not `MAX(invoice_number) + 1`, which races under concurrent inserts and
-silently produces duplicates. The year segment resets the counter annually.
-
-### Immutability
-
-Once an invoice leaves `draft`:
-
-- its `invoice_line_items` become read-only;
-- the `time_entries` and `expenses` it references become read-only (locked via their
-  `invoice_id` being non-NULL);
-- corrections happen by **voiding and reissuing**, never by editing a sent invoice.
-
-Enforce with a `BEFORE UPDATE` trigger, not just UI guards — the service-role key bypasses RLS
-and the API layer is not the only writer.
-
-### Rate snapshotting
-
-`time_entries.rate_applied` is NULL until the entry is invoiced, then written from
-`resolveRate()` at invoice-generation time. Rates change; invoices must not. Never join to
-`rates` when rendering a historical invoice.
+**Invoice numbers come from a Postgres sequence**, not `MAX(...) + 1`, which races and silently
+duplicates.
 
 ---
 
-## Frontend
+## What CMC actually needs on day one
 
-| Route | Purpose |
+The test for Phase 1 is not "is billing complete" but **"could we run the CMC engagement from
+this?"** That is a much smaller system:
+
+1. Record the engagement from the SOW — $150 rate, 160 hours, 4 periods of 40.
+2. Issue invoice #1 on signature, before any work. Mark it sent.
+3. Log hours against it and see the balance move.
+4. Answer, at the Month 1 checkpoint: hours used, hours remaining, on pace or not.
+5. Issue the next invoice on schedule.
+
+Everything else — expenses, payments reconciliation, A/R aging, utilization, multi-user
+approval — is deferrable without blocking the engagement.
+
+### Reporting the retainer
+
+The checkpoint reviews are contractual, so the numbers must be reportable rather than
+assembled by hand:
+
+| Figure | Derivation |
 |---|---|
-| `/admin/time` | Weekly grid + running timer; quick-entry against client/project/task |
-| `/admin/clients` | Client list, detail, rates, retainer balance, A/R summary |
-| `/admin/invoices` | List, builder (select uninvoiced time/expenses → generate), detail |
-| `/admin/reports` | Utilization, realization, A/R aging, retainer burn-down |
+| Hours used this period | Σ debits in period |
+| Against 40 committed / 60 ceiling | flagged when over |
+| Hours used to date | Σ all debits |
+| Hours remaining of 160 | Σ credits − Σ debits |
+| Pace | hours used ÷ term elapsed, projected against 160 |
+| Invoiced to date / worked to date | for the early-termination refund |
+| Effective rate | fee ÷ hours worked — shows when the retainer is being over-delivered |
 
-Nav order in `AdminLayout.tsx`: Time and Invoices after My Tasks; Clients near Team.
+That last one is a genuine early-warning: at 40 hours the effective rate is $150, at 55 it is
+$109. Phase 1 of the CMC SOW estimates **55 hours**, so this fires in month one by design.
 
-**PDF generation:** `@react-pdf/renderer`, client-side, mirroring how ADR-004 does DOCX export
-with the `docx` package rather than adding a serverless rendering path. On **send**, the
-generated PDF is uploaded to a private `invoices` Storage bucket and its path recorded — so a
-reissued invoice can never silently change what the client already received.
+### The CMC engagement has zero slack — and the reporting has to say so
 
-**Data fetching:** TanStack Query throughout, per project convention. Forms use react-hook-form
-+ zod.
+Running the SOW's own phase estimates against its own commitment:
 
----
+| Phase | Estimated | vs 40 committed/month |
+|---|---|---|
+| 1 · Extract and assess | 55 hrs | **+15 — draws ahead** |
+| 2 · Repair the data at its source | 50 hrs | **+10 — draws ahead** |
+| 3 · Move onto the new platform | 30 hrs | −10 |
+| 4 · Onboard, document, train | 25 hrs | −15 |
+| **Total** | **160 hrs** | **exactly the 160 committed — zero buffer** |
 
-## Access Control
+Two things follow, and neither is a software problem:
 
-| Role | Capability |
-|---|---|
-| `admin` | Everything, including rates, voiding invoices, recording payments |
-| `manager` | Full time/expense entry; create and send invoices; read rates |
-| `member` | Own time and expenses only; no rate or invoice visibility |
-| `viewer` | No billing access at all |
+- **The plan consumes the entire retainer.** Any overrun in Phase 1 comes directly out of
+  Phase 4, which is the training and documentation handoff — the part that determines whether
+  CMC can actually run the thing afterwards.
+- **It is front-loaded past the monthly commitment from day one.** Month 1 at 55 hours is 92%
+  of the 60-hour ceiling, and the effective rate that month is **$109/hr against a $150
+  contract rate** — $100/hr if it reaches the ceiling.
 
-Rates are compensation-adjacent data. RLS on `rates` must be **deny-by-default for `member`**,
-including via joins — a `member` reading their own `time_entries` must not be able to infer
-another person's rate through `rate_applied`.
+This is exactly why banked hours, the ceiling check, and effective rate are all **Phase 1**
+requirements rather than later niceties: the very first month of the engagement exercises all
+three. A system that only reported "hours logged" would show month one as healthy.
 
 ---
 
 ## Implementation Sequence
 
-1. **Foundation** — `clients`, `projects`, `rates`, `resolveRate.ts` + unit tests, "Convert to
-   client" on closed-won partnerships.
-2. **Time capture** — `time_entries`, `/admin/time`, weekly grid, timer, utilization report.
-3. **Expenses** — `expenses`, receipt upload to Storage, expense report.
-4. **Invoicing** — `invoices`, `invoice_line_items`, numbering sequence, builder UI, PDF,
-   immutability triggers.
-5. **Payments & retainers** — `payments`, `retainers`, A/R aging, retainer burn-down.
+**Phase 1 — Run CMC.** `engagements`, `retainer_periods`, `retainer_ledger`, `time_entries`,
+`invoices`, `invoice_line_items`. Time entry, retainer status, invoice generation from
+schedule, PDF. This is the whole blocking scope.
 
-Steps 1–2 are independently useful: time tracking with reporting has value before a single
-invoice exists. Ship them before committing to the rest.
+**Phase 2 — Get paid.** `payments`, invoice status lifecycle, overdue flagging, A/R.
+
+**Phase 3 — The rest of the book.** Fixed-fee staged invoicing (BBSP), non-billable time on
+pro-bono engagements feeding contributed value from actuals, expenses.
+
+**Phase 4 — Analysis.** Utilization, realization, effective-rate trends, margin by engagement.
+
+Phases 1 and 2 are the ones with a date attached.
 
 ---
 
 ## Key Design Decisions
 
-- **`clients` separate from `opportunities`** so a won deal can close while the relationship
-  continues.
-- **Minutes as integers, money as NUMERIC** — no floating-point money or time, anywhere.
-- **Rate resolution as one pure tested function** rather than a query with six `COALESCE`s.
-  It is the logic most likely to be wrong and most expensive to get wrong.
-- **Snapshot rates onto invoiced entries** so historical invoices never move.
-- **Void-and-reissue over edit** — the audit trail is the product in billing.
-- **Client-side PDF** to match the ADR-004 DOCX precedent and keep serverless functions thin.
+- **Scoped by a real contract, not a general model.** Ambiguity gets resolved by reading the
+  SOW, and the result is testable: the CMC terms either reproduce or they don't.
+- **Ledger over balance field.** Corrections and refunds are rows, not mutations, and every
+  reported number is derivable.
+- **Invoices are immutable once sent.** Void and reissue. The audit trail *is* the product in
+  billing.
+- **Rates snapshot onto invoiced entries.** Rates change; issued invoices must not.
+- **PDF client-side** via `@react-pdf/renderer`, matching the ADR-004 DOCX precedent, with the
+  generated file stored on send so a reissue cannot silently alter what the client received.
+- **Non-billable engagements are first-class**, so contributed value is measured rather than
+  estimated.
+
+---
+
+## Risks
+
+| Risk | Mitigation |
+|---|---|
+| CMC signs before Phase 1 lands | Invoice #1 can be issued manually; the ledger can be backfilled. Time entry is the piece that must not slip, since hours are hard to reconstruct |
+| Draw-ahead exceeds the 60-hour ceiling unnoticed | Enforced at entry, surfaced on the engagement view, not discovered at the checkpoint |
+| Retainer over-delivered (Phase 1 estimates 55 hours against 40 committed) | Effective-rate figure is a Phase 1 requirement, not a Phase 4 nicety |
+| NUMERIC-as-string bugs | Single `toMoney()` helper; this has now bitten twice |
+| Invoice number collision | Postgres sequence, never `MAX + 1` |
 
 ---
 
 ## Out of Scope
 
-- Stripe or any payment collection — payments are *recorded*, not processed
-- Accounting-system sync (QuickBooks, Xero)
-- Multi-currency
-- Payroll, contractor payouts, or profitability by person
-- Client-facing portal for viewing or paying invoices
-- Automated recurring invoices
+- Payment processing. Payments are **recorded**, not collected. No Stripe.
+- Accounting-system sync (QuickBooks, Xero) and multi-currency
+- Payroll, contractor payouts, profitability by person
+- A client-facing portal
+- Automated recurring invoice *sending* — generation is scheduled, sending stays deliberate
+- Time approval workflows; a two-person firm does not need them
