@@ -32,7 +32,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+  // @ai-sdk/anthropic 3.0.47 defaults baseURL to https://api.anthropic.com and
+  // then appends /messages, producing a 404 — the path needs the /v1 prefix.
+  // Verified: default -> "Not Found"; with /v1 -> 200. Without this every
+  // generateText call in the app silently fails.
+  baseURL: 'https://api.anthropic.com/v1',
+})
 
 // ── Helpers ───────────────────────────────────────────────────
 
