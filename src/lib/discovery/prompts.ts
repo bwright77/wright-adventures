@@ -61,6 +61,11 @@ EXTRACT every distinct opportunity. For each one return:
   url              — direct link to the posting if present, else null
 
 RULES
+- EXTRACT, DO NOT FILTER. Your job is to find everything on the page that a
+  consulting firm could conceivably pursue — including full-time employee roles.
+  A separate scoring pass decides what is worth pursuing, and it cannot weigh
+  what you never returned. If the notes above express a preference, treat it as
+  what to prioritize in relevance_rationale, never as permission to omit.
 - Do NOT invent values. Absent means null.
 - Do NOT infer a deadline from a posted date.
 - compensation_raw must be copied, not normalized. Do not convert salary to hourly.
