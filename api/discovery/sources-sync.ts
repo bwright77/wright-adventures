@@ -119,6 +119,101 @@ async function fetchWpRest(url: string): Promise<string> {
   }
 }
 
+/**
+ * Fetch a sitemap, pick the item pages out of it, fetch those, and concatenate.
+ *
+ * For sources whose index is unfetchable but whose detail pages are plain HTML —
+ * Denver's bids (index is a language-selector widget) and Andrew Hudson's
+ * postings (category page shows only a narrow window).
+ *
+ * Cost control is `lastmod`: only entries modified since the last successful
+ * check are fetched, newest first, capped at maxItems. A first run has no
+ * baseline and takes the newest N. Without that, 208 detail fetches plus a Haiku
+ * pass over all of them would run on every cron tick.
+ */
+async function fetchSitemap(
+  sitemapUrl: string,
+  itemPattern: string | null,
+  maxItems: number,
+  since: string | null,
+  deadlineAt: number,
+): Promise<string | null> {
+  const UA = { 'User-Agent': 'WrightAdventuresOMP/1.0 (+https://wrightadventures.org)' }
+
+  async function getXml(url: string): Promise<string> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    try {
+      const res = await fetch(url, { signal: controller.signal, headers: UA })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return await res.text()
+    } finally { clearTimeout(timer) }
+  }
+
+  let xml = await getXml(sitemapUrl)
+
+  // A sitemap index points at further sitemaps. Follow one level, preferring
+  // children whose URL hints at the items we want.
+  if (/<sitemapindex/i.test(xml)) {
+    const children = [...xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/gi)]
+      .map(m => m[1].trim())
+    const preferred = itemPattern
+      ? children.filter(u => u.includes(itemPattern.replace(/\//g, '')) || u.includes(itemPattern))
+      : []
+    const target = preferred[0] ?? children[0]
+    if (!target) throw new Error('Sitemap index contained no child sitemaps')
+    xml = await getXml(target)
+  }
+
+  const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/gi)].map(block => {
+    const loc     = /<loc>([^<]+)<\/loc>/i.exec(block[1])?.[1]?.trim() ?? ''
+    const lastmod = /<lastmod>([^<]+)<\/lastmod>/i.exec(block[1])?.[1]?.trim() ?? null
+    return { loc, lastmod }
+  }).filter(e => e.loc && (!itemPattern || e.loc.includes(itemPattern)))
+
+  if (entries.length === 0) {
+    throw new Error(`Sitemap had no entries matching ${itemPattern ?? '(no pattern)'}`)
+  }
+
+  const sinceMs = since ? Date.parse(since) : NaN
+  const fresh = Number.isFinite(sinceMs)
+    ? entries.filter(e => !e.lastmod || Date.parse(e.lastmod) > sinceMs)
+    : entries
+
+  // Nothing modified since the last check. Return null rather than a placeholder
+  // string: storing a marker as `last_content_text` would corrupt the baseline
+  // the next diff is computed against.
+  if (fresh.length === 0) return null
+
+  fresh.sort((a, b) => Date.parse(b.lastmod ?? '0') - Date.parse(a.lastmod ?? '0'))
+  const selected = fresh.slice(0, maxItems)
+
+  const parts: string[] = []
+  let chars = 0
+
+  // Small batches: polite to the origin, and fast enough inside the deadline.
+  for (let i = 0; i < selected.length; i += 4) {
+    if (Date.now() > deadlineAt || chars > MAX_PAGE_TEXT_CHARS) break
+    const batch = selected.slice(i, i + 4)
+    const fetched = await Promise.all(batch.map(async e => {
+      try {
+        const html = await getXml(e.loc)
+        const text = extractPageText(html)
+        if (text.length < 200) return null   // a shell, not a posting
+        return `--- POSTING ---\nURL: ${e.loc}\nMODIFIED: ${e.lastmod ?? 'unknown'}\n\n${text}`
+      } catch { return null }
+    }))
+    for (const f of fetched) {
+      if (!f) continue
+      parts.push(f)
+      chars += f.length
+    }
+  }
+
+  if (parts.length === 0) throw new Error(`Fetched ${selected.length} item pages, none yielded usable text`)
+  return parts.join('\n\n')
+}
+
 /** Coerce a possibly-absent date string to YYYY-MM-DD or null. */
 function normalizeDate(d: string | null | undefined): string | null {
   if (!d) return null
@@ -326,9 +421,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       try {
-        const pageText = source.fetch_mode === 'wp_rest'
-          ? await fetchWpRest(source.url)
-          : extractPageText(await fetchPage(source.url))
+        const fetched: string | null =
+          source.fetch_mode === 'wp_rest'  ? await fetchWpRest(source.url)
+        : source.fetch_mode === 'sitemap'  ? await fetchSitemap(
+            source.url,
+            source.item_url_pattern ?? null,
+            source.max_items_per_run ?? 25,
+            // A cleared content hash means "start fresh" — usually because the
+            // URL or fetch_mode just changed. Honouring last_fetched_at then
+            // would filter out every entry as stale and fetch nothing, which is
+            // how switching this source to sitemap mode first presented.
+            source.last_content_hash ? (source.last_fetched_at ?? null) : null,
+            startedAt + SOFT_DEADLINE_MS,
+          )
+        : extractPageText(await fetchPage(source.url))
+
+        // sitemap mode returns null when no entry changed since the last check.
+        if (fetched === null) {
+          await supabase.from('discovery_sources')
+            .update({ last_fetched_at: new Date().toISOString(), last_error: null, consecutive_errors: 0 })
+            .eq('id', source.id)
+          continue
+        }
+
+        const pageText = fetched
         const hash     = computeContentHash(pageText)
 
         // Unchanged since last run — record the check and move on.
