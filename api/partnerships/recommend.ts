@@ -178,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: anthropic('claude-sonnet-4-6'),
       system: ADVISOR_SYSTEM,
       messages: [{ role: 'user', content: prompt }],
-      maxTokens: 1500,
+      maxOutputTokens: 1500,
     })
 
     let parsed: AdvisorRecommendation

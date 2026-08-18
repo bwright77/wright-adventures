@@ -45,6 +45,7 @@ function NotificationPreferencesCard() {
     { key: 'deadline_7d', label: '7-day deadline reminder',  description: 'When a grant deadline is 7 days away' },
     { key: 'deadline_3d', label: '3-day deadline reminder',  description: 'When a grant deadline is 3 days away' },
     { key: 'deadline_1d', label: '1-day deadline reminder',  description: 'When a grant deadline is tomorrow' },
+    { key: 'opportunity_discovered', label: 'Lead discovered', description: 'When the discovery pipeline finds a new opportunity worth reviewing', adminOnly: true },
     { key: 'task_assigned', label: 'Task assigned', description: 'When a task is assigned to you' },
   ]
 

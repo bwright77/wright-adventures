@@ -14,6 +14,7 @@ import { MyTasks } from './pages/admin/MyTasks'
 import { UserManagement } from './pages/admin/UserManagement'
 import { Settings } from './pages/admin/Settings'
 import { Analytics } from './pages/admin/Analytics'
+import { Leads } from './pages/admin/Leads'
 
 function PublicLayout() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="opportunities/new" element={<NewOpportunity />} />
         <Route path="opportunities/:id" element={<OpportunityDetail />} />
         <Route path="opportunities/:id/edit" element={<EditOpportunity />} />
+        <Route path="leads" element={<Leads />} />
         <Route path="tasks" element={<MyTasks />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="team" element={<UserManagement />} />

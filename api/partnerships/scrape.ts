@@ -160,7 +160,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: anthropic('claude-haiku-4-5-20251001'),
       system: SYSTEM,
       messages: [{ role: 'user', content: buildPrompt(pageText) }],
-      maxTokens: 1024,
+      maxOutputTokens: 1024,
     })
 
     try {

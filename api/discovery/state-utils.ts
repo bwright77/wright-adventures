@@ -2,21 +2,31 @@ import { createHash } from 'node:crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // =============================================================================
-// state-utils.ts — Pure utility functions for the state/local grant monitoring
-// pipeline (ADR-005). All functions except isDuplicate are side-effect-free and
+// state-utils.ts — Pure utility functions for the source monitoring pipeline.
+// Built for grant discovery (ADR-005); retained and generalised for Wright
+// Adventures' own opportunity discovery (ADR-011). All functions except isDuplicate are side-effect-free and
 // independently testable. No fetch calls, no Supabase calls in the pure fns.
 // =============================================================================
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /** Opportunity candidate returned by the Haiku extraction stage. */
+/** A candidate lifted off a source page by the Haiku extraction pass (ADR-011). */
 export interface ExtractedOpportunity {
   name:                string
-  funder:              string
+  publisher:           string
   description:         string
+  /** 'rfp' | 'contract' | 'job' — drives the engagement_shape dimension. */
+  source_kind:         string
+  /** Verbatim engagement wording, e.g. "RFP", "Independent Contractor", "Full-time". */
+  engagement_raw:      string | null
   deadline:            string | null
-  amount_range:        string | null
-  eligibility_summary: string
+  posted_date:         string | null
+  /** Verbatim compensation text; formats vary too much to trust a parse alone. */
+  compensation_raw:    string | null
+  location:            string | null
+  remote:              boolean
+  requirements:        string | null
   relevance_rationale: string
   confidence:          'high' | 'medium' | 'low'
   url:                 string | null
@@ -228,11 +238,26 @@ export async function isDuplicate(
   candidate: ExtractedOpportunity,
   supabase: SupabaseClient,
 ): Promise<boolean> {
+  // Exact URL match is the cheapest and most certain signal — a republished
+  // posting keeps its permalink.
+  if (candidate.url) {
+    const { data: byUrl } = await supabase
+      .from('opportunities')
+      .select('id')
+      .eq('type_id', 'lead')
+      .or(`external_url.eq.${candidate.url},source_url.eq.${candidate.url}`)
+      .limit(1)
+    if (byUrl?.length) return true
+  }
+
+  // Then fuzzy name match, scoped to the same publisher. Scoping matters far
+  // more here than it did for grants: "Development Director" is a near-universal
+  // title, so an unscoped name comparison would collapse unrelated postings.
   const { data: existing, error } = await supabase
     .from('opportunities')
-    .select('id, name, funder')
-    .eq('funder', candidate.funder)
-    .eq('type_id', 'grant')
+    .select('id, name, lead_details!inner(publisher)')
+    .eq('type_id', 'lead')
+    .eq('lead_details.publisher', candidate.publisher)
 
   if (error) {
     console.warn('isDuplicate query error:', error.message)
@@ -242,10 +267,10 @@ export async function isDuplicate(
 
   if (!existing?.length) return false
 
-  const candidateNorm = normalizeGrantName(candidate.name)
+  const candidateNorm = normalizeName(candidate.name)
 
   return existing.some(opp => {
-    const similarity = diceCoefficient(normalizeGrantName(opp.name as string), candidateNorm)
+    const similarity = diceCoefficient(normalizeName(opp.name as string), candidateNorm)
     return similarity > 0.75
   })
 }
@@ -261,7 +286,7 @@ export async function isDuplicate(
  *   - Strip non-alphanumeric characters (except spaces)
  *   - Collapse whitespace
  */
-export function normalizeGrantName(name: string): string {
+export function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .replace(/\(fy\d{2,4}(?:-\d{2,4})?\)/g, '') // (FY2026), (FY24-25)

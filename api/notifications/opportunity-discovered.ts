@@ -15,12 +15,11 @@ interface WebhookPayload {
   record: {
     id: string
     name: string
-    funder: string | null
+    source: string | null
     status: string
     auto_discovered: boolean
     ai_match_score: number | null
     ai_match_rationale: string | null
-    amount_max: number | null
     primary_deadline: string | null
   }
   old_record: null
@@ -46,8 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const payload = req.body as WebhookPayload
   const { record } = payload
 
-  // Only notify for auto-discovered opportunities with 'discovered' status
-  if (record.status !== 'grant_discovered' || !record.auto_discovered) {
+  // Only notify for auto-discovered leads sitting in the review queue
+  if (record.status !== 'lead_discovered' || !record.auto_discovered) {
     return res.status(200).json({ ok: true, skipped: 'not_auto_discovered' })
   }
 
@@ -68,22 +67,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Build the email body once (same for all admins)
-  const scoreDisplay = record.ai_match_score != null ? `${record.ai_match_score}/10` : 'Not scored'
-  const amountDisplay = record.amount_max != null ? `$${Number(record.amount_max).toLocaleString()}` : 'Not specified'
-  const subject = `[Wright Adventures OMP] New grant opportunity: ${record.name}`
+  // Fit total is out of 21 (seven rubric dimensions, 0-3 each) — ADR-011.
+  const scoreDisplay = record.ai_match_score != null ? `${record.ai_match_score}/21` : 'Not scored'
+  const subject = `[Wright Adventures OMP] New lead: ${record.name}`
 
   const text = [
-    `The discovery pipeline found a potential match for Confluence Colorado.`,
+    `The discovery pipeline found an opportunity worth a look.`,
     '',
     `Opportunity: ${record.name}`,
-    record.funder ? `Funder: ${record.funder}` : null,
+    record.source ? `Source: ${record.source}` : null,
     `Fit Score: ${scoreDisplay}`,
-    `Max Funding: ${amountDisplay}`,
-    record.primary_deadline ? `Deadline: ${record.primary_deadline}` : null,
+    record.primary_deadline ? `Closes: ${record.primary_deadline}` : null,
     '',
     record.ai_match_rationale ? `Summary: ${record.ai_match_rationale}` : null,
     '',
-    `Review and approve: ${process.env.APP_URL}/admin/opportunities/${record.id}`,
+    `Review: ${process.env.APP_URL}/admin/leads`,
     '',
     `Update your notification preferences: ${process.env.APP_URL}/admin/settings`,
   ].filter(Boolean).join('\n')

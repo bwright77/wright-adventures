@@ -44,7 +44,7 @@ const schema = partnershipSchema
 type FormValues = z.infer<typeof schema>
 
 // ── Default statuses ──────────────────────────────────────────
-const DEFAULT_STATUS: Record<OpportunityTypeId, string> = {
+const DEFAULT_STATUS: Partial<Record<OpportunityTypeId, string>> = {
   partnership: 'partnership_prospecting',
 }
 

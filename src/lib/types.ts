@@ -1,9 +1,10 @@
+import type { FitAssessment } from './discovery/fitRubric'
 // ============================================================
 // OMP — Shared TypeScript types (mirrors DB schema)
 // ============================================================
 
 export type UserRole = 'admin' | 'manager' | 'member' | 'viewer'
-export type OpportunityTypeId = 'partnership'
+export type OpportunityTypeId = 'partnership' | 'lead'
 export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
 export type PartnershipType = 'mou' | 'joint_program' | 'coalition' | 'referral' | 'in_kind' | 'other'
 export type DocType =
@@ -27,21 +28,9 @@ export interface PipelineStatus {
   is_active: boolean
 }
 
-export interface ScoreDetail {
-  scores: {
-    mission_alignment: number
-    geographic_eligibility: number
-    applicant_eligibility: number
-    award_size_fit: number
-    population_alignment: number
-  }
-  weighted_score: number
-  auto_rejected: boolean
-  auto_reject_reason: string | null
-  rationale: string
-  red_flags: string[]
-  recommended_action: 'apply' | 'investigate' | 'skip'
-}
+// `opportunities.ai_score_detail` holds a FitAssessment (ADR-011).
+// The canonical shape lives in src/lib/discovery/fitRubric.ts.
+export type ScoreDetail = FitAssessment
 
 export interface DiscoveryRun {
   id: string
@@ -49,7 +38,7 @@ export interface DiscoveryRun {
   completed_at: string | null
   triggered_by: 'cron' | 'manual'
   status: 'running' | 'cancelling' | 'cancelled' | 'completed' | 'failed'
-  source_type: 'federal' | 'state'
+  source_type: 'sources'
   opportunities_fetched: number
   opportunities_deduplicated: number
   opportunities_detail_fetched: number
@@ -67,14 +56,14 @@ export interface DiscoveryRun {
 export interface DiscoverySource {
   id:                     string
   label:                  string
-  source_type:            string    // 'state' | 'local' | 'foundation' | 'federal_api'
-  funder_name:            string
+  source_type:            string    // 'procurement' | 'job_board' | 'foundation_rfp' | 'sector_board'
+  publisher:              string
   url:                    string
   enabled:                boolean
   check_frequency:        string    // 'daily' | 'weekly' | 'monthly'
   eligibility_notes:      string | null
   relevance_notes:        string | null
-  source_proximity_bonus: number    // NUMERIC(3,1); Supabase JS returns as string, coerce at use site
+  last_content_text:      string | null
   last_content_hash:      string | null
   last_fetched_at:        string | null
   last_changed_at:        string | null
@@ -323,4 +312,27 @@ export interface AdvisorResponse {
   cached: boolean
   error?: string
   message?: string
+}
+
+// ── Opportunity Discovery (ADR-011) ───────────────────────────
+
+// 1:1 extension of `opportunities` for type_id = 'lead'.
+// Mirrors the partnership_details pattern from ADR-006.
+export interface LeadDetails {
+  opportunity_id:   string
+  source_kind:      'rfp' | 'contract' | 'job' | null
+  publisher:        string | null
+  location:         string | null
+  remote:           boolean
+  engagement_type:  string | null
+  compensation_raw: string | null
+  /** NUMERIC — Supabase JS returns a string. Coerce with Number(). */
+  comp_min:         number | null
+  comp_max:         number | null
+  posted_date:      string | null
+  closes_date:      string | null
+  apply_url:        string | null
+  requirements:     string | null
+  created_at:       string
+  updated_at:       string
 }

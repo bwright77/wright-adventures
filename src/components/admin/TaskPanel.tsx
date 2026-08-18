@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Task, OpportunityTypeId } from '../../lib/types'
 
-const TEMPLATE_IDS: Record<OpportunityTypeId, string> = {
+const TEMPLATE_IDS: Partial<Record<OpportunityTypeId, string>> = {
   partnership: '00000000-0000-0000-0000-000000000002',
 }
 
@@ -123,7 +123,11 @@ export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: T
 
   const generateTasks = useMutation({
     mutationFn: async () => {
+      // Leads have no default task template — bail rather than querying with
+      // an undefined template_id.
       const templateId = TEMPLATE_IDS[typeId]
+      if (!templateId) return
+
       const { data: items, error } = await supabase
         .from('task_template_items')
         .select('*')
