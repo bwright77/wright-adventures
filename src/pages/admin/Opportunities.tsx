@@ -19,6 +19,28 @@ type TabFilter = 'all' | OpportunityTypeId
 type ViewMode  = 'table' | 'kanban'
 
 // ── Pipeline definitions ──────────────────────────────────────
+// A discovered lead is a suggestion, not an opportunity. It stays in the Leads
+// review queue until someone acts on it, and only enters the pipeline once it
+// has been marked Pursue. Declined leads never enter, and are not resurfaced.
+const UNPURSUED_LEAD_STATUSES: ReadonlySet<string> = new Set([
+  'lead_discovered',
+  'lead_declined',
+])
+
+// Terminal for a pursued lead. lead_declined is not here: a declined lead never
+// enters the pipeline at all (see UNPURSUED_LEAD_STATUSES).
+const INACTIVE_LEAD_STATUSES = ['lead_won', 'lead_lost']
+
+function isPursued(o: { type_id: string; status: string }): boolean {
+  return o.type_id !== 'lead' || !UNPURSUED_LEAD_STATUSES.has(o.status)
+}
+
+const LEAD_COLS = [
+  { id: 'lead_evaluating', label: 'Evaluating' },
+  { id: 'lead_pursuing',   label: 'Pursuing'   },
+  { id: 'lead_submitted',  label: 'Submitted'  },
+]
+
 const PARTNERSHIP_COLS = [
   { id: 'partnership_prospecting', label: 'Prospecting' },
   { id: 'partnership_qualifying',  label: 'Qualifying'  },
@@ -131,7 +153,9 @@ export function Opportunities() {
     setSearchParams(params, { replace: true })
   }
 
-  const statusOptions = PARTNERSHIP_STATUSES
+  const statusOptions = tab === 'lead'
+    ? [...LEAD_COLS, { id: 'lead_won', label: 'Won' }, { id: 'lead_lost', label: 'Lost' }]
+    : PARTNERSHIP_STATUSES
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
 
@@ -179,12 +203,13 @@ export function Opportunities() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
   })
 
-  const pipelineOpps = opportunities
+  const pipelineOpps = opportunities.filter(isPursued)
 
   const filtered = pipelineOpps.filter(o => {
     if (tab !== 'all' && o.type_id !== tab) return false
     if (statusFilter === 'active') {
       if (INACTIVE_PARTNERSHIP_STATUSES.includes(o.status)) return false
+      if (INACTIVE_LEAD_STATUSES.includes(o.status)) return false
     } else if (statusFilter) {
       if (o.status !== statusFilter) return false
     }
@@ -206,8 +231,9 @@ export function Opportunities() {
       })
     : filtered
 
-  const kanbanCols = PARTNERSHIP_COLS
+  const kanbanCols = tab === 'lead' ? LEAD_COLS : PARTNERSHIP_COLS
   const kanbanOpps = pipelineOpps.filter(o =>
+    (tab === 'all' || o.type_id === tab) &&
     (!search || o.name.toLowerCase().includes(search.toLowerCase()))
   )
 
@@ -231,7 +257,7 @@ export function Opportunities() {
       {/* Filters + view toggle */}
       <div className="flex flex-wrap items-center gap-4 mb-5">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          {(['all', 'partnership'] as TabFilter[]).map(t => (
+          {(['all', 'partnership', 'lead'] as TabFilter[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -239,7 +265,7 @@ export function Opportunities() {
                 tab === t ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-navy'
               }`}
             >
-              {t === 'all' ? 'All' : 'Partnerships'}
+              {t === 'all' ? 'All' : t === 'lead' ? 'Leads' : 'Partnerships'}
             </button>
           ))}
         </div>

@@ -125,8 +125,10 @@ export function Dashboard() {
         />
         <MetricCard
           label="Total"
-          value={opportunities.length}
-          sub="all opportunities"
+          value={opportunities.filter(o =>
+            o.type_id !== 'lead' || !['lead_discovered', 'lead_declined'].includes(o.status)
+          ).length}
+          sub="in the pipeline"
           icon={Briefcase}
           accent="bg-navy"
           to="/admin/opportunities"
