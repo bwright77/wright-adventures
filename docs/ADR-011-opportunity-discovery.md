@@ -124,27 +124,33 @@ relationships change.
 
 ### Threshold
 
-Insert at `total >= 9` — a full band below `pursue_lean` (14), and deliberately low.
+Insert at `total >= 12` — two points below the `pursue_lean` band (14). A 12 with a warm path
+is worth a human glance even when the arithmetic says decline.
 
-Originally 12. The first live run scored 16 candidates from the Colorado Nonprofit Association
-collection and **all 16 fell below 12**, so nothing was stored and nothing explained why. Two
-problems surfaced at once:
+It was briefly lowered to 9, and that was wrong. Recording why, because the mistake is easy to
+repeat:
 
-**The scorer reads conservatively.** Scoring GOBRP — which this rubric records at 19 and
-"pursued, filed" — the pipeline returned **15**. It agreed on `engagement_shape` (2),
-`warm_path` (3 — it found the Ted Rains connection from the org profile), `expansion` and
-`mission_alignment`, and read low on `both_halves` (1 vs 3), `contract_value` (2 vs 3) and
-`portfolio_proof` (2 vs 3). Its stated reasoning on `both_halves` was that "a competent solo
-fundraiser could do the whole thing" — true of the advertised job, false of the engagement WA
-would propose. **The scorer judges the posting as written; the rubric judges the engagement.**
-Until that gap closes, a machine-scored 9 may be a human 13.
+The first live run put all 16 candidates below 12, and scoring GOBRP — recorded here at 19 and
+"pursued, filed" — the pipeline returned 15. The threshold was lowered to compensate for that
+conservatism. The gap was then closed properly in the scoring prompt (see §Calibration below),
+after which GOBRP scored 19 on all seven dimensions. Keeping the lowered bar discounted the
+same four points twice.
 
-**A dropped candidate leaves no trace**, so an empty review queue is indistinguishable from a
-broken pipeline — which is exactly how the first run presented.
+The output confirmed it. At 9, the queue filled with full-time W-2 roles scoring 9–12, every
+one of them `decline`. Reviewing noise costs more attention than the tool saves, and the point
+of the tool is to spend *less* attention on the cold tier.
 
-This is the **storage** bar only. The action bands in `fitRubric.ts` are unchanged at 18/14 and
-still reproduce all six worked examples; a stored 9 displays as `decline`. It is visible rather
-than silently discarded, and declining in the UI is one click.
+**The general lesson: fix a miscalibrated scorer in the scorer, not in the threshold.** A
+threshold compensating for a scoring bug hides the bug and stops compensating correctly the
+moment the bug is fixed.
+
+One real problem the low threshold was also meant to address remains unsolved: **a
+sub-threshold candidate leaves no trace at all**, so an empty review queue is indistinguishable
+from a broken pipeline — which is exactly how the first run presented. That wants recorded
+rejections, not a lower bar.
+
+This is the **storage** bar only. The action bands in `fitRubric.ts` are separate, unchanged at
+18/14, and validated by `scripts/rubric-check.ts`.
 
 ### Calibration (resolved)
 
