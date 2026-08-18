@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './_mailer.js'
+import { buildLeadEmailHtml, buildLeadEmailText } from './_leadEmail.js'
 
 // ── Supabase (service role — server-side only) ────────────────
 const supabase = createClient(
@@ -20,6 +21,7 @@ interface WebhookPayload {
     auto_discovered: boolean
     ai_match_score: number | null
     ai_match_rationale: string | null
+    ai_score_detail: { action?: string } | null
     primary_deadline: string | null
   }
   old_record: null
@@ -66,25 +68,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     errors: [] as string[],
   }
 
-  // Build the email body once (same for all admins)
-  // Fit total is out of 21 (seven rubric dimensions, 0-3 each) — ADR-011.
-  const scoreDisplay = record.ai_match_score != null ? `${record.ai_match_score}/21` : 'Not scored'
-  const subject = `[Wright Adventures OMP] New lead: ${record.name}`
+  // The hiring organization lives in lead_details.publisher, not on the
+  // opportunities row this webhook fires from — and sources-sync writes it a
+  // moment AFTER the insert, so a single read can lose the race. Retry briefly
+  // rather than send an email that cannot say who is hiring.
+  let details: { publisher: string | null; engagement_type: string | null;
+                 compensation_raw: string | null; location: string | null;
+                 closes_date: string | null; apply_url: string | null } | null = null
 
-  const text = [
-    `The discovery pipeline found an opportunity worth a look.`,
-    '',
-    `Opportunity: ${record.name}`,
-    record.source ? `Source: ${record.source}` : null,
-    `Fit Score: ${scoreDisplay}`,
-    record.primary_deadline ? `Closes: ${record.primary_deadline}` : null,
-    '',
-    record.ai_match_rationale ? `Summary: ${record.ai_match_rationale}` : null,
-    '',
-    `Review: ${process.env.APP_URL}/admin/leads`,
-    '',
-    `Update your notification preferences: ${process.env.APP_URL}/admin/settings`,
-  ].filter(Boolean).join('\n')
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { data } = await supabase
+      .from('lead_details')
+      .select('publisher, engagement_type, compensation_raw, location, closes_date, apply_url')
+      .eq('opportunity_id', record.id)
+      .maybeSingle()
+    if (data?.publisher) { details = data; break }
+    details = data ?? details
+    await new Promise(r => setTimeout(r, 400))
+  }
+
+  const fit = record.ai_score_detail
+
+  const emailInput = {
+    role:           record.name,
+    employer:       details?.publisher ?? null,
+    score:          record.ai_match_score ?? null,
+    action:         fit?.action ?? null,
+    engagementType: details?.engagement_type ?? null,
+    compensation:   details?.compensation_raw ?? null,
+    location:       details?.location ?? null,
+    closes:         details?.closes_date ?? record.primary_deadline ?? null,
+    foundVia:       record.source ?? null,
+    rationale:      record.ai_match_rationale ?? null,
+    postingUrl:     details?.apply_url ?? null,
+    appUrl:         process.env.APP_URL ?? 'https://wrightadventures.org',
+  }
+
+  // Lead with the organization: "who is hiring" is the first thing worth knowing.
+  const subject = `[Wright Adventures OMP] New lead — ${emailInput.employer ?? 'Unknown org'}: ${record.name}`
+  const text = buildLeadEmailText(emailInput)
+  const html = buildLeadEmailHtml(emailInput)
 
   // Send to each admin who hasn't opted out
   for (const adminProfile of adminProfiles) {
@@ -109,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let errorMessage: string | undefined
 
     try {
-      await sendEmail(admin.email, subject, text)
+      await sendEmail(admin.email, subject, text, { html })
       success = true
       results.sent++
     } catch (err) {

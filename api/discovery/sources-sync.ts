@@ -107,7 +107,10 @@ async function fetchWpRest(url: string): Promise<string> {
     return items.map(it => {
       const title = it?.title?.rendered ?? it?.slug ?? '(untitled)'
       const body  = extractPageText(it?.content?.rendered ?? '')
-      const link  = it?.link ?? ''
+      // A headless WordPress returns links on its own API host
+      // (api.example.org/...), which is not where a human should be sent.
+      // Drop the leading `api.` so the URL points at the public site.
+      const link  = String(it?.link ?? '').replace(/^(https?:\/\/)api\./, '$1')
       const date  = it?.date ?? ''
       return `--- POSTING ---\nTITLE: ${title}\nURL: ${link}\nPOSTED: ${date}\n\n${body}`
     }).join('\n\n')

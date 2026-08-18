@@ -15,11 +15,17 @@ function createTransporter() {
   })
 }
 
+/**
+ * `text` is always required and is what plain-text clients receive. Pass `html`
+ * for a richer version; nodemailer sends both as a multipart/alternative so the
+ * client picks. Never send html without text — some clients, and most
+ * accessibility tooling, read the plain part.
+ */
 export async function sendEmail(
   to: string,
   subject: string,
   text: string,
-  options?: { replyTo?: string },
+  options?: { replyTo?: string; html?: string },
 ): Promise<void> {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     throw new Error('SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS required)')
@@ -33,5 +39,6 @@ export async function sendEmail(
     to,
     subject,
     text,
+    ...(options?.html ? { html: options.html } : {}),
   })
 }
