@@ -118,6 +118,14 @@ ALTER TABLE discovery_sources RENAME COLUMN funder_name TO publisher;
 ALTER TABLE discovery_sources DROP COLUMN IF EXISTS source_proximity_bonus;
 ALTER TABLE discovery_sources ALTER COLUMN source_type SET DEFAULT 'procurement';
 
+-- The ADR-005 migration declared `url TEXT NOT NULL UNIQUE`, but the deployed
+-- schema has no such constraint — that migration was applied by hand rather than
+-- through the CLI, and the constraint did not survive. Without it the seed's
+-- ON CONFLICT (url) fails with SQLSTATE 42P10. Establish it explicitly; the
+-- decommission migration emptied this table, so there is nothing to violate it.
+ALTER TABLE discovery_sources DROP CONSTRAINT IF EXISTS discovery_sources_url_key;
+ALTER TABLE discovery_sources ADD  CONSTRAINT discovery_sources_url_key UNIQUE (url);
+
 COMMENT ON COLUMN discovery_sources.source_type IS
   '''procurement'' | ''job_board'' | ''foundation_rfp'' | ''sector_board'' (ADR-011)';
 COMMENT ON COLUMN discovery_sources.publisher IS

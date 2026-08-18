@@ -42,12 +42,21 @@ DROP TABLE IF EXISTS ai_messages     CASCADE;
 DROP TABLE IF EXISTS ai_conversations CASCADE;
 
 -- -----------------------------------------------------------------------------
--- 3. Board minutes (ADR-004), plus its private transcript bucket.
+-- 3. Board minutes (ADR-004).
+--
+--    The 'board-meeting-transcripts' bucket is NOT dropped here. Supabase blocks
+--    direct DML against storage.objects / storage.buckets:
+--      ERROR: Direct deletion from storage tables is not allowed.
+--             Use the Storage API instead. (SQLSTATE 42501)
+--    Because this migration runs in a transaction, attempting it rolls back the
+--    entire decommission. The bucket is removed via the Storage API instead —
+--    see scripts/drop-board-transcripts-bucket.mjs.
+--
+--    The bucket's RLS policies on storage.objects reference bucket_id by string
+--    and become inert once the bucket is gone; they are left in place rather
+--    than risk another whole-migration rollback on a storage-schema DDL grant.
 -- -----------------------------------------------------------------------------
 DROP TABLE IF EXISTS board_meetings CASCADE;
-
-DELETE FROM storage.objects WHERE bucket_id = 'board-meeting-transcripts';
-DELETE FROM storage.buckets WHERE id        = 'board-meeting-transcripts';
 
 -- -----------------------------------------------------------------------------
 -- 4. Federal grants.gov query set (ADR-002). Grant-specific; the state/local
