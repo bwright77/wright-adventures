@@ -22,10 +22,25 @@ const AUTO_DISABLE_AFTER  = 3
 const FETCH_TIMEOUT_MS    = 15_000
 const SOFT_DEADLINE_MS    = 250_000
 
-// Insert threshold. Deliberately below the pursue_lean band (14): a 12 with a
-// warm path is worth a human glance even when the arithmetic says decline, and
-// the review queue is cheap. See ADR-011 §Threshold.
-const SCORE_THRESHOLD = 12
+// Insert threshold — a full band below pursue_lean (14).
+//
+// Lowered from 12 after the first live run, where all 16 candidates fell below
+// 12 and vanished without a record. Two reasons to sit this low:
+//
+//   1. The scorer reads conservatively. Scoring GOBRP — which the rubric records
+//      at 19 and "pursued, won" — the pipeline returned 15, agreeing on
+//      engagement_shape, warm_path, expansion and mission_alignment but reading
+//      low on both_halves, contract_value and portfolio_proof. It judges the
+//      posting as written rather than the engagement WA would shape from it.
+//      Until that gap closes, a stored 9 may be a real 13.
+//   2. A dropped candidate leaves no trace, so an empty queue is
+//      indistinguishable from a broken pipeline. Storing more makes the
+//      pipeline observable, and declining in the UI is one click.
+//
+// This is the STORAGE bar only. The action bands in fitRubric.ts are unchanged
+// and still reproduce all six worked examples — a stored 9 shows as "decline",
+// it is simply visible rather than silently discarded. See ADR-011 §Threshold.
+const SCORE_THRESHOLD = 9
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

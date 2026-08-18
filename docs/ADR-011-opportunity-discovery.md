@@ -124,9 +124,52 @@ relationships change.
 
 ### Threshold
 
-Insert at `total >= 12` — below the `pursue_lean` band, deliberately. A 12 with a warm path is
-worth a look even when the arithmetic says decline, and the review queue is cheap. Anything
-scoring under 12 is dropped without a record.
+Insert at `total >= 9` — a full band below `pursue_lean` (14), and deliberately low.
+
+Originally 12. The first live run scored 16 candidates from the Colorado Nonprofit Association
+collection and **all 16 fell below 12**, so nothing was stored and nothing explained why. Two
+problems surfaced at once:
+
+**The scorer reads conservatively.** Scoring GOBRP — which this rubric records at 19 and
+"pursued, filed" — the pipeline returned **15**. It agreed on `engagement_shape` (2),
+`warm_path` (3 — it found the Ted Rains connection from the org profile), `expansion` and
+`mission_alignment`, and read low on `both_halves` (1 vs 3), `contract_value` (2 vs 3) and
+`portfolio_proof` (2 vs 3). Its stated reasoning on `both_halves` was that "a competent solo
+fundraiser could do the whole thing" — true of the advertised job, false of the engagement WA
+would propose. **The scorer judges the posting as written; the rubric judges the engagement.**
+Until that gap closes, a machine-scored 9 may be a human 13.
+
+**A dropped candidate leaves no trace**, so an empty review queue is indistinguishable from a
+broken pipeline — which is exactly how the first run presented.
+
+This is the **storage** bar only. The action bands in `fitRubric.ts` are unchanged at 18/14 and
+still reproduce all six worked examples; a stored 9 displays as `decline`. It is visible rather
+than silently discarded, and declining in the UI is one click.
+
+### Calibration (resolved)
+
+The gap above was closed in the **prompt**, not the numbers. Two changes:
+
+- **`both_halves` now scores the engagement WA would propose, not the job as advertised.** The
+  old wording ended "if a competent solo contractor could do the whole thing, score this low" —
+  which the model dutifully echoed back on every lead, because nearly every posting *could* be
+  filled by one person doing it the way it has always been done. That is the status quo the
+  firm displaces, not a reason to score low. The prompt now names the evidence that the
+  technical half is present even when unstated: a CRM by name, manual gift processing,
+  reporting burden, a website feeding nothing.
+- **`portfolio_proof` now matches on two axes — kind of work *and* sector — scoring the better
+  of the two**, and is told to name the closest portfolio item before scoring. Previously a
+  bicycle organization scored 2 against a portfolio containing betterbikeshare.org.
+
+Validated both directions. GOBRP went 15 → **19, matching the recorded human score on all seven
+dimensions** and landing on `pursue_hard`. As a control against simply inflating everything, the
+three weakest stored leads went 10 → 9, 9 → 11, 9 → 11 and all stayed in `monitor`. The spread
+between the known-good opportunity and the weak ones widened from 5 points to 8.
+
+> Do not "fix" the calibration gap by moving the action bands. They are calibrated against
+> human-scored totals and validated by `scripts/rubric-check.ts`. Moving them to fit
+> machine-scored totals would break agreement with the six recorded decisions. Close the gap in
+> the scoring prompt instead.
 
 ---
 

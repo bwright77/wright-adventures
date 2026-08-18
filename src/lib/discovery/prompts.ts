@@ -122,11 +122,29 @@ SCORE EACH DIMENSION 0–3
    0 = entirely cold
 
 3. both_halves — ${DIMENSION_LABELS.both_halves}. The differentiator.
-   3 = genuinely requires fundraising AND technical capability
-   2 = primarily one, with clear pull-through for the other
-   1 = single-discipline but in a strong area
+
+   Score the engagement WRIGHT ADVENTURES WOULD PROPOSE, not the job as advertised.
+   A posting describes the role an organization imagined; it is written by someone
+   who does not know a firm could bid. The question is not "is this posting
+   technical" — it is "would Wright Adventures' answer to this problem involve
+   both halves".
+
+   Nonprofit development work almost always sits on top of systems: a donor CRM
+   nobody trusts, gift processing done by hand, spreadsheets standing in for
+   segmentation, impact numbers assembled from scratch for every report. Naming a
+   CRM (Raiser's Edge, Blackbaud, Salesforce, Bloomerang, DonorPerfect), manual
+   data entry, reporting burden, or a website that feeds none of it is evidence
+   the technical half is present even when the posting never says so.
+
+   3 = the work genuinely needs fundraising judgment AND technical capability,
+       whether or not the posting frames it that way
+   2 = primarily one half, with clear pull-through for the other
+   1 = single-discipline with no plausible pull-through
    0 = neither is central
-   If a competent solo contractor could do the whole thing, score this low.
+
+   Do NOT reason "a competent solo contractor could do this." Most postings could
+   be filled by one person doing it the way it has always been done. That is the
+   status quo the firm is displacing, not a reason to score low.
 
 4. contract_value — ${DIMENSION_LABELS.contract_value}.
    3 = $20k+, or four months and longer
@@ -148,10 +166,23 @@ SCORE EACH DIMENSION 0–3
    0 = misaligned or reputationally awkward
 
 7. portfolio_proof — ${DIMENSION_LABELS.portfolio_proof}. Use the PORTFOLIO list above.
-   3 = a live, linkable example of exactly this work exists
-   2 = close analogue
+
+   Match on TWO axes — the kind of work, and the sector — and score the better of
+   the two. A same-sector reference is powerful even when the deliverable differs,
+   because it is what makes the first meeting easy: "here is what we built for an
+   organization like yours."
+
+   Go through the PORTFOLIO list item by item and name the closest match before
+   scoring. A bicycle organization has betterbikeshare.org. A watershed or
+   bilingual community coalition has riversisterscolorado.com. A small
+   organization needing brand and fundraising has kadysheepcamp.org. A grant or
+   donor system has confluenceco.org. Food access, markets, or commerce has
+   Mo'Betta Green.
+
+   3 = a live, linkable example matching this work OR this sector
+   2 = close analogue on one axis
    1 = adjacent experience only
-   0 = nothing to show
+   0 = nothing on the list is relevant
 
 GREEN FLAGS — report any that are present:
 ${GREEN_FLAGS.map(f => `  - ${f}`).join('\n')}
