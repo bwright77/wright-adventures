@@ -61,6 +61,39 @@ async function fetchPage(url: string): Promise<string> {
   }
 }
 
+/**
+ * Fetch a WordPress REST collection and flatten it into the same shape the HTML
+ * path produces, so hashing, diffing, extraction and scoring are unchanged.
+ *
+ * Preferred over scraping wherever an endpoint exists: the Colorado Nonprofit
+ * Association's job board is a Next.js front end whose index renders client-side
+ * and yields nothing to a plain fetch, while its WordPress API serves the same
+ * posts as clean JSON.
+ */
+async function fetchWpRest(url: string): Promise<string> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'WrightAdventuresOMP/1.0 (+https://wrightadventures.org)' },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const items = await res.json() as Array<Record<string, any>>
+    if (!Array.isArray(items)) throw new Error('WP REST response was not a collection')
+
+    return items.map(it => {
+      const title = it?.title?.rendered ?? it?.slug ?? '(untitled)'
+      const body  = extractPageText(it?.content?.rendered ?? '')
+      const link  = it?.link ?? ''
+      const date  = it?.date ?? ''
+      return `--- POSTING ---\nTITLE: ${title}\nURL: ${link}\nPOSTED: ${date}\n\n${body}`
+    }).join('\n\n')
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Coerce a possibly-absent date string to YYYY-MM-DD or null. */
 function normalizeDate(d: string | null | undefined): string | null {
   if (!d) return null
@@ -123,6 +156,43 @@ async function syncOrgProfile(): Promise<string | null> {
       .eq('id', existing.id)
   }
   return existing.id
+}
+
+/**
+ * Roll this run's usage into the app-wide token budget.
+ *
+ * Single-tenant per ADR-001: one row, with `current_period_start` naming the
+ * billing month. When that month has passed the counter resets rather than
+ * accumulating forever.
+ */
+async function recordTokenUsage(tokens: number): Promise<void> {
+  if (tokens <= 0) return
+
+  const now = new Date()
+  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    .toISOString().slice(0, 10)
+
+  const { data: row } = await supabase
+    .from('token_budgets')
+    .select('id, tokens_used, current_period_start')
+    .order('current_period_start', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!row) {
+    await supabase.from('token_budgets').insert({
+      current_period_start: periodStart,
+      tokens_used: tokens,
+    })
+    return
+  }
+
+  const rolledOver = row.current_period_start !== periodStart
+  await supabase.from('token_budgets').update({
+    current_period_start: periodStart,
+    tokens_used: rolledOver ? tokens : (row.tokens_used ?? 0) + tokens,
+    updated_at: new Date().toISOString(),
+  }).eq('id', row.id)
 }
 
 // ── AI passes ─────────────────────────────────────────────────
@@ -231,8 +301,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       try {
-        const html     = await fetchPage(source.url)
-        const pageText = extractPageText(html)
+        const pageText = source.fetch_mode === 'wp_rest'
+          ? await fetchWpRest(source.url)
+          : extractPageText(await fetchPage(source.url))
         const hash     = computeContentHash(pageText)
 
         // Unchanged since last run — record the check and move on.
@@ -373,6 +444,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // Roll this run's usage into the month's budget. Without this the AI-spend
+    // card in Settings shows a frozen number, which is worse than none.
+    await recordTokenUsage(stats.tokens_haiku + stats.tokens_sonnet)
+
     await supabase.from('discovery_runs').update({
       completed_at:   new Date().toISOString(),
       status:         'completed',
@@ -385,6 +460,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
+    // Roll this run's usage into the month's budget. Without this the AI-spend
+    // card in Settings shows a frozen number, which is worse than none.
+    await recordTokenUsage(stats.tokens_haiku + stats.tokens_sonnet)
+
     await supabase.from('discovery_runs').update({
       completed_at: new Date().toISOString(),
       status:       'failed',

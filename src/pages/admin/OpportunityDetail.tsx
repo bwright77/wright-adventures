@@ -29,6 +29,14 @@ const ENGAGEMENT_LABELS: Record<string, string> = {
   pro_bono:     'Pro bono',
 }
 
+// Statuses that end pursuit. Reaching one clears any unfinished tasks —
+// leaving them open puts dead work on somebody's My Tasks list forever.
+const LOST_STATUSES: ReadonlySet<string> = new Set([
+  'partnership_closed_lost',
+  'lead_declined',
+  'lead_lost',
+])
+
 // ── Pipeline config ───────────────────────────────────────────
 
 // ADR-006 — new 7-stage sales pipeline
@@ -458,6 +466,28 @@ export function OpportunityDetail() {
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', id!)
       if (error) throw error
+
+      // Losing or declining an opportunity retires its outstanding work. Only
+      // unfinished tasks go — completed ones are the record of what was done.
+      if (LOST_STATUSES.has(newStatus)) {
+        const { data: removed, error: delError } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('opportunity_id', id!)
+          .neq('status', 'complete')
+          .select('id')
+        if (delError) throw delError
+
+        if (removed?.length) {
+          await supabase.from('activity_log').insert({
+            opportunity_id: id,
+            actor_id: user?.id ?? null,
+            action: 'tasks_cleared',
+            details: { reason: newStatus, count: removed.length },
+          })
+        }
+        return
+      }
 
       // The DB trigger logs the stage change; stage tasks are generated
       // client-side (ADR-006 Option B).

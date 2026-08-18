@@ -59,6 +59,7 @@ export interface DiscoverySource {
   id:                     string
   label:                  string
   source_type:            string    // 'procurement' | 'job_board' | 'foundation_rfp' | 'sector_board'
+  fetch_mode:             'html' | 'wp_rest'
   publisher:              string
   url:                    string
   enabled:                boolean
