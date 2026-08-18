@@ -8,7 +8,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import type { Task, OpportunityTypeId } from '../../lib/types'
 
 const TEMPLATE_IDS: Record<OpportunityTypeId, string> = {
-  grant:       '00000000-0000-0000-0000-000000000001',
   partnership: '00000000-0000-0000-0000-000000000002',
 }
 

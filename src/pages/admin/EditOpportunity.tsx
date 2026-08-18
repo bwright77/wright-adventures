@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
-import type { Opportunity, GrantType, PartnershipType, PartnershipDetails, CompanySize } from '../../lib/types'
+import type { Opportunity, PartnershipType, PartnershipDetails, CompanySize } from '../../lib/types'
 import { normalizePhone } from '../../lib/phone'
 
 // ── Schemas (same shape as NewOpportunity) ────────────────────
@@ -19,16 +19,6 @@ const baseSchema = z.object({
   primary_deadline: z.string().optional(),
   source_url:       z.string().url('Enter a valid URL').or(z.literal('')).optional(),
   tags:             z.string().optional(),
-})
-
-const grantSchema = baseSchema.extend({
-  funder:            z.string().optional(),
-  grant_type:        z.enum(['federal', 'state', 'foundation', 'corporate', 'other']).or(z.literal('')).optional(),
-  amount_max:        z.string().optional(),
-  amount_requested:  z.string().optional(),
-  loi_deadline:      z.string().optional(),
-  cfda_number:       z.string().optional(),
-  eligibility_notes: z.string().optional(),
 })
 
 const partnershipSchema = baseSchema.extend({
@@ -48,7 +38,7 @@ const partnershipSchema = baseSchema.extend({
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
 })
 
-type AnyOppForm = z.infer<typeof grantSchema> | z.infer<typeof partnershipSchema>
+type AnyOppForm = z.infer<typeof partnershipSchema>
 
 // ── Field helpers ─────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
@@ -106,7 +96,6 @@ export function EditOpportunity() {
     enabled: !!id,
   })
 
-  const isGrant = opp?.type_id === 'grant'
 
   const { data: partnershipDetails } = useQuery<PartnershipDetails | null>({
     queryKey: ['partnership-details', id],
@@ -119,10 +108,10 @@ export function EditOpportunity() {
       if (error) throw error
       return data
     },
-    enabled: !!id && !isGrant,
+    enabled: !!id,
   })
 
-  const schema = isGrant ? grantSchema : partnershipSchema
+  const schema = partnershipSchema
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<AnyOppForm>({
@@ -155,18 +144,6 @@ export function EditOpportunity() {
       primary_deadline: toDateInput(o.primary_deadline),
       source_url:       o.source_url ?? '',
       tags:             o.tags.join(', '),
-    }
-    if (o.type_id === 'grant') {
-      return {
-        ...base,
-        funder:            o.funder ?? '',
-        grant_type:        o.grant_type ?? undefined,
-        amount_max:        o.amount_max != null ? String(o.amount_max) : '',
-        amount_requested:  o.amount_requested != null ? String(o.amount_requested) : '',
-        loi_deadline:      toDateInput(o.loi_deadline),
-        cfda_number:       o.cfda_number ?? '',
-        eligibility_notes: o.eligibility_notes ?? '',
-      }
     }
     return {
       ...base,
@@ -201,16 +178,7 @@ export function EditOpportunity() {
       updated_at:       new Date().toISOString(),
     }
 
-    if (isGrant) {
-      const v = values as z.infer<typeof grantSchema>
-      payload.funder            = v.funder || null
-      payload.grant_type        = v.grant_type || null
-      payload.amount_max        = v.amount_max ? Number(v.amount_max) : null
-      payload.amount_requested  = v.amount_requested ? Number(v.amount_requested) : null
-      payload.loi_deadline      = v.loi_deadline || null
-      payload.cfda_number       = v.cfda_number || null
-      payload.eligibility_notes = v.eligibility_notes || null
-    } else {
+    {
       const v = values as z.infer<typeof partnershipSchema>
       payload.partner_org      = v.partner_org || null
       payload.primary_contact  = v.primary_contact || null
@@ -229,7 +197,7 @@ export function EditOpportunity() {
     if (error) { setSubmitError(error.message); return }
 
     // Save partnership_details fields
-    if (!isGrant) {
+    {
       const v = values as z.infer<typeof partnershipSchema>
       const detailsPayload: Record<string, unknown> = {
         org_size:         v.org_size || null,
@@ -281,9 +249,7 @@ export function EditOpportunity() {
 
       <div className="flex items-center gap-3 mb-8">
         <h1 className="text-2xl font-bold text-navy">Edit Opportunity</h1>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${
-          isGrant ? 'bg-river-50 text-river' : 'bg-trail-50 text-trail'
-        }`}>
+        <span className="text-xs font-medium px-2 py-0.5 rounded capitalize bg-trail-50 text-trail">
           {opp.type_id}
         </span>
       </div>
@@ -311,9 +277,7 @@ export function EditOpportunity() {
                 <Input {...register('source_url')} type="url" placeholder="https://…" error={e.source_url?.message} />
               </div>
             </div>
-            {!isGrant && (
-              <ScrapePanel sourceUrl={sourceUrl} onApply={handleScrapeApply} />
-            )}
+            <ScrapePanel sourceUrl={sourceUrl} onApply={handleScrapeApply} />
             <div>
               <Label>Tags</Label>
               <Input {...register('tags')} placeholder="watershed, youth, federal (comma-separated)" />
@@ -324,34 +288,9 @@ export function EditOpportunity() {
         {/* Type-specific fields */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">
-            {isGrant ? 'Grant Info' : 'Partnership Info'}
+            Partnership Info
           </h2>
 
-          {isGrant ? (
-            <div className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div><Label>Funder</Label><Input {...register('funder' as never)} placeholder="Foundation or agency name" /></div>
-                <div>
-                  <Label>Grant type</Label>
-                  <Select {...register('grant_type' as never)}>
-                    <option value="">Select…</option>
-                    {(['federal', 'state', 'foundation', 'corporate', 'other'] as GrantType[]).map(g => (
-                      <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div><Label>Max amount ($)</Label><Input {...register('amount_max' as never)} type="number" min="0" placeholder="0" /></div>
-                <div><Label>Amount requesting ($)</Label><Input {...register('amount_requested' as never)} type="number" min="0" placeholder="0" /></div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div><Label>LOI deadline</Label><Input {...register('loi_deadline' as never)} type="date" /></div>
-                <div><Label>CFDA #</Label><Input {...register('cfda_number' as never)} placeholder="XX.XXX" /></div>
-              </div>
-              <div><Label>Eligibility notes</Label><Textarea {...register('eligibility_notes' as never)} placeholder="Who is eligible, restrictions…" /></div>
-            </div>
-          ) : (
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label>Partner organization</Label><Input {...register('partner_org' as never)} placeholder="Org name" /></div>
@@ -407,7 +346,6 @@ export function EditOpportunity() {
                 <div><Label>Next action date</Label><Input {...register('next_action_date' as never)} type="date" /></div>
               </div>
             </div>
-          )}
         </div>
 
         {submitError && (

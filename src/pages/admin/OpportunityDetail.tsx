@@ -9,7 +9,6 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { TaskPanel } from '../../components/admin/TaskPanel'
-import { GrantChatPanel } from '../../components/admin/GrantChatPanel'
 import { ContactsPanel } from '../../components/admin/ContactsPanel'
 import { InteractionsLog } from '../../components/admin/InteractionsLog'
 import { PartnershipAdvisorPanel } from '../../components/admin/PartnershipAdvisorPanel'
@@ -22,19 +21,6 @@ import { toTelHref } from '../../lib/phone'
 import { parseLocalDate } from '../../lib/dates'
 
 // ── Pipeline config ───────────────────────────────────────────
-const GRANT_STAGES = [
-  { id: 'grant_identified',   label: 'Identified'   },
-  { id: 'grant_evaluating',   label: 'Evaluating'   },
-  { id: 'grant_preparing',    label: 'Preparing'    },
-  { id: 'grant_submitted',    label: 'Submitted'    },
-  { id: 'grant_under_review', label: 'Under Review' },
-  { id: 'grant_awarded',      label: 'Awarded'      },
-]
-const GRANT_TERMINAL = [
-  { id: 'grant_declined',  label: 'Declined'  },
-  { id: 'grant_withdrawn', label: 'Withdrawn' },
-  { id: 'grant_archived',  label: 'Archived'  },
-]
 
 // ADR-006 — new 7-stage sales pipeline
 const PARTNERSHIP_STAGES = [
@@ -49,10 +35,9 @@ const PARTNERSHIP_TERMINAL = [
   { id: 'partnership_closed_lost', label: 'Closed-Lost' },
 ]
 
-const GRANT_TEMPLATE_ID = '00000000-0000-0000-0000-000000000001'
 
 const STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  [...GRANT_STAGES, ...GRANT_TERMINAL, ...PARTNERSHIP_STAGES, ...PARTNERSHIP_TERMINAL]
+  [...PARTNERSHIP_STAGES, ...PARTNERSHIP_TERMINAL]
     .map(s => [s.id, s.label])
 )
 
@@ -414,38 +399,6 @@ export function OpportunityDetail() {
     enabled: !!id && opportunity?.type_id === 'partnership',
   })
 
-  // ── Grant-only auto-gen (from original template) ────────────
-  const generateFromTemplate = async (newStatus: string) => {
-    if (newStatus !== 'grant_preparing') return
-    const { count } = await supabase
-      .from('tasks').select('*', { count: 'exact', head: true })
-      .eq('opportunity_id', id!)
-    if ((count ?? 0) > 0) return
-
-    const { data: items } = await supabase
-      .from('task_template_items').select('*')
-      .eq('template_id', GRANT_TEMPLATE_ID).order('sort_order')
-    if (!items?.length) return
-
-    const base = opportunity!.primary_deadline
-      ? new Date(opportunity!.primary_deadline) : new Date()
-    await supabase.from('tasks').insert(
-      items.map((item, i) => ({
-        opportunity_id: id,
-        title:          item.title,
-        due_date:       addDays(base, item.days_offset).toISOString(),
-        assignee_id:    opportunity!.owner_id ?? user?.id ?? null,
-        sort_order:     i,
-        status:         'not_started',
-        days_offset:    item.days_offset,
-      }))
-    )
-    await supabase.from('activity_log').insert({
-      opportunity_id: id, actor_id: user?.id ?? null,
-      action: 'tasks_generated', details: { count: items.length, template: GRANT_TEMPLATE_ID },
-    })
-  }
-
   // ── Partnership stage-triggered tasks (ADR-006) ─────────────
   const generateStageTasks = async (newStatus: string) => {
     const { data: stageTasks } = await supabase
@@ -497,16 +450,9 @@ export function OpportunityDetail() {
         .eq('id', id!)
       if (error) throw error
 
-      // The DB trigger logs the stage change for partnerships;
-      // for grants we still log manually to match the existing pattern.
-      if (opportunity!.type_id === 'grant') {
-        await supabase.from('activity_log').insert({
-          opportunity_id: id, actor_id: user?.id ?? null,
-          action: 'status_changed', details: { from: oldStatus, to: newStatus },
-        })
-        await generateFromTemplate(newStatus)
-      } else {
-        // Partnership stage tasks — generated client-side (ADR-006 Option B)
+      // The DB trigger logs the stage change; stage tasks are generated
+      // client-side (ADR-006 Option B).
+      {
         await generateStageTasks(newStatus)
       }
     },
@@ -568,9 +514,8 @@ export function OpportunityDetail() {
     )
   }
 
-  const isGrant       = opportunity.type_id === 'grant'
   const isPartnership = opportunity.type_id === 'partnership'
-  const orgOrFunder   = opportunity.funder ?? opportunity.partner_org
+  const orgOrFunder   = opportunity.partner_org
   const owner         = profiles.find(p => p.id === opportunity.owner_id)
 
   // Closed-Won badge for the pipeline stepper area
@@ -602,7 +547,7 @@ export function OpportunityDetail() {
           <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${
-              isGrant ? 'bg-river-50 text-river' : 'bg-trail-50 text-trail'
+              'bg-trail-50 text-trail'
             }`}>
               {opportunity.type_id}
             </span>
@@ -663,10 +608,10 @@ export function OpportunityDetail() {
       <div className="bg-white rounded-xl border border-gray-200 px-6 py-4 mb-6">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-3">Pipeline stage</p>
         <PipelineStepper
-          stages={isGrant ? GRANT_STAGES : PARTNERSHIP_STAGES}
-          terminal={isGrant ? GRANT_TERMINAL : PARTNERSHIP_TERMINAL}
+          stages={PARTNERSHIP_STAGES}
+          terminal={PARTNERSHIP_TERMINAL}
           currentStatus={opportunity.status}
-          color={isGrant ? 'river' : 'trail'}
+          color="trail"
           onSelect={changeStatus}
           isPending={statusPending}
         />
@@ -748,20 +693,8 @@ export function OpportunityDetail() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">
-            {isGrant ? 'Grant Info' : 'Partnership Info'}
+            Partnership Info
           </h2>
-          {isGrant ? (
-            <>
-              <DetailRow label="Funder"      value={opportunity.funder} />
-              <DetailRow label="Grant type"  value={opportunity.grant_type ? opportunity.grant_type.charAt(0).toUpperCase() + opportunity.grant_type.slice(1) : null} />
-              <DetailRow label="Max amount"  value={opportunity.amount_max != null ? `$${opportunity.amount_max.toLocaleString()}` : null} />
-              <DetailRow label="Requesting"  value={opportunity.amount_requested != null ? `$${opportunity.amount_requested.toLocaleString()}` : null} />
-              <DetailRow label="Awarded"     value={opportunity.amount_awarded != null ? `$${opportunity.amount_awarded.toLocaleString()}` : null} />
-              <DetailRow label="LOI due"     value={opportunity.loi_deadline ? format(parseLocalDate(opportunity.loi_deadline), 'MMM d, yyyy') : null} />
-              <DetailRow label="CFDA #"      value={opportunity.cfda_number} />
-              <DetailRow label="Eligibility" value={opportunity.eligibility_notes} />
-            </>
-          ) : (
             <>
               <DetailRow label="Partner org"   value={opportunity.partner_org} />
               <DetailRow label="Contact"       value={opportunity.primary_contact} />
@@ -776,7 +709,6 @@ export function OpportunityDetail() {
                 <DetailRow label="Org size" value={partnershipDetails.org_size} />
               )}
             </>
-          )}
         </div>
       </div>
 
@@ -842,19 +774,6 @@ export function OpportunityDetail() {
           </button>
         )}
 
-        {isGrant && (
-          <button
-            onClick={() => setActiveTab('ai')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
-              activeTab === 'ai'
-                ? 'border-river text-river'
-                : 'border-transparent text-gray-500 hover:text-navy'
-            }`}
-          >
-            <Sparkles size={13} />
-            AI Draft Assistant
-          </button>
-        )}
       </div>
 
       {/* Tab content */}
@@ -893,11 +812,6 @@ export function OpportunityDetail() {
         </div>
       )}
 
-      {activeTab === 'ai' && isGrant && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <GrantChatPanel opportunityId={id!} />
-        </div>
-      )}
     </div>
   )
 }

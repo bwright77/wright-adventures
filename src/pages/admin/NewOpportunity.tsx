@@ -8,29 +8,17 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
-import type { OpportunityTypeId, GrantType, PartnershipType, CompanySize } from '../../lib/types'
+import type { OpportunityTypeId, PartnershipType, CompanySize } from '../../lib/types'
 import { normalizePhone } from '../../lib/phone'
 
 // ── Shared fields ─────────────────────────────────────────────
 const baseSchema = z.object({
-  type_id:          z.enum(['grant', 'partnership']),
+  type_id:          z.literal('partnership'),
   name:             z.string().min(1, 'Name is required'),
   description:      z.string().optional(),
   primary_deadline: z.string().optional(),
   source_url:       z.string().url('Enter a valid URL').or(z.literal('')).optional(),
   tags:             z.string().optional(), // comma-separated, split on save
-})
-
-// ── Grant extras ──────────────────────────────────────────────
-const grantSchema = baseSchema.extend({
-  type_id:           z.literal('grant'),
-  funder:            z.string().optional(),
-  grant_type:        z.enum(['federal', 'state', 'foundation', 'corporate', 'other']).or(z.literal('')).optional(),
-  amount_max:        z.string().optional(),
-  amount_requested:  z.string().optional(),
-  loi_deadline:      z.string().optional(),
-  cfda_number:       z.string().optional(),
-  eligibility_notes: z.string().optional(),
 })
 
 // ── Partnership extras ────────────────────────────────────────
@@ -52,12 +40,11 @@ const partnershipSchema = baseSchema.extend({
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
 })
 
-const schema = z.discriminatedUnion('type_id', [grantSchema, partnershipSchema])
+const schema = partnershipSchema
 type FormValues = z.infer<typeof schema>
 
 // ── Default statuses ──────────────────────────────────────────
 const DEFAULT_STATUS: Record<OpportunityTypeId, string> = {
-  grant:       'grant_identified',
   partnership: 'partnership_prospecting',
 }
 
@@ -120,7 +107,7 @@ export function NewOpportunity() {
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { type_id: 'grant' },
+      defaultValues: { type_id: 'partnership' },
     })
 
   const typeId   = watch('type_id') as OpportunityTypeId
@@ -161,23 +148,13 @@ export function NewOpportunity() {
       created_by:       user?.id ?? null,
     }
 
-    if (values.type_id === 'grant') {
-      payload.funder            = values.funder || null
-      payload.grant_type        = values.grant_type || null
-      payload.amount_max        = values.amount_max ? Number(values.amount_max) : null
-      payload.amount_requested  = values.amount_requested ? Number(values.amount_requested) : null
-      payload.loi_deadline      = values.loi_deadline || null
-      payload.cfda_number       = values.cfda_number || null
-      payload.eligibility_notes = values.eligibility_notes || null
-    } else {
-      payload.partner_org      = values.partner_org || null
-      payload.primary_contact  = values.primary_contact || null
-      payload.contact_email    = values.contact_email || null
-      payload.contact_phone    = values.contact_phone ? normalizePhone(values.contact_phone) || null : null
-      payload.partnership_type = values.partnership_type || null
-      payload.estimated_value  = values.estimated_value ? Number(values.estimated_value) : null
-      payload.alignment_notes  = values.alignment_notes || null
-    }
+    payload.partner_org      = values.partner_org || null
+    payload.primary_contact  = values.primary_contact || null
+    payload.contact_email    = values.contact_email || null
+    payload.contact_phone    = values.contact_phone ? normalizePhone(values.contact_phone) || null : null
+    payload.partnership_type = values.partnership_type || null
+    payload.estimated_value  = values.estimated_value ? Number(values.estimated_value) : null
+    payload.alignment_notes  = values.alignment_notes || null
 
     const { data, error } = await supabase
       .from('opportunities')
@@ -227,28 +204,6 @@ export function NewOpportunity() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-        {/* Type toggle */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Type</h2>
-          <div className="flex gap-3">
-            {(['grant', 'partnership'] as OpportunityTypeId[]).map(t => (
-              <label
-                key={t}
-                className={`flex-1 flex items-center justify-center gap-2 border rounded-lg py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                  typeId === t
-                    ? t === 'grant'
-                      ? 'bg-river-50 border-river/30 text-river'
-                      : 'bg-trail-50 border-trail/30 text-trail'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                <input {...register('type_id')} type="radio" value={t} className="sr-only" />
-                {t === 'grant' ? 'Grant' : 'Partnership'}
-              </label>
-            ))}
-          </div>
-        </div>
-
         {/* Core fields */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Details</h2>
@@ -284,52 +239,9 @@ export function NewOpportunity() {
         {/* Type-specific fields */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">
-            {typeId === 'grant' ? 'Grant Info' : 'Partnership Info'}
+            Partnership Info
           </h2>
 
-          {typeId === 'grant' ? (
-            <div className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Funder</Label>
-                  <Input {...register('funder' as never)} placeholder="Foundation or agency name" />
-                </div>
-                <div>
-                  <Label>Grant type</Label>
-                  <Select {...register('grant_type' as never)}>
-                    <option value="">Select…</option>
-                    {(['federal', 'state', 'foundation', 'corporate', 'other'] as GrantType[]).map(g => (
-                      <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Max amount ($)</Label>
-                  <Input {...register('amount_max' as never)} type="number" min="0" placeholder="0" />
-                </div>
-                <div>
-                  <Label>Amount requesting ($)</Label>
-                  <Input {...register('amount_requested' as never)} type="number" min="0" placeholder="0" />
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>LOI deadline</Label>
-                  <Input {...register('loi_deadline' as never)} type="date" />
-                </div>
-                <div>
-                  <Label>CFDA #</Label>
-                  <Input {...register('cfda_number' as never)} placeholder="XX.XXX" />
-                </div>
-              </div>
-              <div>
-                <Label>Eligibility notes</Label>
-                <Textarea {...register('eligibility_notes' as never)} placeholder="Who is eligible, restrictions…" />
-              </div>
-            </div>
-          ) : (
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -417,7 +329,6 @@ export function NewOpportunity() {
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* Submit */}

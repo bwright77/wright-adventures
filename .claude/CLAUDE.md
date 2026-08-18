@@ -8,8 +8,11 @@ Do not delete or move it.
 ## Project Overview
 
 **Wright Adventures Opportunity Management Platform (OMP)** — an internal web application
-for the Wright Adventures team to track grants, partnerships, and strategic opportunities.
+for the Wright Adventures team to track partnerships and business-development opportunities.
 Single-tenant. Doubles as a demo for prospective partner organizations.
+
+**Grants, AI grant writing, grant discovery, and board minutes moved to Confluence
+Colorado's own platform in 2026-08 — see ADR-009. Do not re-add them here.**
 
 Live at: https://wrightadventures.org/ (also: https://wright-adventures.vercel.app/)
 Repo: https://github.com/bwright77/wright-adventures
@@ -39,7 +42,8 @@ Repo: https://github.com/bwright77/wright-adventures
   settings.json
   CLAUDE.md             ← this file
 docs/
-  ADR-001-ai-grant-writing.md  ← read before touching any AI-related code
+  ADR-009-omp-split.md   ← why grants are gone; read before touching the schema
+  ADR-011-*.md           ← opportunity discovery (RFPs, procurement, job boards)
 src/
   components/
     admin/
@@ -54,7 +58,7 @@ src/
     admin/
       Dashboard.tsx
       Opportunities.tsx
-      OpportunityDetail.tsx  ← AI Draft Assistant tab goes here (Phase 2)
+      OpportunityDetail.tsx
       MyTasks.tsx
     Home.tsx
     Login.tsx
@@ -63,8 +67,8 @@ src/
 supabase/
   migrations/
     20260224000000_initial_schema.sql  ← DO NOT MODIFY
-    20260225000000_ai_grant_writing.sql ← Phase 2 migration (to be created per ADR-001)
-vercel.json             ← SPA rewrite config — see ADR-001 Decision section for required fix
+    20260818000000_decommission_grants.sql ← ADR-009 Phases 4–5
+vercel.json             ← SPA rewrite config; /api passthrough MUST stay first
 ```
 
 ---
@@ -74,14 +78,13 @@ vercel.json             ← SPA rewrite config — see ADR-001 Decision section 
 **`profiles`** — extends `auth.users`
 - `id` (uuid, PK), `full_name`, `role` (`admin|manager|member|viewer`), `avatar_url`
 
-**`opportunities`** — unified model for grants and partnerships
-- `id`, `type_id` (`grant|partnership`), `name`, `description`, `status`, `owner_id`
-- Grant fields: `funder`, `grant_type`, `amount_max`, `amount_requested`, `amount_awarded`, `loi_deadline`, `cfda_number`, `eligibility_notes`
+**`opportunities`** — partnerships (grant columns dropped in ADR-009)
+- `id`, `type_id` (`partnership`), `name`, `description`, `status`, `owner_id`
 - Partnership fields: `partner_org`, `primary_contact`, `contact_email`, `partnership_type`, `mutual_commitments`, `agreement_date`, `renewal_date`, `estimated_value`, `alignment_notes`
 - Shared: `primary_deadline`, `source_url`, `tags`, `created_by`, `created_at`, `updated_at`
 
-**`opportunity_types`** — seeded: `grant`, `partnership`
-**`pipeline_statuses`** — seeded per type (e.g., `grant_identified`, `grant_preparing`, etc.)
+**`opportunity_types`** — seeded: `partnership`
+**`pipeline_statuses`** — seeded per type (`partnership_prospecting` … `partnership_closed_won`)
 **`tasks`** — linked to opportunity; `status`: `not_started|in_progress|complete|blocked`
 **`task_templates`** + **`task_template_items`** — default templates seeded for both types
 **`documents`** — linked to opportunity; `storage_path` points to Supabase Storage
@@ -96,27 +99,32 @@ vercel.json             ← SPA rewrite config — see ADR-001 Decision section 
 - **TanStack Query** for all data fetching — don't introduce raw `useEffect` + fetch patterns.
 - **Zod schemas** for all form validation and API request/response shapes.
 - **Brand tokens** — use Tailwind classes `text-navy`, `bg-river`, `text-earth`, `text-trail` etc. Do not hardcode hex values in components.
-- **`opportunity.type_id === 'grant'`** — use this check to gate grant-only UI (e.g., AI Draft Assistant tab).
+- **Retained but dormant:** `discovery_sources`, `discovery_runs`, `org_profiles`, `token_budgets`.
+  These are the ADR-005 monitoring machinery, kept deliberately for ADR-011. Do not drop them.
 
 ---
 
 ## Active ADRs
 
-### ADR-001: AI-Assisted Grant Writing (Phase 2)
-**File:** `docs/ADR-001-ai-grant-writing.md`
-**Status:** Accepted — implementation in progress
+### ADR-009: OMP Split (Confluence Colorado)
+**File:** `docs/ADR-009-omp-split.md`
+**Status:** Phases 1–3 complete; Phases 4–5 landed 2026-08-18
 
-**Read this file in full before implementing any AI-related feature.**
+Grants, AI grant writing, grant discovery, and board minutes now live in
+`confluence-co` against a separate Supabase project. ADR-001 through ADR-005 are
+**historical** for this repo — they describe features that no longer exist here.
 
-Summary of key decisions:
-- Freeform prose output via Anthropic `claude-sonnet-4-6`
-- Iterative chat (conversation history persisted in Supabase)
-- Single application-wide monthly token budget (single-tenant)
-- Vercel Serverless Functions in `/api/` as the proxy layer
-- Vercel AI SDK (`useChat`) for streaming on the frontend
-- `vercel.json` requires a fix before `/api/*` routes will work — **do this first**
+### ADR-010: Timekeeping & Billing
+**File:** `docs/ADR-010-timekeeping-billing.md`
+**Status:** Proposed — not started
 
-Implementation sequence (8 steps) is defined in the ADR. Follow it in order.
+### ADR-011: Opportunity Discovery
+**Status:** In progress
+
+Reuses the retained ADR-005 pipeline to monitor RFP/procurement portals and job
+boards, scoring findings against Wright Adventures' own fit rubric.
+- Rubric + banding: `src/lib/discovery/fitRubric.ts`
+- Firm profile injected into scoring: `src/lib/discovery/waOrgProfile.ts`
 
 ---
 
@@ -140,17 +148,19 @@ SUPABASE_SERVICE_ROLE_KEY=
 ## What's Built (MVP — Phase 1)
 
 - Auth (email/password + Google OAuth)
-- Opportunity CRUD — grants and partnerships with type-specific fields
-- Pipeline status tracking (kanban-ready statuses seeded)
-- Task management with default templates
-- Document upload to Supabase Storage
+- Opportunity CRUD — partnerships
+- Pipeline status tracking (7-stage partnership pipeline, kanban + table views)
+- Task management with default templates and stage tasks
 - Dashboard with metrics, upcoming deadlines, my tasks
+- Pipeline analytics (ADR-008)
+- Partnership CRM: contacts, interactions, AI solution advisor (ADR-006/007)
+- Email notifications (ADR-003)
 - Role-based access (admin/manager/member/viewer)
 
-## What's Next (Phase 2 — in progress)
+> The `documents` table exists in the schema but **has no frontend or API code**.
+> Document upload was never wired. Don't cite it as built.
 
-Per ADR-001, currently implementing AI-assisted grant writing. After that:
-- Reporting & analytics
-- Email/Slack notifications
-- Saved search filters
-- Google Drive document linking
+## What's Next
+
+- ADR-011 — opportunity discovery (procurement portals first, then job boards)
+- ADR-010 — timekeeping & billing

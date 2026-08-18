@@ -13,9 +13,6 @@ import { OpportunityDetail } from './pages/admin/OpportunityDetail'
 import { MyTasks } from './pages/admin/MyTasks'
 import { UserManagement } from './pages/admin/UserManagement'
 import { Settings } from './pages/admin/Settings'
-import { BoardMeetings } from './pages/admin/BoardMeetings'
-import { BoardMeetingNew } from './pages/admin/BoardMeetingNew'
-import { BoardMeetingDetail } from './pages/admin/BoardMeetingDetail'
 import { Analytics } from './pages/admin/Analytics'
 
 function PublicLayout() {
@@ -56,9 +53,6 @@ export default function App() {
         <Route path="opportunities/:id" element={<OpportunityDetail />} />
         <Route path="opportunities/:id/edit" element={<EditOpportunity />} />
         <Route path="tasks" element={<MyTasks />} />
-        <Route path="board-meetings" element={<BoardMeetings />} />
-        <Route path="board-meetings/new" element={<BoardMeetingNew />} />
-        <Route path="board-meetings/:id" element={<BoardMeetingDetail />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="team" element={<UserManagement />} />
         <Route path="settings" element={<Settings />} />

@@ -1,17 +1,11 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { computeGrantMetrics, computePartnershipMetrics, fmtCurrency } from '../../lib/analytics'
+import { computePartnershipMetrics, fmtCurrency } from '../../lib/analytics'
 import type { OpportunityWithDetails } from '../../lib/analytics'
 import { MetricCard } from '../../components/admin/analytics/MetricCard'
-import { GrantFunnel } from '../../components/admin/analytics/GrantFunnel'
 import { PartnershipFunnel } from '../../components/admin/analytics/PartnershipFunnel'
 
-type Tab = 'grants' | 'partnerships'
-
 export function Analytics() {
-  const [tab, setTab] = useState<Tab>('grants')
-
   // Shares cache with Opportunities.tsx via the same query key
   const { data: opportunities = [], isLoading } = useQuery<OpportunityWithDetails[]>({
     queryKey: ['opportunities'],
@@ -25,7 +19,6 @@ export function Analytics() {
     },
   })
 
-  const grantMetrics       = computeGrantMetrics(opportunities)
   const partnershipMetrics = computePartnershipMetrics(opportunities)
 
   return (
@@ -46,17 +39,6 @@ export function Analytics() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <MetricCard
-            label="Active Grants"
-            value={grantMetrics.activeCount}
-            sub="in pipeline"
-          />
-          <MetricCard
-            label="Grant Pipeline"
-            value={fmtCurrency(grantMetrics.totalPipelineValue)}
-            sub="total requested"
-            accent="river"
-          />
-          <MetricCard
             label="Active Partnerships"
             value={partnershipMetrics.activeCount}
             sub="in pipeline"
@@ -68,29 +50,23 @@ export function Analytics() {
             sub="estimated value"
             accent="earth"
           />
+          <MetricCard
+            label="Win Rate"
+            value={partnershipMetrics.winRate != null ? `${partnershipMetrics.winRate}%` : '—'}
+            sub="closed-won share"
+            accent="river"
+          />
+          <MetricCard
+            label="Weighted Pipeline"
+            value={fmtCurrency(partnershipMetrics.weightedPipeline)}
+            sub="by confidence"
+          />
         </div>
       )}
-
-      {/* Tab switcher */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
-        {(['grants', 'partnerships'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              tab === t ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-navy'
-            }`}
-          >
-            {t === 'grants' ? 'Grants' : 'Partnerships'}
-          </button>
-        ))}
-      </div>
 
       {/* Panel */}
       {isLoading ? (
         <div className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse" />
-      ) : tab === 'grants' ? (
-        <GrantFunnel metrics={grantMetrics} />
       ) : (
         <PartnershipFunnel metrics={partnershipMetrics} />
       )}
