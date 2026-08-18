@@ -17,7 +17,13 @@ import { WA_ORG_PROFILE, WA_ORG_PROFILE_PROMPT } from '../../src/lib/discovery/w
 export const config = { maxDuration: 300 }
 
 // ── Constants ─────────────────────────────────────────────────
-const MAX_PAGE_TEXT_CHARS = 100_000
+// Ceiling on text handed to ONE extraction call. Larger inputs are chunked, not
+// truncated — see extractCandidates.
+const EXTRACTION_CHUNK_CHARS = 40_000
+
+// Ceiling on total text pulled from a single source in one run. A backstop
+// against a runaway page, not a normal operating limit.
+const MAX_PAGE_TEXT_CHARS = 400_000
 const AUTO_DISABLE_AFTER  = 3
 const FETCH_TIMEOUT_MS    = 15_000
 const SOFT_DEADLINE_MS    = 250_000
@@ -92,32 +98,77 @@ async function fetchPage(url: string): Promise<string> {
  * Association's job board is a Next.js front end whose index renders client-side
  * and yields nothing to a plain fetch, while its WordPress API serves the same
  * posts as clean JSON.
+ *
+ * The window is by DATE, not count. It was briefly a fixed per_page=40, which on
+ * a board this busy reached back only five days — and silently dropped the two
+ * best candidates the rubric knows about: the GOBRP Development Director
+ * (contract, scored 19) and the Climate Democracy communications consultant
+ * (contract, scored 15). Both sat outside the window and were never extracted,
+ * scored, or even rejected. Meanwhile the 40 postings inside it were almost all
+ * full-time W-2 noise.
+ *
+ * So: fetch everything posted since the last successful check, paginating, with
+ * a lookback on first run. A count-based cap silently discards the tail, and the
+ * tail is where contract work lives.
  */
-async function fetchWpRest(url: string): Promise<string> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'WrightAdventuresOMP/1.0 (+https://wrightadventures.org)' },
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const items = await res.json() as Array<Record<string, any>>
-    if (!Array.isArray(items)) throw new Error('WP REST response was not a collection')
+async function fetchWpRest(
+  baseUrl: string,
+  since: string | null,
+  firstRunLookbackDays = 60,
+): Promise<string> {
+  const PER_PAGE = 100          // WordPress REST maximum
+  const MAX_PAGES = 5           // 500 postings is far beyond any real window
 
-    return items.map(it => {
-      const title = it?.title?.rendered ?? it?.slug ?? '(untitled)'
-      const body  = extractPageText(it?.content?.rendered ?? '')
-      // A headless WordPress returns links on its own API host
-      // (api.example.org/...), which is not where a human should be sent.
-      // Drop the leading `api.` so the URL points at the public site.
-      const link  = String(it?.link ?? '').replace(/^(https?:\/\/)api\./, '$1')
-      const date  = it?.date ?? ''
-      return `--- POSTING ---\nTITLE: ${title}\nURL: ${link}\nPOSTED: ${date}\n\n${body}`
-    }).join('\n\n')
-  } finally {
-    clearTimeout(timer)
+  const url = new URL(baseUrl)
+  url.searchParams.set('per_page', String(PER_PAGE))
+  url.searchParams.set('orderby', 'date')
+  url.searchParams.set('order', 'desc')
+
+  const after = since
+    ? new Date(since)
+    : new Date(Date.now() - firstRunLookbackDays * 24 * 60 * 60 * 1000)
+  url.searchParams.set('after', after.toISOString())
+
+  const all: Array<Record<string, any>> = []
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    url.searchParams.set('page', String(page))
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    let items: Array<Record<string, any>>
+    try {
+      const res = await fetch(url.toString(), {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'WrightAdventuresOMP/1.0 (+https://wrightadventures.org)' },
+      })
+      // WordPress returns 400 rest_post_invalid_page_number past the last page.
+      if (res.status === 400 && page > 1) break
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const body = await res.json()
+      if (!Array.isArray(body)) throw new Error('WP REST response was not a collection')
+      items = body
+    } finally {
+      clearTimeout(timer)
+    }
+
+    all.push(...items)
+    if (items.length < PER_PAGE) break
   }
+
+  if (all.length === 0) {
+    return `--- NO POSTINGS --- none published since ${after.toISOString().slice(0, 10)}`
+  }
+
+  return all.map(it => {
+    const title = it?.title?.rendered ?? it?.slug ?? '(untitled)'
+    const body  = extractPageText(it?.content?.rendered ?? '')
+    // A headless WordPress returns item links on its own API host
+    // (api.example.org/...), which is not where a human should be sent.
+    const link  = String(it?.link ?? '').replace(/^(https?:\/\/)api\./, '$1')
+    const date  = it?.date ?? ''
+    return `--- POSTING ---\nTITLE: ${title}\nURL: ${link}\nPOSTED: ${date}\n\n${body}`
+  }).join('\n\n')
 }
 
 /**
@@ -316,8 +367,78 @@ async function recordTokenUsage(tokens: number): Promise<void> {
   }).eq('id', row.id)
 }
 
+/**
+ * Log a dropped candidate. Rejections are observability, never a work queue —
+ * they exist so an empty review queue can be told apart from a broken pipeline,
+ * and so a scorer bias against a whole category of posting becomes visible.
+ *
+ * Deliberately non-fatal: failing to record a rejection must never abort a run
+ * that is otherwise working.
+ */
+async function recordRejection(
+  runId: string,
+  sourceId: string,
+  reason: 'below_threshold' | 'duplicate' | 'unscorable' | 'incomplete',
+  candidate: Partial<ExtractedOpportunity>,
+  fit?: { total: number },
+): Promise<void> {
+  const { error } = await supabase.from('discovery_rejections').insert({
+    run_id:           runId,
+    source_id:        sourceId,
+    reason,
+    name:             candidate.name ?? null,
+    publisher:        candidate.publisher ?? null,
+    url:              candidate.url ?? null,
+    source_kind:      candidate.source_kind ?? null,
+    engagement_raw:   candidate.engagement_raw ?? null,
+    compensation_raw: candidate.compensation_raw ?? null,
+    score:            fit?.total ?? null,
+    // Full FitAssessment: per-dimension scores, action, gates, flags. This is
+    // what makes a scorer bias against a category of posting reviewable later.
+    score_detail:     fit ? (fit as unknown as Record<string, unknown>) : null,
+  })
+  if (error) console.warn('[sources-sync] rejection log failed:', error.message)
+}
+
 // ── AI passes ─────────────────────────────────────────────────
 
+/**
+ * Split text into chunks small enough for one extraction call.
+ *
+ * Prefers to break on the `--- POSTING ---` delimiter the wp_rest and sitemap
+ * modes emit, so a posting is never severed across two calls. Falls back to
+ * paragraph boundaries for plain HTML sources.
+ */
+function chunkForExtraction(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text]
+
+  const delimiter = text.includes('--- POSTING ---') ? '--- POSTING ---' : '\n\n'
+  const pieces = text.split(delimiter).filter(p => p.trim().length > 0)
+
+  const chunks: string[] = []
+  let current = ''
+  for (const piece of pieces) {
+    const candidate = current ? current + delimiter + piece : piece
+    if (candidate.length > maxChars && current) {
+      chunks.push(current)
+      current = piece
+    } else {
+      current = candidate
+    }
+  }
+  if (current.trim()) chunks.push(current)
+  return chunks
+}
+
+/**
+ * Extract candidates, chunking rather than truncating.
+ *
+ * Truncation was silently dropping the tail. Because both structured modes emit
+ * newest-first, the tail is the oldest postings — and on a job board that is
+ * exactly where contract work has aged to. Two of the highest-scoring
+ * opportunities the rubric knows about (GOBRP at 19, Climate Democracy at 15)
+ * were lost this way, first to a per_page cap and then to a character cap.
+ */
 async function extractCandidates(opts: {
   sourceLabel: string
   publisher: string
@@ -326,17 +447,23 @@ async function extractCandidates(opts: {
   pageText: string
   isDiff: boolean
 }): Promise<{ candidates: ExtractedOpportunity[]; tokens: number }> {
-  const { text, usage } = await generateText({
-    model:       anthropic('claude-haiku-4-5-20251001'),
-    maxOutputTokens: 8000,
-    temperature: 0,
-    prompt:      buildExtractionPrompt(opts),
-  })
-  const parsed = parseJson<ExtractedOpportunity[]>(text)
-  return {
-    candidates: Array.isArray(parsed) ? parsed : [],
-    tokens:     usage?.totalTokens ?? 0,
+  const chunks = chunkForExtraction(opts.pageText, EXTRACTION_CHUNK_CHARS)
+  const candidates: ExtractedOpportunity[] = []
+  let tokens = 0
+
+  for (const chunk of chunks) {
+    const { text, usage } = await generateText({
+      model:           anthropic('claude-haiku-4-5-20251001'),
+      maxOutputTokens: 8000,
+      temperature:     0,
+      prompt:          buildExtractionPrompt({ ...opts, pageText: chunk }),
+    })
+    tokens += usage?.totalTokens ?? 0
+    const parsed = parseJson<ExtractedOpportunity[]>(text)
+    if (Array.isArray(parsed)) candidates.push(...parsed)
   }
+
+  return { candidates, tokens }
 }
 
 interface RawScore {
@@ -423,7 +550,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       try {
         const fetched: string | null =
-          source.fetch_mode === 'wp_rest'  ? await fetchWpRest(source.url)
+          source.fetch_mode === 'wp_rest'  ? await fetchWpRest(
+            source.url,
+            // Same rule as sitemap mode: a cleared hash means "start fresh".
+            source.last_content_hash ? (source.last_fetched_at ?? null) : null,
+          )
         : source.fetch_mode === 'sitemap'  ? await fetchSitemap(
             source.url,
             source.item_url_pattern ?? null,
@@ -470,20 +601,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           publisher:        source.publisher,
           relevanceNotes:   source.relevance_notes,
           eligibilityNotes: source.eligibility_notes,
-          pageText:         target.slice(0, MAX_PAGE_TEXT_CHARS),
+          pageText:         target,
           isDiff,
         })
         stats.tokens_haiku += haikuTokens
         stats.opportunities_fetched += candidates.length
 
+        let truncated = false
+
         for (const candidate of candidates) {
+          // Scoring is one Sonnet call per candidate, so a large first-run
+          // window can outlast the function. Stop cleanly rather than being
+          // killed mid-loop by the platform.
+          if (Date.now() - startedAt > SOFT_DEADLINE_MS) {
+            truncated = true
+            stats.error_log.push({
+              label: source.label,
+              error: `Stopped at the soft deadline with candidates unprocessed; ` +
+                     `source baseline left unchanged so the next run repeats the window`,
+              timestamp: new Date().toISOString(),
+            })
+            break
+          }
+
           if (!candidate?.name || !candidate?.publisher) {
             stats.opportunities_auto_rejected++
+            await recordRejection(run.id, source.id, 'incomplete', candidate ?? {})
             continue
           }
 
           if (await isDuplicate(candidate, supabase)) {
             stats.opportunities_deduplicated++
+            await recordRejection(run.id, source.id, 'duplicate', candidate)
             continue
           }
 
@@ -492,6 +641,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (!score?.scores) {
             stats.opportunities_auto_rejected++
+            await recordRejection(run.id, source.id, 'unscorable', candidate)
             continue
           }
 
@@ -505,6 +655,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (fit.total < SCORE_THRESHOLD) {
             stats.opportunities_below_threshold++
+            await recordRejection(run.id, source.id, 'below_threshold', candidate, fit)
             continue
           }
 
@@ -558,13 +709,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           stats.opportunities_inserted++
         }
 
-        // Success — store the new baseline for the next diff.
+        // Advance the baseline only on a complete pass. A truncated run that
+        // recorded the new hash would mark the unprocessed candidates as
+        // already-seen and lose them permanently.
         await supabase.from('discovery_sources').update({
-          last_content_hash:  hash,
-          last_content_text:  pageText,
+          ...(truncated ? {} : {
+            last_content_hash: hash,
+            last_content_text: pageText,
+            last_changed_at:   new Date().toISOString(),
+          }),
           last_fetched_at:    new Date().toISOString(),
-          last_changed_at:    new Date().toISOString(),
-          last_error:         null,
+          last_error:         truncated ? 'Last run stopped at the soft deadline; window will repeat' : null,
           consecutive_errors: 0,
         }).eq('id', source.id)
 

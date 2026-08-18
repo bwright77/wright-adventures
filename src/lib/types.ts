@@ -347,3 +347,27 @@ export interface LeadDetails {
   created_at:       string
   updated_at:       string
 }
+
+/**
+ * A candidate discovery dropped (ADR-011). Deliberately NOT an opportunity:
+ * never pursued, no owner, no pipeline. Exists so an empty review queue can be
+ * told apart from a broken pipeline.
+ */
+export type RejectionReason = 'below_threshold' | 'duplicate' | 'unscorable' | 'incomplete'
+
+export interface DiscoveryRejection {
+  id:               string
+  run_id:           string | null
+  source_id:        string | null
+  reason:           RejectionReason
+  name:             string | null
+  publisher:        string | null
+  url:              string | null
+  source_kind:      string | null
+  engagement_raw:   string | null
+  compensation_raw: string | null
+  /** NULL for duplicates and incomplete extractions — dropped before scoring. */
+  score:            number | null
+  score_detail:     ScoreDetail | null
+  created_at:       string
+}

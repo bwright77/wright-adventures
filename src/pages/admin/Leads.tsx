@@ -9,7 +9,7 @@ import {
   DIMENSION_LABELS, MAX_FIT_SCORE, BAND_PURSUE_HARD, BAND_PURSUE_LEAN,
   type FitAssessment, type FitAction, type FitDimension,
 } from '../../lib/discovery/fitRubric'
-import type { Opportunity, LeadDetails } from '../../lib/types'
+import type { Opportunity, LeadDetails, DiscoveryRejection } from '../../lib/types'
 
 type LeadRow = Opportunity & { lead_details: LeadDetails | null }
 
@@ -195,6 +195,86 @@ function LeadCard({ lead, onPursue, onDecline }: {
   )
 }
 
+const REASON_LABEL: Record<string, string> = {
+  below_threshold: 'below threshold',
+  duplicate:       'already seen',
+  unscorable:      'could not score',
+  incomplete:      'incomplete',
+}
+
+/**
+ * What discovery dropped. Collapsed by default and placed below the queue: it is
+ * reference, not work. Its job is to answer "did the pipeline find nothing, or
+ * find things and rightly drop them" — the question an empty queue cannot.
+ */
+function RejectedPanel() {
+  const [open, setOpen] = useState(false)
+
+  const { data: rejections = [] } = useQuery<DiscoveryRejection[]>({
+    queryKey: ['discovery_rejections'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('discovery_rejections')
+        .select('*')
+        .order('score', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      return (data ?? []) as DiscoveryRejection[]
+    },
+  })
+
+  if (rejections.length === 0) return null
+
+  return (
+    <div className="mt-10">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 text-sm text-gray-400 hover:text-navy transition-colors"
+      >
+        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        {rejections.length} rejected
+        <span className="text-xs text-gray-300">— scored and dropped, highest first</span>
+      </button>
+
+      {open && (
+        <div className="mt-3 bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-gray-50">
+            {rejections.map(r => (
+              <li key={r.id} className="flex items-baseline gap-3 px-4 py-2.5">
+                <span className="text-xs font-semibold tabular-nums text-gray-400 w-9 shrink-0">
+                  {r.score != null ? `${r.score}/21` : '—'}
+                </span>
+                <span className="text-sm text-navy truncate flex-1 min-w-0">
+                  {r.name}
+                  {r.publisher && <span className="text-gray-400"> · {r.publisher}</span>}
+                </span>
+                {r.engagement_raw && (
+                  <span className="text-xs text-gray-400 shrink-0 hidden md:block">{r.engagement_raw}</span>
+                )}
+                <span className="text-[0.7rem] text-gray-300 shrink-0 whitespace-nowrap">
+                  {REASON_LABEL[r.reason] ?? r.reason}
+                </span>
+                {r.url && (
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-300 hover:text-river transition-colors shrink-0"
+                    aria-label={`View posting for ${r.name ?? 'this rejection'}`}
+                  >
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Leads() {
   const queryClient = useQueryClient()
 
@@ -257,6 +337,8 @@ export function Leads() {
           ))}
         </div>
       )}
+
+      <RejectedPanel />
     </div>
   )
 }

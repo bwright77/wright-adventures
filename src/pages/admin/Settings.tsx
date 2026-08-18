@@ -120,6 +120,7 @@ function DiscoverySourcesCard() {
           Last run {formatDistanceToNow(new Date(latestRun.started_at), { addSuffix: true })}
           {' · '}{latestRun.status}
           {latestRun.opportunities_inserted > 0 && ` · ${latestRun.opportunities_inserted} added`}
+          {latestRun.opportunities_below_threshold > 0 && ` · ${latestRun.opportunities_below_threshold} rejected`}
         </p>
       )}
 
