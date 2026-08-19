@@ -17,11 +17,15 @@ export type OpportunityWithDetails = Opportunity & {
   } | null
 }
 
-// Portfolio and pro-bono engagements are real work but not sales outcomes.
-// Counting them would put win rate at 80% off four $0 deals and drag average
-// deal size to nothing, so they are excluded from the commercial metrics and
-// reported separately as contributed value.
-const NON_COMMERCIAL: ReadonlySet<string> = new Set(['portfolio', 'pro_bono'])
+// Work that is real but is not a sales outcome. Counting it would put win rate
+// at 80% off four ~$0 deals and drag average deal size to nothing, so it is
+// excluded from the commercial metrics and reported separately.
+//
+// 'strategic' belongs here despite carrying an expected return: the return
+// arrives as grant-funded technical support later, not as cash booked against
+// this engagement. Reporting it as investment rather than revenue keeps both
+// numbers honest.
+const NON_COMMERCIAL: ReadonlySet<string> = new Set(['portfolio', 'pro_bono', 'strategic'])
 
 function isCommercial(o: OpportunityWithDetails): boolean {
   return !NON_COMMERCIAL.has(o.partnership_details?.engagement_nature ?? 'paid')

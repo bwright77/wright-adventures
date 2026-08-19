@@ -39,7 +39,7 @@ const partnershipSchema = baseSchema.extend({
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
-  engagement_nature: z.enum(['paid', 'reduced_rate', 'portfolio', 'pro_bono']).optional(),
+  engagement_nature: z.enum(['paid', 'reduced_rate', 'portfolio', 'pro_bono', 'strategic']).optional(),
   list_value:        z.string().optional(),
 })
 
@@ -301,6 +301,7 @@ export function NewOpportunity() {
                     <option value="reduced_rate">Reduced rate — discounted</option>
                     <option value="portfolio">Portfolio — nominal fee</option>
                     <option value="pro_bono">Pro bono — no fee</option>
+                    <option value="strategic">Strategic — indirect return</option>
                   </Select>
                 </div>
                 <div>

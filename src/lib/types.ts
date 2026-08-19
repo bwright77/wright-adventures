@@ -213,11 +213,19 @@ export type InteractionType =
 export type InteractionDirection = 'inbound' | 'outbound' | 'internal'
 
 /** How an engagement is priced. Non-paid work is excluded from sales metrics. */
-export type EngagementNature = 'paid' | 'reduced_rate' | 'portfolio' | 'pro_bono'
+export type EngagementNature =
+  | 'paid' | 'reduced_rate' | 'portfolio' | 'pro_bono'
+  /** Below market by design, with an expected INDIRECT return — the Confluence
+   *  fiscal-agent network, where digital work feeds grants that fund tech support. */
+  | 'strategic'
+
+/** Post-win lifecycle, orthogonal to pipeline status. */
+export type DeliveryStatus = 'in_delivery' | 'supporting' | 'complete' | 'dormant'
 
 export interface PartnershipDetails {
   opportunity_id: string
   engagement_nature: EngagementNature
+  delivery_status: DeliveryStatus
   /** NUMERIC — Supabase JS returns a string. Coerce with Number(). */
   list_value: number | null
   qualification_status: QualificationStatus

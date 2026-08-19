@@ -29,6 +29,15 @@ const ENGAGEMENT_LABELS: Record<string, string> = {
   reduced_rate: 'Reduced rate',
   portfolio:    'Portfolio — nominal fee',
   pro_bono:     'Pro bono',
+  strategic:    'Strategic — indirect return',
+}
+
+// Post-win lifecycle. Winning ends the pipeline; this is what happens after.
+const DELIVERY_LABELS: Record<string, string> = {
+  in_delivery: 'In delivery',
+  supporting:  'Supporting — obligation still live',
+  complete:    'Complete — nothing owed',
+  dormant:     'Dormant — no active work',
 }
 
 // Statuses that end pursuit. Reaching one clears any unfinished tasks —
@@ -826,6 +835,12 @@ export function OpportunityDetail() {
               <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(parseLocalDate(opportunity.renewal_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Est. value"    value={opportunity.estimated_value != null ? `$${opportunity.estimated_value.toLocaleString()}` : null} />
               <DetailRow label="Engagement"    value={ENGAGEMENT_LABELS[partnershipDetails?.engagement_nature ?? 'paid'] ?? null} />
+              <DetailRow
+                label="Delivery"
+                value={opportunity.status === 'partnership_closed_won'
+                  ? (DELIVERY_LABELS[partnershipDetails?.delivery_status ?? 'in_delivery'] ?? null)
+                  : null}
+              />
               <DetailRow label="At std. rate"  value={partnershipDetails?.list_value != null ? `$${Number(partnershipDetails.list_value).toLocaleString()}` : null} />
               <DetailRow label="Alignment"     value={opportunity.alignment_notes} />
               {partnershipDetails?.org_size && (

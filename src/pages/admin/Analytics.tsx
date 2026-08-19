@@ -57,9 +57,9 @@ export function Analytics() {
             accent="river"
           />
           <MetricCard
-            label="Contributed"
+            label="Network investment"
             value={fmtCurrency(partnershipMetrics.contributedValue)}
-            sub={`${partnershipMetrics.contributedCount} portfolio / pro-bono`}
+            sub={`${partnershipMetrics.contributedCount} strategic / portfolio`}
           />
         </div>
       )}
