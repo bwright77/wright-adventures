@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, ChevronDown, ChevronUp, MapPin, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { ExternalLink, ChevronDown, ChevronUp, MapPin, Calendar, AlertTriangle, CheckCircle2, Search, ArrowUpDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { parseLocalDate } from '../../lib/dates'
@@ -275,8 +275,25 @@ function RejectedPanel() {
   )
 }
 
+type SortKey = 'score' | 'discovered' | 'closes' | 'publisher'
+
+const SORT_LABELS: Record<SortKey, string> = {
+  score:      'Fit score',
+  discovered: 'Recently found',
+  closes:     'Closing soonest',
+  publisher:  'Organization',
+}
+
 export function Leads() {
   const queryClient = useQueryClient()
+
+  // Score descending is the default deliberately: the queue exists to be worked
+  // top-down, and the whole point of scoring is to decide what to read first.
+  const [sortKey, setSortKey]   = useState<SortKey>('score')
+  const [actionFilter, setActionFilter] = useState<FitAction | ''>('')
+  const [sourceFilter, setSourceFilter] = useState('')
+  const [kindFilter, setKindFilter]     = useState('')
+  const [search, setSearch]             = useState('')
 
   const { data: leads = [], isLoading } = useQuery<LeadRow[]>({
     queryKey: ['leads'],
@@ -291,6 +308,39 @@ export function Leads() {
       return (data ?? []) as LeadRow[]
     },
   })
+
+  const sources = [...new Set((leads ?? []).map(l => l.source).filter(Boolean))] as string[]
+  const kinds   = [...new Set((leads ?? []).map(l => l.lead_details?.source_kind).filter(Boolean))] as string[]
+
+  const visible = leads
+    .filter(l => {
+      const fit = l.ai_score_detail as FitAssessment | null
+      if (actionFilter && (fit?.action ?? 'monitor') !== actionFilter) return false
+      if (sourceFilter && l.source !== sourceFilter) return false
+      if (kindFilter && l.lead_details?.source_kind !== kindFilter) return false
+      if (search) {
+        const hay = `${l.name} ${l.lead_details?.publisher ?? ''}`.toLowerCase()
+        if (!hay.includes(search.toLowerCase())) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortKey) {
+        case 'discovered':
+          return new Date(b.discovered_at ?? b.created_at).getTime()
+               - new Date(a.discovered_at ?? a.created_at).getTime()
+        case 'closes': {
+          // Undated leads sort last rather than pretending to be urgent.
+          const aT = a.lead_details?.closes_date ? new Date(a.lead_details.closes_date).getTime() : Infinity
+          const bT = b.lead_details?.closes_date ? new Date(b.lead_details.closes_date).getTime() : Infinity
+          return aT - bT
+        }
+        case 'publisher':
+          return (a.lead_details?.publisher ?? '').localeCompare(b.lead_details?.publisher ?? '')
+        default:
+          return (b.ai_match_score ?? 0) - (a.ai_match_score ?? 0)
+      }
+    })
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -308,9 +358,69 @@ export function Leads() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-navy">Leads</h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          Discovered RFPs, contracts, and roles — scored against the fit rubric, highest first
+          Discovered RFPs, contracts, and roles — scored against the fit rubric
         </p>
       </div>
+
+      {leads.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <div className="relative flex-1 min-w-[12rem] max-w-xs">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search role or organization"
+              className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-river/20 focus:border-river/40"
+            />
+          </div>
+
+          <select
+            value={actionFilter}
+            onChange={e => setActionFilter(e.target.value as FitAction | '')}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-river/20"
+          >
+            <option value="">All verdicts</option>
+            {(Object.keys(ACTION_STYLE) as FitAction[]).map(a => (
+              <option key={a} value={a}>{ACTION_STYLE[a].label}</option>
+            ))}
+          </select>
+
+          {sources.length > 1 && (
+            <select
+              value={sourceFilter}
+              onChange={e => setSourceFilter(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-river/20"
+            >
+              <option value="">All sources</option>
+              {sources.map(s2 => <option key={s2} value={s2}>{s2}</option>)}
+            </select>
+          )}
+
+          {kinds.length > 1 && (
+            <select
+              value={kindFilter}
+              onChange={e => setKindFilter(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-river/20"
+            >
+              <option value="">All kinds</option>
+              {kinds.map(k => <option key={k} value={k}>{k.toUpperCase()}</option>)}
+            </select>
+          )}
+
+          <div className="flex items-center gap-1.5 ml-auto">
+            <ArrowUpDown size={13} className="text-gray-400" />
+            <select
+              value={sortKey}
+              onChange={e => setSortKey(e.target.value as SortKey)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-river/20"
+            >
+              {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                <option key={k} value={k}>{SORT_LABELS[k]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-4">
@@ -318,16 +428,20 @@ export function Leads() {
             <div key={i} className="bg-white rounded-xl border border-gray-200 h-40 animate-pulse" />
           ))}
         </div>
-      ) : leads.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
-          <p className="text-sm text-gray-400">No leads in the review queue.</p>
+          <p className="text-sm text-gray-400">
+            {leads.length === 0 ? 'No leads in the review queue.' : 'No leads match these filters.'}
+          </p>
           <p className="text-xs text-gray-300 mt-1">
-            Sources are checked weekly on Monday mornings.
+            {leads.length === 0
+              ? 'Sources are checked weekly on Monday mornings.'
+              : `${leads.length} in the queue — clear a filter to see them.`}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {leads.map(lead => (
+          {visible.map(lead => (
             <LeadCard
               key={lead.id}
               lead={lead}

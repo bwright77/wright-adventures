@@ -110,11 +110,18 @@ async function fetchPage(url: string): Promise<string> {
  * So: fetch everything posted since the last successful check, paginating, with
  * a lookback on first run. A count-based cap silently discards the tail, and the
  * tail is where contract work lives.
+ *
+ * The first-run lookback is 14 days. It was 60, which on CNA produced 218
+ * candidates and 933k tokens in a single run. Nothing is pre-filtered — a W-2
+ * posting can still be argued into a firm engagement, and a warm_path of 0 often
+ * means the relationship list is incomplete rather than that the organization is
+ * cold — so the window is the only lever that does not risk discarding a real
+ * opportunity.
  */
 async function fetchWpRest(
   baseUrl: string,
   since: string | null,
-  firstRunLookbackDays = 60,
+  firstRunLookbackDays = 14,
 ): Promise<string> {
   const PER_PAGE = 100          // WordPress REST maximum
   const MAX_PAGES = 5           // 500 postings is far beyond any real window
