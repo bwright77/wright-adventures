@@ -64,6 +64,7 @@ export const WA_ORG_PROFILE = {
     { name: 'Custom software',                  detail: 'Grant management, donor systems, dashboards, registration, purpose-built admin tools' },
     { name: 'Websites and digital fundraising', detail: 'Build, conversion paths, recurring giving, bilingual where it matters' },
     { name: 'Impact and storytelling',          detail: 'Impact reports in web and print, program archives, funder-facing narrative' },
+    { name: 'Brand identity',                   detail: 'Logo and mark, visual language, messaging — the legitimacy that makes funders take an organization seriously' },
     { name: 'Development strategy',             detail: 'Case for support, grant pipeline, corporate partnerships, individual giving' },
     { name: 'Compliance navigation',            detail: 'Gift substantiation, fiscal sponsorship, worker classification, charitable registration' },
   ],

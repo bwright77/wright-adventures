@@ -22,6 +22,7 @@ export type ServiceLine =
   | 'impact_storytelling'
   | 'development_strategy'
   | 'compliance'
+  | 'brand_identity'
 
 export const SERVICE_LINES: Array<{
   id: ServiceLine
@@ -65,6 +66,12 @@ export const SERVICE_LINES: Array<{
     label: 'Development strategy',
     half: 'fundraising',
     detail: 'Case for support, grant pipeline, corporate partnerships, individual giving',
+  },
+  {
+    id: 'brand_identity',
+    label: 'Brand identity',
+    half: 'both',
+    detail: 'Logo and mark, visual language, messaging — the legitimacy that makes funders take an organization seriously',
   },
   {
     id: 'compliance',

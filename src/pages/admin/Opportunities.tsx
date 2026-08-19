@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { parseLocalDate } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import type { Opportunity, DealConfidence } from '../../lib/types'
+import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
 
 type OpportunityWithLogo = Opportunity & {
   partnership_details?: {
@@ -74,6 +75,36 @@ const STATUS_COLORS: Record<string, string> = {
 // ── Score detail drawer ───────────────────────────────────────
 
 // ── Kanban card ───────────────────────────────────────────────
+/**
+ * Logo with an initials fallback.
+ *
+ * Replaces an inline onError that did `img.nextElementSibling.style.display =
+ * 'flex'` — but the next sibling is the name block, not a fallback, so a broken
+ * logo hid the image AND forced display:flex onto the organization name. It
+ * never fired while logo_url was mostly null; populating every row made it
+ * reachable.
+ */
+function OrgAvatar({ logo, name }: { logo: string | null; name: string }) {
+  const [failed, setFailed] = useState(false)
+  const box = 'w-7 h-7 rounded shrink-0'
+
+  if (!logo || failed) {
+    return (
+      <div className={`${box} bg-gray-100 border border-gray-200 flex items-center justify-center text-[11px] font-semibold text-gray-400`}>
+        {name.charAt(0).toUpperCase()}
+      </div>
+    )
+  }
+  return (
+    <img
+      src={logo}
+      alt=""
+      onError={() => setFailed(true)}
+      className={`${box} object-contain bg-gray-50 border border-gray-100`}
+    />
+  )
+}
+
 function KanbanCard({ opp }: { opp: Opportunity }) {
   const org = opp.partner_org
 
@@ -160,7 +191,7 @@ export function Opportunities() {
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
 
-  type SortKey = 'name' | 'type_id' | 'status' | 'primary_deadline'
+  type SortKey = 'name' | 'status' | 'primary_deadline'
   const [sortKey, setSortKey] = useState<SortKey | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
@@ -362,14 +393,19 @@ export function Opportunities() {
                 {(
                   [
                     { key: 'name',              label: 'Name',     className: 'px-5 py-3.5' },
-                    { key: 'type_id',           label: 'Type',     className: 'px-5 py-3.5 hidden sm:table-cell' },
+                    { key: null,                label: 'Services', className: 'px-5 py-3.5 hidden md:table-cell' },
                     { key: 'status',            label: 'Status',   className: 'px-5 py-3.5' },
                     { key: 'primary_deadline',  label: 'Deadline', className: 'px-5 py-3.5 hidden md:table-cell' },
-                  ] as { key: SortKey; label: string; className: string }[]
+                    // key: null = not sortable. An array of service lines has no
+                    // natural order worth offering.
+                  ] as { key: SortKey | null; label: string; className: string }[]
                 ).map(({ key, label, className }) => {
-                  const active = sortKey === key
+                  const active = key !== null && sortKey === key
                   return (
-                    <th key={key} className={`text-left text-xs font-medium uppercase tracking-[0.07em] ${className}`}>
+                    <th key={label} className={`text-left text-xs font-medium uppercase tracking-[0.07em] ${className}`}>
+                      {key === null ? (
+                        <span className="text-gray-400">{label}</span>
+                      ) : (
                       <button
                         onClick={() => toggleSort(key)}
                         className={`flex items-center gap-1 group ${active ? 'text-navy' : 'text-gray-400 hover:text-gray-600'}`}
@@ -382,6 +418,7 @@ export function Opportunities() {
                           }
                         </span>
                       </button>
+                      )}
                     </th>
                   )
                 })}
@@ -392,26 +429,7 @@ export function Opportunities() {
                 <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2.5">
-                      {o.type_id === 'partnership' && (() => {
-                        const logo = o.partnership_details?.logo_url
-                        const initials = (o.partner_org ?? o.name).charAt(0).toUpperCase()
-                        return logo ? (
-                          <img
-                            src={logo}
-                            alt=""
-                            className="w-7 h-7 rounded object-contain bg-gray-50 border border-gray-100 shrink-0"
-                            onError={(ev) => {
-                              const img = ev.target as HTMLImageElement
-                              img.style.display = 'none'
-                              if (img.nextElementSibling) (img.nextElementSibling as HTMLElement).style.display = 'flex'
-                            }}
-                          />
-                        ) : (
-                          <div className="w-7 h-7 rounded bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-[11px] font-semibold text-gray-400">
-                            {initials}
-                          </div>
-                        )
-                      })()}
+                      <OrgAvatar logo={o.partnership_details?.logo_url ?? null} name={o.partner_org ?? o.name} />
                       <div>
                         <Link
                           to={`/admin/opportunities/${o.id}`}
@@ -425,12 +443,26 @@ export function Opportunities() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 hidden sm:table-cell">
-                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded capitalize ${
-                      'bg-trail-50 text-trail'
-                    }`}>
-                      {o.type_id}
-                    </span>
+                  <td className="px-5 py-4 hidden md:table-cell">
+                    {o.service_lines?.length ? (
+                      <span className="flex flex-wrap gap-1 max-w-[16rem]">
+                        {o.service_lines.slice(0, 2).map(sl => (
+                          <span key={sl} className="text-[0.7rem] px-1.5 py-0.5 rounded bg-river-50 text-river whitespace-nowrap">
+                            {SERVICE_LINE_LABELS[sl] ?? sl}
+                          </span>
+                        ))}
+                        {o.service_lines.length > 2 && (
+                          <span
+                            className="text-[0.7rem] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
+                            title={o.service_lines.map(sl => SERVICE_LINE_LABELS[sl] ?? sl).join(', ')}
+                          >
+                            +{o.service_lines.length - 2}
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
                   </td>
                   <td className="px-5 py-4">
                     <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
