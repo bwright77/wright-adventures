@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, ChevronDown, ChevronUp, MapPin, Calendar, AlertTriangle, CheckCircle2, Search, ArrowUpDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
+import { convertLeadToOpportunity } from '../../lib/leads'
 import { parseLocalDate } from '../../lib/dates'
 import {
   DIMENSION_LABELS, MAX_FIT_SCORE, BAND_PURSUE_HARD, BAND_PURSUE_LEAN,
@@ -60,7 +62,7 @@ function DimensionBars({ fit }: { fit: FitAssessment }) {
 
 function LeadCard({ lead, onPursue, onDecline }: {
   lead: LeadRow
-  onPursue: (id: string) => void
+  onPursue: () => void
   onDecline: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -124,8 +126,9 @@ function LeadCard({ lead, onPursue, onDecline }: {
 
         <div className="flex items-center gap-2 mt-4 ml-[3.75rem] flex-wrap">
           <button
-            onClick={() => onPursue(lead.id)}
+            onClick={onPursue}
             className="text-xs font-medium px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-navy-800 transition-colors"
+                      title="Convert to an opportunity at the discovery stage"
           >
             Pursue
           </button>
@@ -342,11 +345,31 @@ export function Leads() {
       }
     })
 
-  const setStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+  const { user, session } = useAuth()
+
+  // Pursuing converts the lead into a partnership opportunity at the discovery
+  // stage. Declining is only a status change — a declined lead is never an
+  // opportunity and should not acquire partnership machinery.
+  const pursue = useMutation({
+    mutationFn: async (lead: LeadRow) => {
+      await convertLeadToOpportunity({
+        opportunity: lead,
+        details:     lead.lead_details,
+        actorId:     user?.id ?? null,
+        accessToken: session?.access_token ?? null,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+    },
+  })
+
+  const decline = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('opportunities')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status: 'lead_declined', updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
     },
@@ -445,8 +468,8 @@ export function Leads() {
             <LeadCard
               key={lead.id}
               lead={lead}
-              onPursue={id => setStatus.mutate({ id, status: 'lead_evaluating' })}
-              onDecline={id => setStatus.mutate({ id, status: 'lead_declined' })}
+              onPursue={() => pursue.mutate(lead)}
+              onDecline={id => decline.mutate(id)}
             />
           ))}
         </div>

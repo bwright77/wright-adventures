@@ -424,7 +424,9 @@ export function OpportunityDetail() {
       if (error) throw error
       return data as LeadDetails | null
     },
-    enabled: !!id && opportunity?.type_id === 'lead',
+    // Not gated on type_id: a converted partnership keeps its lead_details row,
+    // and that provenance (which board, what it scored) is worth keeping visible.
+    enabled: !!id,
   })
 
   const { data: partnershipDetails } = useQuery<PartnershipDetails | null>({
@@ -821,6 +823,42 @@ export function OpportunityDetail() {
           )}
         </div>
       </div>
+
+      {/* Where a converted lead came from. Only rendered when the row still
+          carries lead_details, i.e. it was discovered rather than entered by hand. */}
+      {isPartnership && leadDetails && (
+        <div className="bg-river-50/40 border border-river/20 rounded-xl px-5 py-3 mb-6 flex items-center gap-x-6 gap-y-1 flex-wrap">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-river shrink-0">
+            Sourced from discovery
+          </span>
+          {opportunity.source && (
+            <span className="text-xs text-gray-500">{opportunity.source}</span>
+          )}
+          {opportunity.ai_match_score != null && (
+            <span className="text-xs text-gray-500">
+              Fit {opportunity.ai_match_score}/{MAX_FIT_SCORE}
+            </span>
+          )}
+          {leadDetails.engagement_type && (
+            <span className="text-xs text-gray-500">{leadDetails.engagement_type}</span>
+          )}
+          {leadDetails.posted_date && (
+            <span className="text-xs text-gray-500">
+              Posted {format(parseLocalDate(leadDetails.posted_date), 'MMM d, yyyy')}
+            </span>
+          )}
+          {(leadDetails.apply_url ?? opportunity.external_url) && (
+            <a
+              href={(leadDetails.apply_url ?? opportunity.external_url) as string}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto flex items-center gap-1 text-xs font-medium text-river hover:underline shrink-0"
+            >
+              Original posting <ExternalLink size={11} />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Qualification tracker — partnership only */}
       {isPartnership && partnershipDetails && (
