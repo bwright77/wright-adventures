@@ -369,3 +369,20 @@ export interface DiscoveryRejection {
   score_detail:     ScoreDetail | null
   created_at:       string
 }
+
+/**
+ * Warm-path network, editable from Settings and injected into the fit-scoring
+ * prompt (ADR-011). Closed-won clients merge in automatically and need no row.
+ */
+export interface OrgRelationship {
+  id:         string
+  org:        string
+  basis:      string
+  /** 'direct' = client or principal history (rubric 3). 'network' = via someone (rubric 2). */
+  tier:       'direct' | 'network'
+  via:        string | null
+  is_active:  boolean
+  notes:      string | null
+  created_at: string
+  updated_at: string
+}

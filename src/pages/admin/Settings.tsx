@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Play, RefreshCw, Radar, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Bell, Play, RefreshCw, Radar, Zap, AlertTriangle, CheckCircle2, Users, Plus, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { NotificationPreference, DiscoverySource, DiscoveryRun } from '../../lib/types'
+import type { NotificationPreference, DiscoverySource, DiscoveryRun, OrgRelationship } from '../../lib/types'
 
 interface TokenBudget {
   id: string
@@ -14,6 +14,134 @@ interface TokenBudget {
   updated_at: string
 }
 
+
+
+// ── Warm-path relationships ───────────────────────────────────
+function RelationshipsCard() {
+  const queryClient = useQueryClient()
+  const [org, setOrg]     = useState('')
+  const [basis, setBasis] = useState('')
+  const [tier, setTier]   = useState<'direct' | 'network'>('direct')
+  const [via, setVia]     = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const { data: rels = [], isLoading } = useQuery<OrgRelationship[]>({
+    queryKey: ['org_relationships'],
+    queryFn: async () => {
+      const { data, error: e } = await supabase
+        .from('org_relationships').select('*').order('tier').order('org')
+      if (e) throw e
+      return (data ?? []) as OrgRelationship[]
+    },
+  })
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const { error: e } = await supabase.from('org_relationships').insert({
+        org: org.trim(),
+        basis: basis.trim(),
+        tier,
+        via: tier === 'network' && via.trim() ? via.trim() : null,
+      })
+      if (e) throw e
+    },
+    onSuccess: () => {
+      setOrg(''); setBasis(''); setVia(''); setError(null)
+      queryClient.invalidateQueries({ queryKey: ['org_relationships'] })
+    },
+    onError: (e: Error) => setError(e.message),
+  })
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: e } = await supabase.from('org_relationships').delete().eq('id', id)
+      if (e) throw e
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['org_relationships'] }),
+  })
+
+  const direct  = rels.filter(r => r.tier === 'direct')
+  const network = rels.filter(r => r.tier === 'network')
+
+  const inputCls = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20 bg-white'
+
+  function Row({ r }: { r: OrgRelationship }) {
+    return (
+      <li className="flex items-start gap-3 py-2">
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-medium text-navy">{r.org}</span>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            {r.basis}{r.via && <span className="text-gray-300"> · via {r.via}</span>}
+          </p>
+        </div>
+        <button
+          onClick={() => remove.mutate(r.id)}
+          className="text-gray-300 hover:text-red-500 transition-colors shrink-0 mt-0.5"
+          aria-label={`Remove ${r.org}`}
+        >
+          <Trash2 size={13} />
+        </button>
+      </li>
+    )
+  }
+
+  if (isLoading) return <div className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse" />
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-sm font-semibold text-navy flex items-center gap-1.5">
+        <Users size={14} className="text-trail" /> Warm-path relationships
+      </h3>
+      <p className="text-xs text-gray-400 mt-0.5 mb-4">
+        Scored against for the <span className="font-medium">warm path</span> dimension. An organization
+        missing here scores 0, which drops a lead a whole band — so it is worth keeping current.
+        Closed-won clients are added automatically.
+      </p>
+
+      <div className="mb-4">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-gray-400 mb-1">
+          Direct — a client, or a principal&rsquo;s own history
+        </p>
+        <ul className="divide-y divide-gray-50">
+          {direct.map(r => <Row key={r.id} r={r} />)}
+        </ul>
+      </div>
+
+      <div className="mb-5">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-gray-400 mb-1">
+          Network — an introduction is available
+        </p>
+        <ul className="divide-y divide-gray-50">
+          {network.length === 0
+            ? <li className="py-2 text-xs text-gray-300">None yet.</li>
+            : network.map(r => <Row key={r.id} r={r} />)}
+        </ul>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4 space-y-2">
+        <div className="grid sm:grid-cols-2 gap-2">
+          <input className={inputCls} placeholder="Organization" value={org} onChange={e => setOrg(e.target.value)} />
+          <select className={inputCls} value={tier} onChange={e => setTier(e.target.value as 'direct' | 'network')}>
+            <option value="direct">Direct — client or history</option>
+            <option value="network">Network — via someone</option>
+          </select>
+        </div>
+        <input className={inputCls} placeholder="How we know them" value={basis} onChange={e => setBasis(e.target.value)} />
+        {tier === 'network' && (
+          <input className={inputCls} placeholder="Reachable via (e.g. PeopleForBikes / BBSP)" value={via} onChange={e => setVia(e.target.value)} />
+        )}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+        <button
+          onClick={() => add.mutate()}
+          disabled={!org.trim() || !basis.trim() || add.isPending}
+          className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-navy text-white hover:bg-navy-800 disabled:opacity-40 transition-colors"
+        >
+          <Plus size={12} /> Add relationship
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // ── Discovery sources card ────────────────────────────────────
 function DiscoverySourcesCard() {
@@ -362,6 +490,13 @@ export function Settings() {
                 Discovery
               </h2>
               <DiscoverySourcesCard />
+            </section>
+
+            <section>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">
+                Relationships
+              </h2>
+              <RelationshipsCard />
             </section>
 
             <section>

@@ -113,6 +113,10 @@ export const WA_ORG_PROFILE = {
 export interface ProfileRelationship {
   org: string
   basis: string
+  /** 'direct' = client or principal history. 'network' = reachable through one. */
+  tier?: 'direct' | 'network'
+  /** For network relationships, who the introduction runs through. */
+  via?: string | null
 }
 
 /**
@@ -151,8 +155,10 @@ export function buildOrgProfilePrompt(extra: readonly ProfileRelationship[] = []
     return seen.some(k => k.includes(key) || key.includes(k))
   }
 
-  const merged = [
-    ...WA_ORG_PROFILE.relationships,
+  const merged: ProfileRelationship[] = [
+    // The static array is a SEED only — org_relationships in the database is the
+    // source of truth, editable from Settings. These entries default to direct.
+    ...WA_ORG_PROFILE.relationships.map(r => ({ org: r.org, basis: r.basis, tier: 'direct' as const })),
     ...extra.filter(r => {
       if (isDuplicate(r.org)) return false
       seen.push(norm(r.org))
@@ -177,8 +183,14 @@ ${WA_ORG_PROFILE.principals
 WHAT THEY SELL
 ${WA_ORG_PROFILE.services.map(s => `- ${s.name}: ${s.detail}`).join('\n')}
 
-EXISTING RELATIONSHIPS (use for the warm_path dimension)
-${merged.map(r => `- ${r.org} — ${r.basis}`).join('\n')}
+DIRECT RELATIONSHIPS — a client, or a principal's own history. warm_path 3.
+${merged.filter(r => (r.tier ?? 'direct') === 'direct')
+  .map(r => `- ${r.org} — ${r.basis}`).join('\n') || '- (none)'}
+
+NETWORK — reachable through a relationship above, so an introduction is
+available but the organization does not know us directly. warm_path 2.
+${merged.filter(r => r.tier === 'network')
+  .map(r => `- ${r.org} — ${r.basis}${r.via ? ` (via ${r.via})` : ''}`).join('\n') || '- (none)'}
 
 PORTFOLIO (use for the portfolio_proof dimension)
 ${WA_ORG_PROFILE.portfolio.map(p => `- ${p.url} — ${p.proves}`).join('\n')}

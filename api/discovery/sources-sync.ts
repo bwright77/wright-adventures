@@ -344,6 +344,14 @@ async function syncOrgProfile(promptText: string): Promise<string | null> {
  * grows as work is won, instead of going stale between edits — and a stale list
  * silently scores warm_path 0, which trips the downgrade gate.
  */
+async function storedRelationships(): Promise<ProfileRelationship[]> {
+  const { data } = await supabase
+    .from('org_relationships')
+    .select('org, basis, tier, via')
+    .eq('is_active', true)
+  return (data ?? []) as ProfileRelationship[]
+}
+
 async function wonEngagementRelationships(): Promise<ProfileRelationship[]> {
   const { data } = await supabase
     .from('opportunities')
@@ -360,6 +368,7 @@ async function wonEngagementRelationships(): Promise<ProfileRelationship[]> {
         .join(', ')
       return {
         org: o.partner_org as string,
+        tier: 'direct' as const,
         basis: services
           ? `Closed-won client — ${services.toLowerCase()}`
           : `Closed-won client — ${o.name}`,
@@ -570,8 +579,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Static relationships plus every closed-won client, composed once per run.
-    const orgProfilePrompt = buildOrgProfilePrompt(await wonEngagementRelationships())
+    // The editable list from Settings, plus every closed-won client. Composed
+    // once per run; the static array in waOrgProfile is now only a seed.
+    const orgProfilePrompt = buildOrgProfilePrompt([
+      ...await storedRelationships(),
+      ...await wonEngagementRelationships(),
+    ])
     const orgProfileId = await syncOrgProfile(orgProfilePrompt)
 
     let query = supabase.from('discovery_sources').select('*')
