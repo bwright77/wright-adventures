@@ -9,7 +9,8 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
-import type { Opportunity, PartnershipType, PartnershipDetails, CompanySize } from '../../lib/types'
+import type { Opportunity, PartnershipDetails, CompanySize } from '../../lib/types'
+import { SERVICE_LINES } from '../../lib/serviceLines'
 import { normalizePhone } from '../../lib/phone'
 
 // ── Schemas (same shape as NewOpportunity) ────────────────────
@@ -26,7 +27,7 @@ const partnershipSchema = baseSchema.extend({
   primary_contact:  z.string().optional(),
   contact_email:    z.string().email('Enter a valid email').or(z.literal('')).optional(),
   contact_phone:    z.string().optional(),
-  partnership_type: z.enum(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'strategic_alliance', 'other']).or(z.literal('')).optional(),
+  service_lines:    z.array(z.string()).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
   // partnership_details fields
@@ -153,7 +154,7 @@ export function EditOpportunity() {
       primary_contact:  o.primary_contact ?? '',
       contact_email:    o.contact_email ?? '',
       contact_phone:    o.contact_phone ?? '',
-      partnership_type: o.partnership_type ?? undefined,
+      service_lines:    o.service_lines ?? [],
       estimated_value:  o.estimated_value != null ? String(o.estimated_value) : '',
       alignment_notes:  o.alignment_notes ?? '',
       org_size:         pd?.org_size ?? undefined,
@@ -188,7 +189,7 @@ export function EditOpportunity() {
       payload.primary_contact  = v.primary_contact || null
       payload.contact_email    = v.contact_email || null
       payload.contact_phone    = v.contact_phone ? normalizePhone(v.contact_phone) || null : null
-      payload.partnership_type = v.partnership_type || null
+      payload.service_lines    = v.service_lines ?? []
       payload.estimated_value  = v.estimated_value ? Number(v.estimated_value) : null
       payload.alignment_notes  = v.alignment_notes || null
     }
@@ -300,14 +301,26 @@ export function EditOpportunity() {
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label>Partner organization</Label><Input {...register('partner_org' as never)} placeholder="Org name" /></div>
-                <div>
-                  <Label>Partnership type</Label>
-                  <Select {...register('partnership_type' as never)}>
-                    <option value="">Select…</option>
-                    {(['mou', 'joint_program', 'coalition', 'referral', 'in_kind', 'other'] as PartnershipType[]).map(p => (
-                      <option key={p} value={p}>{p.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
+                <div className="sm:col-span-2">
+                  <Label>Service lines</Label>
+                  <p className="text-xs text-gray-400 mb-2">
+                    What we are selling. Multiple apply — the combination is the differentiator.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                    {SERVICE_LINES.map(sl => (
+                      <label key={sl.id} className="flex items-start gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          value={sl.id}
+                          {...register('service_lines' as never)}
+                          className="mt-0.5 rounded border-gray-300 text-river focus:ring-river/30"
+                        />
+                        <span className="text-sm text-navy group-hover:text-river transition-colors">
+                          {sl.label}
+                        </span>
+                      </label>
                     ))}
-                  </Select>
+                  </div>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">

@@ -19,7 +19,7 @@ You must return ONLY a valid JSON object matching the specified schema. No markd
 // ── User prompt builder ───────────────────────────────────────
 
 export function buildAdvisorPrompt(
-  opp: Pick<Opportunity, 'name' | 'description' | 'status' | 'partner_org' | 'partnership_type' | 'estimated_value'>,
+  opp: Pick<Opportunity, 'name' | 'description' | 'status' | 'partner_org' | 'service_lines' | 'estimated_value'>,
   pd: Pick<PartnershipDetails, 'org_size' | 'pain_points' | 'tech_stack_notes' | 'qualification_notes'>,
 ): string {
   const lines: string[] = [
@@ -33,7 +33,7 @@ export function buildAdvisorPrompt(
   if (opp.status)            lines.push(`Pipeline stage: ${opp.status.replace('partnership_', '')}`)
   if (opp.partner_org)       lines.push(`Partner org: ${opp.partner_org}`)
   if (pd.org_size)           lines.push(`Org size: ${pd.org_size} employees`)
-  if (opp.partnership_type)  lines.push(`Partnership type: ${opp.partnership_type}`)
+  if (opp.service_lines?.join(', '))  lines.push(`Service lines: ${opp.service_lines?.join(', ')}`)
   if (opp.estimated_value)   lines.push(`Estimated value: $${opp.estimated_value}`)
 
   lines.push('')

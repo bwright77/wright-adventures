@@ -11,7 +11,8 @@ import {
 } from './state-utils.js'
 import { buildExtractionPrompt, buildScoringPrompt } from '../../src/lib/discovery/prompts.js'
 import { assess, type FitScores } from '../../src/lib/discovery/fitRubric.js'
-import { WA_ORG_PROFILE, WA_ORG_PROFILE_PROMPT } from '../../src/lib/discovery/waOrgProfile.js'
+import { WA_ORG_PROFILE, buildOrgProfilePrompt, type ProfileRelationship } from '../../src/lib/discovery/waOrgProfile.js'
+import { SERVICE_LINE_LABELS } from '../../src/lib/serviceLines.js'
 
 // Vercel clamps to plan max: 60s Hobby, 300s Pro.
 export const config = { maxDuration: 300 }
@@ -311,7 +312,7 @@ async function isAdminJwt(jwt: string): Promise<boolean> {
  * which matters, because a stale list silently depresses warm_path and
  * portfolio_proof and can trip the warm_path downgrade gate.
  */
-async function syncOrgProfile(): Promise<string | null> {
+async function syncOrgProfile(promptText: string): Promise<string | null> {
   const { data: existing } = await supabase
     .from('org_profiles').select('id, prompt_text').eq('is_active', true).maybeSingle()
 
@@ -321,20 +322,49 @@ async function syncOrgProfile(): Promise<string | null> {
       .insert({
         org_name:     WA_ORG_PROFILE.org_name,
         profile_json: WA_ORG_PROFILE,
-        prompt_text:  WA_ORG_PROFILE_PROMPT,
+        prompt_text:  promptText,
         is_active:    true,
       })
       .select('id').single()
     return created?.id ?? null
   }
 
-  if (existing.prompt_text !== WA_ORG_PROFILE_PROMPT) {
+  if (existing.prompt_text !== promptText) {
     await supabase
       .from('org_profiles')
-      .update({ profile_json: WA_ORG_PROFILE, prompt_text: WA_ORG_PROFILE_PROMPT })
+      .update({ profile_json: WA_ORG_PROFILE, prompt_text: promptText })
       .eq('id', existing.id)
   }
   return existing.id
+}
+
+/**
+ * Every closed-won engagement is a warm path, whether or not anyone remembered
+ * to add it to the static list. Deriving them means the relationship network
+ * grows as work is won, instead of going stale between edits — and a stale list
+ * silently scores warm_path 0, which trips the downgrade gate.
+ */
+async function wonEngagementRelationships(): Promise<ProfileRelationship[]> {
+  const { data } = await supabase
+    .from('opportunities')
+    .select('partner_org, name, service_lines')
+    .eq('type_id', 'partnership')
+    .eq('status', 'partnership_closed_won')
+    .not('partner_org', 'is', null)
+
+  return (data ?? [])
+    .filter(o => o.partner_org)
+    .map(o => {
+      const services = (o.service_lines ?? [])
+        .map((sl: string) => SERVICE_LINE_LABELS[sl] ?? sl)
+        .join(', ')
+      return {
+        org: o.partner_org as string,
+        basis: services
+          ? `Closed-won client — ${services.toLowerCase()}`
+          : `Closed-won client — ${o.name}`,
+      }
+    })
 }
 
 /**
@@ -483,12 +513,13 @@ interface RawScore {
 
 async function scoreCandidate(
   candidate: ExtractedOpportunity,
+  orgProfilePrompt: string,
 ): Promise<{ score: RawScore | null; tokens: number }> {
   const { text, usage } = await generateText({
     model:       anthropic('claude-sonnet-4-6'),
     maxOutputTokens: 2000,
     temperature: 0,
-    prompt:      buildScoringPrompt(candidate),
+    prompt:      buildScoringPrompt(candidate, orgProfilePrompt),
   })
   return { score: parseJson<RawScore>(text), tokens: usage?.totalTokens ?? 0 }
 }
@@ -539,7 +570,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const orgProfileId = await syncOrgProfile()
+    // Static relationships plus every closed-won client, composed once per run.
+    const orgProfilePrompt = buildOrgProfilePrompt(await wonEngagementRelationships())
+    const orgProfileId = await syncOrgProfile(orgProfilePrompt)
 
     let query = supabase.from('discovery_sources').select('*')
     query = singleSourceId ? query.eq('id', singleSourceId) : query.eq('enabled', true)
@@ -643,7 +676,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             continue
           }
 
-          const { score, tokens: sonnetTokens } = await scoreCandidate(candidate)
+          const { score, tokens: sonnetTokens } = await scoreCandidate(candidate, orgProfilePrompt)
           stats.tokens_sonnet += sonnetTokens
 
           if (!score?.scores) {

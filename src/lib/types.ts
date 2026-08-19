@@ -6,9 +6,6 @@ import type { FitAssessment } from './discovery/fitRubric'
 export type UserRole = 'admin' | 'manager' | 'member' | 'viewer'
 export type OpportunityTypeId = 'partnership' | 'lead'
 export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
-export type PartnershipType =
-  | 'mou' | 'joint_program' | 'coalition' | 'referral' | 'in_kind'
-  | 'strategic_alliance' | 'other'
 export type DocType =
   | 'proposal' | 'budget' | 'loi' | 'agreement' | 'supporting'
   | 'award_letter' | 'report' | 'correspondence' | 'other'
@@ -93,7 +90,8 @@ export interface Opportunity {
   primary_contact: string | null
   contact_email: string | null
   contact_phone: string | null
-  partnership_type: PartnershipType | null
+  /** What WA is selling — see src/lib/serviceLines.ts. Replaced partnership_type. */
+  service_lines: string[]
   mutual_commitments: string | null
   agreement_date: string | null
   renewal_date: string | null

@@ -109,8 +109,58 @@ export const WA_ORG_PROFILE = {
   ],
 } as const
 
-/** Injected verbatim into the Sonnet scoring call. */
-export const WA_ORG_PROFILE_PROMPT = `
+/** A relationship the scorer can use for warm_path. */
+export interface ProfileRelationship {
+  org: string
+  basis: string
+}
+
+/**
+ * Build the scoring prompt, optionally merging in relationships discovered at
+ * runtime.
+ *
+ * The static list below covers relationships that are not opportunities —
+ * Shane's Groundwork history, the Denver civic network. Closed-won engagements
+ * are merged in from the database by the sync endpoint, because a hand-curated
+ * list goes stale the moment work is won, and a missing organization scores
+ * warm_path 0, which trips the downgrade gate and buries a real opportunity a
+ * band lower than it deserves.
+ *
+ * De-duplicated by containment rather than exact match, because the same
+ * organization is named differently in each place: "PeopleForBikes / BBSP" in
+ * the static list against "PeopleForBikes Foundation" on the row, "River
+ * Sisters" against "River Sisters · Hermanas del Río". Exact matching listed
+ * all three pairs twice.
+ *
+ * Static entries win — their `basis` text is richer than anything derivable
+ * from a row.
+ */
+export function buildOrgProfilePrompt(extra: readonly ProfileRelationship[] = []): string {
+  // Strip punctuation, spacing and legal suffixes so "Mo'Betta Green" and
+  // "Mo'Betta Green MarketPlace" reduce to comparable keys.
+  const norm = (name: string): string =>
+    name.toLowerCase()
+      .replace(/\b(foundation|association|inc|llc|the|program|programs|marketplace)\b/g, '')
+      .replace(/[^a-z0-9]/g, '')
+
+  const seen = WA_ORG_PROFILE.relationships.map(r => norm(r.org))
+
+  const isDuplicate = (candidate: string): boolean => {
+    const key = norm(candidate)
+    if (key.length < 4) return false
+    return seen.some(k => k.includes(key) || key.includes(k))
+  }
+
+  const merged = [
+    ...WA_ORG_PROFILE.relationships,
+    ...extra.filter(r => {
+      if (isDuplicate(r.org)) return false
+      seen.push(norm(r.org))
+      return true
+    }),
+  ]
+
+  return `
 You are scoring an opportunity for Wright Adventures, a two-person consulting firm in
 Denver, Colorado.
 
@@ -128,7 +178,7 @@ WHAT THEY SELL
 ${WA_ORG_PROFILE.services.map(s => `- ${s.name}: ${s.detail}`).join('\n')}
 
 EXISTING RELATIONSHIPS (use for the warm_path dimension)
-${WA_ORG_PROFILE.relationships.map(r => `- ${r.org} — ${r.basis}`).join('\n')}
+${merged.map(r => `- ${r.org} — ${r.basis}`).join('\n')}
 
 PORTFOLIO (use for the portfolio_proof dimension)
 ${WA_ORG_PROFILE.portfolio.map(p => `- ${p.url} — ${p.proves}`).join('\n')}
@@ -140,3 +190,7 @@ RATES
 Standard $${WA_ORG_PROFILE.rates.standard_hourly}/hr; $${WA_ORG_PROFILE.rates.partner_hourly}/hr for existing partners.
 Below roughly $5,000 the cost of bidding exceeds the return.
 `.trim()
+}
+
+/** The profile with only the static relationships — used where no DB is available. */
+export const WA_ORG_PROFILE_PROMPT = buildOrgProfilePrompt()

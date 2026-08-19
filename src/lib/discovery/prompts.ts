@@ -81,7 +81,8 @@ ${pageText}
 
 // ── Scoring (Sonnet) ─────────────────────────────────────────────────────────
 
-export function buildScoringPrompt(candidate: {
+export function buildScoringPrompt(
+  candidate: {
   name: string
   publisher: string
   description: string
@@ -90,11 +91,14 @@ export function buildScoringPrompt(candidate: {
   compensation_raw: string | null
   location: string | null
   remote: boolean
-  requirements: string | null
-  deadline: string | null
-}): string {
+    requirements: string | null
+    deadline: string | null
+  },
+  /** Profile text to score against. Defaults to the static relationships. */
+  orgProfilePrompt: string = WA_ORG_PROFILE_PROMPT,
+): string {
   return `
-${WA_ORG_PROFILE_PROMPT}
+${orgProfilePrompt}
 
 ────────────────────────────────────────────────────────────────
 THE OPPORTUNITY

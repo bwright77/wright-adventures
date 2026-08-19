@@ -83,13 +83,21 @@ export function findOrgWebsite(html: string, postingUrl: string, orgName: string
 }
 
 /**
- * Pick the best logo from a page, most specific first.
+ * Pick the best logo from a page, most logo-like first.
  *
- * The `rel="icon"` branch deliberately does NOT require type="image/png".
- * Real sites often declare `<link rel="icon" href="…png" sizes="192x192">` with
- * no type attribute — goldenoptimist.org does exactly that — and requiring the
- * type made the extractor fall through to a 64px favicon on pages that were
- * advertising a proper logo.
+ * Order matters more than it looks. og:image is tempting because every site has
+ * one, but it is a 1200x630 SOCIAL SHARE CARD — usually a hero photo with
+ * overlaid text. Preferring it produced hero-justride.jpg for PeopleForBikes and
+ * og-image.png for Kady and Mo'Betta: correct per the spec, useless as a logo.
+ *
+ * apple-touch-icon and rel="icon" are square and designed to stand alone at
+ * small sizes, which is exactly what a mark is. So those come first, and
+ * og:image is a fallback rather than the preference.
+ *
+ * The rel="icon" branch deliberately does NOT require type="image/png". Real
+ * sites commonly write <link rel="icon" href="...png" sizes="192x192"> with no
+ * type — goldenoptimist.org does — and requiring it fell through to a 64px
+ * favicon on pages advertising a proper logo.
  */
 export function extractLogoUrl(html: string, baseUrl: string): string | null {
   let base: URL
@@ -99,27 +107,33 @@ export function extractLogoUrl(html: string, baseUrl: string): string | null {
     try { return new URL(href, base.origin).href } catch { return href }
   }
 
-  // 1. og:image — usually a real branded asset
-  const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-  if (og?.[1]) return resolve(og[1])
-
-  // 2. apple-touch-icon — 180px+, designed to stand alone
+  // 1. apple-touch-icon — 180px+, square, meant to represent the org alone
   const touch = html.match(/<link[^>]+rel=["']apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i)
     ?? html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']apple-touch-icon[^"']*["']/i)
   if (touch?.[1]) return resolve(touch[1])
 
-  // 3. Any rel="icon", preferring the largest declared size
+  // 2. Any rel="icon", largest declared size first. Skip .ico — it is a browser
+  //    chrome asset and renders badly at card size.
   const icons = [...html.matchAll(/<link[^>]+rel=["'](?:shortcut )?icon["'][^>]*>/gi)]
     .map(tag => {
       const href = /href=["']([^"']+)["']/i.exec(tag[0])?.[1]
       const size = /sizes=["'](\d+)x\d+["']/i.exec(tag[0])?.[1]
       return href ? { href, size: size ? Number(size) : 0 } : null
     })
-    .filter((v): v is { href: string; size: number } => v !== null)
+    .filter((v): v is { href: string; size: number } => v !== null && !/\.ico(\?|$)/i.test(v.href))
     .sort((a, b) => b.size - a.size)
   if (icons[0]) return resolve(icons[0].href)
 
-  // 4. Last resort. Low resolution, but better than an empty card.
+  // 3. An explicit logo image in the markup, before falling back to a share card
+  const imgLogo = html.match(/<img[^>]+(?:class|id|alt)=["'][^"']*\blogo\b[^"']*["'][^>]*src=["']([^"']+)["']/i)
+    ?? html.match(/<img[^>]+src=["']([^"']+)["'][^>]*(?:class|id|alt)=["'][^"']*\blogo\b[^"']*["']/i)
+  if (imgLogo?.[1]) return resolve(imgLogo[1])
+
+  // 4. og:image — a share card, not a mark. Better than nothing.
+  const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+  if (og?.[1]) return resolve(og[1])
+
+  // 5. Last resort. Low resolution, but better than an empty card.
   return `https://www.google.com/s2/favicons?domain=${base.hostname}&sz=128`
 }

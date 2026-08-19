@@ -5,7 +5,7 @@ import { Plus, Search, LayoutList, Columns3, ChevronDown, ChevronUp } from 'luci
 import { format } from 'date-fns'
 import { parseLocalDate } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
-import type { Opportunity, OpportunityTypeId, DealConfidence } from '../../lib/types'
+import type { Opportunity, DealConfidence } from '../../lib/types'
 
 type OpportunityWithLogo = Opportunity & {
   partnership_details?: {
@@ -15,7 +15,25 @@ type OpportunityWithLogo = Opportunity & {
   } | null
 }
 
-type TabFilter = 'all' | OpportunityTypeId
+// The three states that matter operationally: work we are doing, work we are
+// chasing, and work we lost. Replaced 'all | partnership | lead', which split by
+// record type rather than by anything anyone acts on.
+type TabFilter = 'active' | 'pursuing' | 'lost'
+
+const TAB_STATUSES: Record<TabFilter, readonly string[]> = {
+  active:   ['partnership_closed_won'],
+  pursuing: [
+    'partnership_prospecting', 'partnership_qualifying', 'partnership_discovery',
+    'partnership_proposal', 'partnership_negotiating',
+  ],
+  lost:     ['partnership_closed_lost'],
+}
+
+const TAB_LABELS: Record<TabFilter, string> = {
+  active:   'Active',
+  pursuing: 'Pursuing',
+  lost:     'Closed-Lost',
+}
 type ViewMode  = 'table' | 'kanban'
 
 // ── Pipeline definitions ──────────────────────────────────────
@@ -27,6 +45,7 @@ function isOpportunity(o: { type_id: string }): boolean {
   return o.type_id !== 'lead'
 }
 
+
 const PARTNERSHIP_COLS = [
   { id: 'partnership_prospecting', label: 'Prospecting' },
   { id: 'partnership_qualifying',  label: 'Qualifying'  },
@@ -35,8 +54,6 @@ const PARTNERSHIP_COLS = [
   { id: 'partnership_negotiating', label: 'Negotiating' },
 ]
 
-// Terminal statuses excluded from "active" pseudo-filter
-const INACTIVE_PARTNERSHIP_STATUSES  = ['partnership_closed_won', 'partnership_closed_lost']
 
 // Full status lists (including terminal) for the filter dropdown
 const PARTNERSHIP_STATUSES = [
@@ -125,21 +142,21 @@ function KanbanCol({
 export function Opportunities() {
   const queryClient  = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab          = (searchParams.get('tab')    ?? 'all') as TabFilter
+  const tab          = (searchParams.get('tab')    ?? 'active') as TabFilter
   const statusFilter =  searchParams.get('status') ?? ''
 
   function setTab(t: TabFilter) {
     // Switching tabs clears status filter
-    setSearchParams(t === 'all' ? {} : { tab: t }, { replace: true })
+    setSearchParams(t === 'active' ? {} : { tab: t }, { replace: true })
   }
   function setStatus(s: string) {
     const params: Record<string, string> = {}
-    if (tab !== 'all') params.tab = tab
+    if (tab !== 'active') params.tab = tab
     if (s) params.status = s
     setSearchParams(params, { replace: true })
   }
 
-  const statusOptions = PARTNERSHIP_STATUSES
+  const statusOptions = PARTNERSHIP_STATUSES.filter(s2 => TAB_STATUSES[tab].includes(s2.id))
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
 
@@ -190,15 +207,17 @@ export function Opportunities() {
   const pipelineOpps = opportunities.filter(isOpportunity)
 
   const filtered = pipelineOpps.filter(o => {
-    if (tab !== 'all' && o.type_id !== tab) return false
-    if (statusFilter === 'active') {
-      if (INACTIVE_PARTNERSHIP_STATUSES.includes(o.status)) return false
-    } else if (statusFilter) {
-      if (o.status !== statusFilter) return false
-    }
+    if (!TAB_STATUSES[tab].includes(o.status)) return false
+    if (statusFilter && o.status !== statusFilter) return false
     if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  const tabCounts = Object.fromEntries(
+    (Object.keys(TAB_STATUSES) as TabFilter[]).map(t =>
+      [t, pipelineOpps.filter(o => TAB_STATUSES[t].includes(o.status)).length],
+    ),
+  ) as Record<TabFilter, number>
 
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
@@ -216,7 +235,7 @@ export function Opportunities() {
 
   const kanbanCols = PARTNERSHIP_COLS
   const kanbanOpps = pipelineOpps.filter(o =>
-    (tab === 'all' || o.type_id === tab) &&
+    TAB_STATUSES.pursuing.includes(o.status) &&
     (!search || o.name.toLowerCase().includes(search.toLowerCase()))
   )
 
@@ -226,7 +245,11 @@ export function Opportunities() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-navy">Opportunities</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{pipelineOpps.length} in pipeline</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {tab === 'active'   && `${filtered.length} engagement${filtered.length === 1 ? '' : 's'} in flight`}
+            {tab === 'pursuing' && `${filtered.length} in the pipeline`}
+            {tab === 'lost'     && `${filtered.length} not won`}
+          </p>
         </div>
         <Link
           to="/admin/opportunities/new"
@@ -240,15 +263,18 @@ export function Opportunities() {
       {/* Filters + view toggle */}
       <div className="flex flex-wrap items-center gap-4 mb-5">
         <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          {(['all', 'partnership'] as TabFilter[]).map(t => (
+          {(Object.keys(TAB_STATUSES) as TabFilter[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 tab === t ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-navy'
               }`}
             >
-              {t === 'all' ? 'All' : 'Partnerships'}
+              {TAB_LABELS[t]}
+              <span className={`text-[0.7rem] tabular-nums ${tab === t ? 'text-gray-400' : 'text-gray-300'}`}>
+                {tabCounts[t]}
+              </span>
             </button>
           ))}
         </div>

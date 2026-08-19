@@ -19,6 +19,7 @@ import type {
 } from '../../lib/types'
 import { toTelHref } from '../../lib/phone'
 import { MAX_FIT_SCORE } from '../../lib/discovery/fitRubric'
+import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
 import { parseLocalDate } from '../../lib/dates'
 
 // How the engagement is priced (ADR: engagement_nature). Non-paid work is real
@@ -809,7 +810,18 @@ export function OpportunityDetail() {
               <DetailRow label="Contact"       value={opportunity.primary_contact} />
               <DetailRow label="Email"         value={opportunity.contact_email} />
               <DetailRow label="Phone"         value={opportunity.contact_phone ? <a href={toTelHref(opportunity.contact_phone)} className="hover:text-river transition-colors">{opportunity.contact_phone}</a> : null} />
-              <DetailRow label="Type"          value={opportunity.partnership_type} />
+              <DetailRow
+                label="Service lines"
+                value={opportunity.service_lines?.length
+                  ? <span className="flex flex-wrap gap-1.5">
+                      {opportunity.service_lines.map(sl => (
+                        <span key={sl} className="text-xs px-2 py-0.5 rounded bg-river-50 text-river">
+                          {SERVICE_LINE_LABELS[sl] ?? sl}
+                        </span>
+                      ))}
+                    </span>
+                  : null}
+              />
               <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(parseLocalDate(opportunity.agreement_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(parseLocalDate(opportunity.renewal_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Est. value"    value={opportunity.estimated_value != null ? `$${opportunity.estimated_value.toLocaleString()}` : null} />
