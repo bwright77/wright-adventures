@@ -14,17 +14,34 @@ import { RADIO } from '../data/siteData'
  * No paraphrase and no restated bios. Verbatim quotes, lightly elided.
  */
 
+// Same treatment as the service cards: white card, hairline border, and an
+// always-on colour bar down the left that widens on hover. One colour per
+// brother, so the two voices are distinguishable before you read the name.
+//
+// The bar is decorative, so the full-strength brand colours are fine there. The
+// NAME is text, so it uses the -700 shades — #009DD6 measures about 3:1 at this
+// size, under the 4.5:1 AA needs.
+const SPEAKER: Record<string, { bar: string; name: string }> = {
+  Ben:   { bar: 'bg-river', name: 'text-river-700' },
+  Shane: { bar: 'bg-trail', name: 'text-trail-700' },
+}
+
 function Quote({ q, index }: { q: typeof RADIO.quotes[number]; index: number }) {
   const { ref, style } = useFadeIn({ delay: index * 90 })
+  const c = SPEAKER[q.speaker] ?? { bar: 'bg-navy', name: 'text-navy' }
 
   return (
     <blockquote
       ref={ref}
       style={style}
-      className="border-l-2 border-gray-300/70 pl-5 hover:border-river transition-colors"
+      className="group relative overflow-hidden p-5 pl-6 rounded-xl border border-gray-200/70 bg-white shadow-[0_1px_2px_rgba(0,70,103,0.04),0_10px_30px_-16px_rgba(0,70,103,0.18)] transition-all duration-300 hover:border-transparent hover:shadow-[0_16px_44px_-12px_rgba(0,70,103,0.22)] hover:-translate-y-1"
     >
+      <span
+        className={`absolute top-0 left-0 w-1 h-full ${c.bar} transition-all duration-300 group-hover:w-1.5`}
+        aria-hidden
+      />
       <p className="text-[0.95rem] text-gray-600 leading-relaxed font-light">“{q.text}”</p>
-      <cite className="block mt-2 text-xs font-semibold text-navy not-italic tracking-wide">
+      <cite className={`block mt-3 text-xs font-semibold not-italic tracking-wide ${c.name}`}>
         {q.speaker}
       </cite>
     </blockquote>
@@ -48,7 +65,7 @@ export function OnAir() {
           a ~68-character measure; past it the line length jumps to ~102 and the
           left column collapses to two lines, which is what made the sidebar
           overhang by ~80px. Line length and column balance are the same knob. */}
-      <div className="grid lg:grid-cols-[1fr_300px] gap-10 lg:gap-12 mt-8 items-start max-w-[60rem]">
+      <div className="grid lg:grid-cols-[1fr_340px] gap-10 lg:gap-12 mt-8 items-start max-w-[64rem]">
         {/* Left is the conversation, right is what to take from it. The intro
             sits here rather than full-width above so the two columns carry
             comparable weight — two quotes alone left the right column
@@ -60,7 +77,7 @@ export function OnAir() {
             on rivers, technology, and building for organizations that have been priced out of good
             software.
           </p>
-          <div className="space-y-7">
+          <div className="space-y-4">
             {RADIO.quotes.map((q, i) => (
               <Quote key={q.text} q={q} index={i} />
             ))}
@@ -74,7 +91,12 @@ export function OnAir() {
         <div className="lg:border-l lg:border-gray-300/60 lg:pl-10">
           <figure>
             <blockquote>
-              <p className="text-2xl sm:text-[1.75rem] leading-tight text-navy font-bold tracking-tight">
+              {/* 22px against the 30px headline, so "In our own words" carries
+                  the section and this defers to it — they were 28 and 30, near
+                  enough to compete. At 22px the phrase needs 257px on one line
+                  and the column now offers 300px, so it never wraps: breaking
+                  "Responsible / technology." across two lines was killing it. */}
+              <p className="text-[1.375rem] leading-tight text-navy font-bold tracking-tight whitespace-nowrap">
                 “{RADIO.pullQuote}”
               </p>
             </blockquote>
@@ -87,7 +109,7 @@ export function OnAir() {
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group block mt-6 pt-6 border-t border-gray-300/60"
+            className="group block mt-9 pt-9 border-t border-gray-300/60"
           >
             <img
               src={RADIO.logo}
@@ -106,7 +128,7 @@ export function OnAir() {
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-center gap-2.5 mt-5 w-full bg-navy hover:bg-navy/90 text-white text-sm font-medium px-5 py-3.5 rounded-lg transition-colors"
+            className="group flex items-center justify-center gap-2.5 mt-7 w-full bg-navy hover:bg-navy/90 text-white text-sm font-medium px-5 py-3.5 rounded-lg transition-colors"
           >
             <Radio size={17} strokeWidth={1.75} />
             Listen to the conversation
