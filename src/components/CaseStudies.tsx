@@ -12,7 +12,7 @@ import kadyLogo from '../assets/images/kady.svg'
 
 const ORG_LOGOS: Record<string, string | string[]> = {
   'Lincoln Hills Cares': lhcLogo,
-  'GroundWork Denver': gwdLogo,
+  'Groundwork Denver': gwdLogo,
   'Confluence Colorado': ccLogo,
   'Colorado Mountain Club': cmcLogo,
   'PeopleForBikes — Better Bike Share Partnership': [pfbMark, pfbLogo, bbspLogo],

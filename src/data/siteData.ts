@@ -141,7 +141,7 @@ export const CASE_STUDIES = [
   {
     tag: 'Conservation & Community',
     tagColor: 'river' as const,
-    title: 'GroundWork Denver',
+    title: 'Groundwork Denver',
     description: 'Built grant strategy and program design capacity for urban youth conservation and community health programs, creating pathways that connect young people to environmental careers and community leadership.',
     metrics: [
       { value: '$3M+', label: 'Total funds raised' },
@@ -156,7 +156,7 @@ export const TEAM = [
     role: 'Founder & Executive Director',
     icon: 'Network',
     gradient: 'from-trail to-[#5A9C6D]',
-    bio: '20+ years leading youth development, conservation, and community programs across Colorado. Former director at GroundWork Denver and architect of the Lincoln Hills Cares pathways initiative. Deep relationships across the nonprofit, foundation, and government sectors.',
+    bio: '20+ years leading youth development, conservation, and community programs across Colorado. Former director at Groundwork Denver and architect of the Lincoln Hills Cares pathways initiative. Deep relationships across the nonprofit, foundation, and government sectors.',
   },
   {
     name: 'Benjamin Wright',
