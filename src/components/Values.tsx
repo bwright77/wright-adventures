@@ -18,6 +18,12 @@ export function Values() {
       <div className="max-w-7xl mx-auto">
         <span className="section-label">Our Values</span>
         <h2 className="section-title">What guides every engagement</h2>
+        {/* Closes the arc that Team opens and On the Air carries: these read as
+            a summary of what was just said on air, not as claims made cold. */}
+        <p className="section-desc">
+          Six words for what you just heard — and the test we hold our own work to, including the
+          question Shane asks out loud: are we part of the problem, or part of the solution?
+        </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-12">
           {VALUES.map((value, i) => (

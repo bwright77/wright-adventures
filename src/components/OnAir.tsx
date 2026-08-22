@@ -3,95 +3,108 @@ import { useFadeIn } from '../hooks/useFadeIn'
 import { RADIO } from '../data/siteData'
 
 /**
- * "Hear us talk about the work" — a listening invitation rather than a press
- * clipping. It sits after Team on purpose: that section says who the brothers
- * are, and this one lets you hear them say it themselves.
+ * The bridge between "Who We Are" and "Our Values".
  *
- * White, between the dark Team section and the warm-gray Values band, so the
- * page keeps alternating rather than running two light sections together.
+ * Team states the credentials; Values states the principles. On its own that is
+ * a leap — a reader has no reason to believe the values are anything more than
+ * words on a page. This section closes the gap by putting the same people in
+ * their own voices, unedited, on someone else's microphone. The values that
+ * follow then read as a summary of what was just said rather than as a claim.
+ *
+ * So: no paraphrase and no restated bios. Verbatim quotes, lightly elided.
+ * White, between the dark Team band and the warm-gray Values band.
  */
+
+function Quote({ q, index }: { q: typeof RADIO.quotes[number]; index: number }) {
+  const { ref, style } = useFadeIn({ delay: index * 90 })
+
+  return (
+    <blockquote
+      ref={ref}
+      style={style}
+      className="border-l-2 border-gray-200 pl-5 hover:border-river transition-colors"
+    >
+      <p className="text-[0.95rem] text-gray-600 leading-relaxed font-light">“{q.text}”</p>
+      <cite className="block mt-2 text-xs font-semibold text-navy not-italic tracking-wide">
+        {q.speaker}
+      </cite>
+    </blockquote>
+  )
+}
+
 export function OnAir() {
   const { ref, style } = useFadeIn()
 
   return (
     <section id="on-air" className="py-24 px-6 lg:px-12 bg-white">
-      <div ref={ref} style={style} className="max-w-5xl mx-auto">
+      <div ref={ref} style={style} className="max-w-7xl mx-auto">
         <span className="section-label">On the Air</span>
-        <h2 className="section-title">Hear us talk about the work</h2>
+        <h2 className="section-title">In our own words</h2>
+        <p className="section-desc">
+          Shane and Ben joined {RADIO.host} on{' '}
+          <span className="font-medium text-navy">{RADIO.show}</span> at {RADIO.station} — an hour on
+          rivers, technology, and building for organizations that have been priced out of good
+          software.
+        </p>
 
-        <div className="mt-10 grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-14 items-center">
-          <div>
-            {/* Her phrase, not ours — the attribution stays even though the
-                full on-air story doesn't. */}
-            <blockquote className="border-l-[3px] border-river pl-5 mb-7">
-              <p className="text-2xl sm:text-3xl font-semibold text-navy leading-snug">
-                “{RADIO.pullQuote}”
-              </p>
-              <cite className="block mt-2 text-sm text-gray-400 not-italic font-light">
-                {RADIO.quoteSource}
-              </cite>
-            </blockquote>
-
-            <div className="space-y-4 text-[0.95rem] text-gray-600 leading-relaxed font-light">
-              <p>
-                Shane and Ben sat down with <span className="font-medium text-navy">{RADIO.show}</span> on{' '}
-                {RADIO.station} to tell the story of two brothers building together.
-              </p>
-              <p>
-                Shane found himself guiding people down rivers and built that into two decades of
-                nonprofit leadership — fundraising, strategy, and youth development that treats
-                urban gardens and river corridors as the classroom. Ben came up through Seattle's
-                dot-com years and a stint as a fourth-generation attorney before deciding he'd
-                rather build things than pick up broken pieces, then spent twelve years engineering
-                software for fintech startups.
-              </p>
-              <p className="text-navy font-medium">Different paths. One confluence.</p>
-              <p>
-                What the conversation kept circling back to is the question we open every engagement
-                with: <span className="text-navy font-medium">how can we free you up to do the work
-                you actually want to be doing?</span> Not build a dependency — build something you
-                own and keep using long after we're gone. AI has finally put a real website, a real
-                brand, and real grant capacity within reach of a one-person shop. That's the part
-                worth fighting for.
-              </p>
-            </div>
-
-            <a
-              href={RADIO.episodeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2.5 mt-8 bg-navy hover:bg-navy/90 text-white text-sm font-medium px-6 py-3.5 rounded-lg transition-colors"
-            >
-              <Radio size={17} strokeWidth={1.75} />
-              Listen to the conversation
-              <ArrowUpRight
-                size={16}
-                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </a>
+        <div className="grid lg:grid-cols-[1fr_280px] gap-12 lg:gap-16 mt-12">
+          <div className="space-y-7">
+            {RADIO.quotes.map((q, i) => (
+              <Quote key={q.text} q={q} index={i} />
+            ))}
           </div>
 
-          {/* Station card. Ordered first on small screens so the logo leads. */}
+          {/* Station card — the credential for everything quoted above. */}
           <a
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="order-first lg:order-last shrink-0 flex flex-col items-center gap-4 p-8 rounded-xl bg-warm-gray border border-gray-200 hover:border-river/40 hover:shadow-sm transition-all lg:w-[248px]"
+            className="order-first lg:order-last self-start w-full flex flex-col items-center gap-4 p-8 rounded-xl bg-warm-gray border border-gray-200 hover:border-river/40 hover:shadow-sm transition-all"
           >
             <img
               src={RADIO.logo}
               alt={RADIO.logoAlt}
               width={180}
-              height={60}
+              height={41}
               loading="lazy"
               className="w-[180px] max-w-full h-auto"
             />
             <div className="text-center">
               <p className="text-sm font-semibold text-navy">{RADIO.show}</p>
               <p className="text-xs text-gray-400 mt-0.5 font-light">{RADIO.airedOn}</p>
+              <p className="text-[0.7rem] text-gray-400 mt-2 font-light leading-relaxed">
+                {RADIO.stationDial}
+              </p>
             </div>
           </a>
         </div>
+
+        {/* The host's phrase, given the last word — it is the name for all of
+            the above, and it is hers, not ours. */}
+        <figure className="mt-14 border-t border-gray-100 pt-10">
+          <blockquote className="max-w-3xl">
+            <p className="text-xl sm:text-2xl text-navy font-medium leading-snug">
+              “{RADIO.pullQuote}”
+            </p>
+          </blockquote>
+          <figcaption className="mt-3 text-sm text-gray-400 font-light">
+            {RADIO.quoteSource}
+          </figcaption>
+        </figure>
+
+        <a
+          href={RADIO.episodeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2.5 mt-9 bg-navy hover:bg-navy/90 text-white text-sm font-medium px-6 py-3.5 rounded-lg transition-colors"
+        >
+          <Radio size={17} strokeWidth={1.75} />
+          Listen to the full conversation
+          <ArrowUpRight
+            size={16}
+            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          />
+        </a>
       </div>
     </section>
   )

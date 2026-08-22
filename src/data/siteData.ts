@@ -182,13 +182,39 @@ export const VALUES = [
 // the image silently fails to decode. Hosting it ourselves also means we don't
 // depend on their CDN layout or use their bandwidth.
 export const RADIO = {
-  station:     'KGNU Community Radio',
-  show:        'Metro',
-  airedOn:     'August 12, 2026',
-  episodeUrl:  'https://kgnu.org/shows/metro/08-12-2026/',
-  logo:        '/kgnu-logo.png',
-  logoAlt:     'KGNU Community Radio',
-  // Her phrase, not ours — worth keeping the attribution even in one clause.
-  pullQuote:   'Responsible technology.',
-  quoteSource: 'the phrase our host landed on, mid-conversation',
+  station:    'KGNU Community Radio',
+  stationDial: '88.5 FM Boulder · 1390 AM Denver',
+  show:       'Metro',
+  host:       'Miss Beverly Grant',
+  airedOn:    'August 12, 2026',
+  episodeUrl: 'https://kgnu.org/shows/metro/08-12-2026/',
+  logo:       '/kgnu-logo.png',
+  logoAlt:    'KGNU Community Radio',
+
+  // Verbatim from the broadcast. These sit between "Who We Are" and "Our
+  // Values" and carry the weight of both: the first explains where the work
+  // comes from, the second what we actually sell, the third why we keep
+  // checking ourselves. Lightly elided, never reworded — they are quotes.
+  quotes: [
+    {
+      speaker: 'Shane',
+      text: 'I wasn’t a very good student. I really found myself, and came of age, guiding people on the rivers — nature as my space of solitude, a place where I could feel more myself and in many ways develop my own identity.',
+    },
+    {
+      speaker: 'Ben',
+      text: 'My true love was in building things and protecting things, and as a lawyer, too often I was picking up broken pieces.',
+    },
+    {
+      speaker: 'Ben',
+      text: 'How can I free you up to do the work you want to be doing? We want to get in, have something built that you know how to use, that you own, that you’re going to keep using well beyond our relationship.',
+    },
+    {
+      speaker: 'Shane',
+      text: 'As a fundraiser — Ben’s a technology guy — are we part of the problem or part of the solution? Sometimes you have to ask yourself.',
+    },
+  ],
+
+  // Her phrase. She named it mid-sentence, listening to Ben, so she is named.
+  pullQuote:   'And a couple of words are coming to mind, listening to you, Ben — and that’s responsible technology. That language has to exist.',
+  quoteSource: 'Miss Beverly Grant, host of Metro on KGNU',
 } as const
