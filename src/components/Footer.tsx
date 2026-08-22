@@ -15,7 +15,10 @@ export function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
           <Logo dark className="h-8 w-auto" />
-          <span className="text-white/50 text-sm font-light">
+          {/* Nudged down to sit on the wordmark. The logo box is 32px tall but
+              the lettering only occupies the middle band of it, so centring the
+              copyright on the box leaves it riding high above the type. */}
+          <span className="relative top-[2px] text-white/50 text-sm font-light">
             &copy; {new Date().getFullYear()}
           </span>
         </div>
