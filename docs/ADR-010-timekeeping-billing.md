@@ -2,10 +2,39 @@
 
 **Project:** Wright Adventures — Opportunity Management Platform (OMP)
 **Author:** Benjamin Wright, Director of Technology & Innovation
-**Date:** 2026-08-18 (rewritten from the 2026-08-11 draft)
+**Date:** 2026-08-22 (rewritten against the ADR-012 schema; supersedes the 2026-08-18 draft)
 **Status:** Proposed
-**Depends on:** ADR-006 (Partnership Pipeline), engagement_nature migration (2026-08-18)
+**Depends on:** ADR-012 (Lead → Opportunity → Client) — specifically the `engagements` table
 **Driving requirement:** the Colorado Mountain Club SOW, if signed
+
+---
+
+## What changed since the last draft
+
+The previous version of this ADR proposed creating an `engagements` table. **It now exists**,
+built in ADR-012 Phase 4 for a different reason: a closed-won opportunity is a fact that should
+stop changing, while the work it produced keeps changing. This ADR therefore *extends* an
+existing table rather than introducing one, and several things it used to specify are already
+settled:
+
+| Old draft | Now |
+|---|---|
+| `engagements.client_name` (text) | `organization_id` → `organizations` — the durable entity |
+| `opportunity_id` required | **Nullable.** CMC's contract predates the OMP |
+| `total_fee` | `contract_value` |
+| `term_start` / `term_end` | `started_on` / `ended_on` |
+| `engagement_nature` on `opportunity_details` | `engagements.nature` |
+| `list_value` on `opportunity_details` (hand-estimated FMV) | `engagements.fmv` |
+
+Two consequences worth stating plainly:
+
+1. **CMC already has an engagement row.** ADR-012 created it from what
+   `org_relationships` asserted — *"Active engagement — hiring, ops, compliance"* — with
+   `contract_value`, `fmv` and `started_on` deliberately left NULL rather than guessed. If the
+   SOW is signed, this ADR fills that row in; it does not create a new one.
+2. **Time is logged against an engagement, and engagements are real now.** The previous draft
+   had to invent its own anchor. That was the strongest argument for splitting them out in the
+   first place: an opportunity is not a thing you can bill to.
 
 ---
 
@@ -14,9 +43,14 @@
 The OMP tracks opportunities up to the point of winning them and then stops. There is no way
 to log an hour, draw down a retainer, or produce an invoice.
 
-That becomes urgent rather than theoretical if CMC signs. Its SOW starts **August 24**, is
-**invoiced in advance**, and the first invoice is **due on signature** — so the very first
-obligation of the engagement is one this system cannot meet.
+That becomes urgent rather than theoretical if CMC signs. Its SOW starts **August 24** — two
+days from this rewrite — is **invoiced in advance**, and the first invoice is **due on
+signature**. The very first obligation of the engagement is one this system cannot meet.
+
+**Current state of that deal:** CMC sits at **Approval**, `decision_body = board`, with no
+decision date recorded. So the trigger for this work is a board meeting whose date we do not
+yet know — which is precisely why the ageing indicator treats a missing decision date
+differently from a late one.
 
 ### The CMC terms are the specification
 
@@ -35,7 +69,7 @@ mechanic below comes from the signed-form SOW:
 | Ending early | **"Any retainer paid for hours not worked is refunded"** |
 | Checkpoints | Written progress review at end of **Month 1 and Month 2** — hours used, deliverables completed |
 
-Four of those break the naive model in the earlier draft of this ADR:
+Four of those break a naive model:
 
 1. **Banked hours across a term, not per month.** A month where 25 hours are used does not
    forfeit 15; they remain available. The balance is a term-level ledger.
@@ -47,31 +81,39 @@ Four of those break the naive model in the earlier draft of this ADR:
    independently known at any moment.
 
 A time-and-materials model — collect entries, sum them, invoice in arrears — models none of
-this. BBSP, by contrast, was a flat fee ($6,525 against a $10,875 list, a 40% discount) with
-no hours drawn at all. The schema must hold both without pretending they are the same.
+this. BBSP, by contrast, was a flat fee ($6,525 against a $10,875 FMV, a 40% discount) with no
+hours drawn at all. The schema must hold both without pretending they are the same.
 
 ---
 
 ## Decision
 
-### Engagements, not projects
+### `billing_model` extends the existing engagement
 
-A won partnership becomes an **engagement**: the unit that has a fee, a term, a rate, and
-possibly a retainer. Attached to the `opportunities` row that won it, so the pipeline history
-survives, and separate from it, because an opportunity closes and an engagement runs.
+`engagements.nature` already says *why* the work is priced as it is — `paid`, `reduced_rate`,
+`strategic`, `portfolio`. It does **not** say how it bills, and conflating the two would be
+wrong in both directions: a reduced-rate engagement can still be a retainer, and a strategic
+one still accrues hours worth measuring.
 
-`billing_model` is the discriminator, and it decides which mechanics apply:
+So `billing_model` is added alongside it as the mechanic:
 
 - **`retainer`** — CMC. Periodic fee paid in advance, hours drawn against a term balance.
 - **`fixed_fee`** — BBSP. One agreed sum, optionally invoiced in stages. Hours logged for
   margin analysis but not billed.
 - **`hourly`** — billed in arrears from approved time entries.
-- **`non_billable`** — pro-bono and portfolio work (Kady, River Sisters, Mo'Betta). Time is
-  logged so contributed value is measured rather than estimated, and never invoiced.
+- **`non_billable`** — the strategic and portfolio work (Kady, River Sisters, Mo'Betta,
+  Confluence). Time is logged so contributed value is *measured*, and never invoiced.
 
-That last one matters: `engagement_nature` already distinguishes pro-bono work for reporting,
-and `list_value` currently holds a **hand-estimated** FMV. Logging hours against non-billable
-engagements would let contributed value be computed from actuals instead.
+**The one rule tying them together:** an engagement whose `nature` is `strategic` or
+`portfolio` must be `non_billable`, enforced by a CHECK rather than by convention. Any other
+pairing is legitimate.
+
+That last model is doing real work. `fmv` currently holds hand-estimated numbers — Confluence
+at $45,000, Kady at $11,000, and Mo'Betta at **NULL** because nobody has estimated it. Logging
+hours against non-billable engagements replaces guesses with actuals, which matters given the
+whole point of the four-org model is to show that contributed work is an investment rather
+than $0 of activity. Today's figure — **$10,125 collected against $91,875 of FMV** — rests
+entirely on estimates.
 
 ### The retainer is a ledger, not a balance field
 
@@ -86,31 +128,33 @@ Balance is the sum. Every number in a checkpoint report or a refund calculation 
 derivable and auditable, and a correction is a new row rather than a mutated total.
 
 **Draw-ahead falls out for free.** Hours are granted per period but drawn against the term, so
-using 55 in month one simply leaves less later. The 60/hour monthly ceiling is enforced as a
+using 55 in month one simply leaves less later. The 60-hour monthly ceiling is enforced as a
 check at entry time — a warning surfaced in the UI, and a hard stop only if the engagement is
 configured to enforce it.
 
 ### Invoices are documents, not derived views
 
 An invoice, once sent, is a statement of fact. It does not change because a time entry was
-later edited. So invoices carry their own immutable line items and a snapshot of the rate,
-and a retainer invoice is generated **from the schedule**, not from time.
+later edited. So invoices carry their own immutable line items and a snapshot of the rate, and
+a retainer invoice is generated **from the schedule**, not from time.
 
 Corrections are made by **voiding and reissuing**, never by editing a sent invoice.
 
 ### Schema
 
 ```
-engagements
-  id, opportunity_id → opportunities, client_name, billing_model,
-  standard_rate, contract_rate,            -- CMC: 170 / 150, for discount reporting
-  total_fee, currency,
-  term_start, term_end, term_months,
+engagements                                 -- EXISTS (ADR-012); this ADR adds:
+  billing_model,                            -- retainer|fixed_fee|hourly|non_billable
+  standard_rate, contract_rate,             -- CMC: 170 / 150, for discount reporting
+  currency,
   committed_hours,                          -- 160
   hours_per_period, max_hours_per_period,   -- 40 / 60
   payment_terms,                            -- 'due_on_signature' | 'net_15' | 'net_30'
   invoice_in_advance boolean,
-  status                                    -- draft|active|paused|complete|terminated
+  billing_status                            -- draft|active|paused|complete|terminated
+  -- already present: organization_id, opportunity_id, name, nature,
+  -- delivery_status, contract_value, fmv, fmv_basis, service_lines,
+  -- started_on, ended_on, notes
 
 retainer_periods                            -- one per month for CMC
   id, engagement_id, period_start, period_end,
@@ -143,10 +187,15 @@ payments
   id, invoice_id, amount, payment_date, method, reference
 ```
 
+Note there is no `client_name`: the client is `engagements.organization_id`, and an invoice
+addresses the organisation. That also means a second CMC engagement — likely, since the
+tech-services expansion is a separate pursuit — bills the same client without duplicating it.
+
 **Money is `NUMERIC`; time is integer minutes.** `0.1 + 0.2 !== 0.3` is not an acceptable
 failure mode on a billable hour. And **Supabase JS returns NUMERIC as a string** — the
-`proximity_bonus` lesson from ADR-005 and `list_value` from this month. One `toMoney()` helper,
-not scattered `Number()` calls.
+`proximity_bonus` lesson from ADR-005, and `list_value` from this month, which is why
+`EngagementForMetrics` types `contract_value` and `fmv` as `number | string`. One `toMoney()`
+helper, not scattered `Number()` calls.
 
 **Invoice numbers come from a Postgres sequence**, not `MAX(...) + 1`, which races and silently
 duplicates.
@@ -158,7 +207,7 @@ duplicates.
 The test for Phase 1 is not "is billing complete" but **"could we run the CMC engagement from
 this?"** That is a much smaller system:
 
-1. Record the engagement from the SOW — $150 rate, 160 hours, 4 periods of 40.
+1. Fill in the existing CMC engagement row from the SOW — $150 rate, 160 hours, 4 periods of 40.
 2. Issue invoice #1 on signature, before any work. Mark it sent.
 3. Log hours against it and see the balance move.
 4. Answer, at the Month 1 checkpoint: hours used, hours remaining, on pace or not.
@@ -214,25 +263,33 @@ three. A system that only reported "hours logged" would show month one as health
 
 ## Implementation Sequence
 
-**Phase 1 — Run CMC.** `engagements`, `retainer_periods`, `retainer_ledger`, `time_entries`,
-`invoices`, `invoice_line_items`. Time entry, retainer status, invoice generation from
-schedule, PDF. This is the whole blocking scope.
+**Phase 0 — Nothing.** Blocked on the CMC board decision. The engagement row exists and can
+hold the SOW terms the day it is signed; building the ledger before then is speculative.
+
+**Phase 1 — Run CMC.** Extend `engagements`; add `retainer_periods`, `retainer_ledger`,
+`time_entries`, `invoices`, `invoice_line_items`. Time entry, retainer status, invoice
+generation from schedule, PDF. This is the whole blocking scope.
 
 **Phase 2 — Get paid.** `payments`, invoice status lifecycle, overdue flagging, A/R.
 
-**Phase 3 — The rest of the book.** Fixed-fee staged invoicing (BBSP), non-billable time on
-pro-bono engagements feeding contributed value from actuals, expenses.
+**Phase 3 — The rest of the book.** Fixed-fee staged invoicing (BBSP), non-billable time on the
+strategic engagements feeding contributed value from actuals, expenses.
 
 **Phase 4 — Analysis.** Utilization, realization, effective-rate trends, margin by engagement.
 
-Phases 1 and 2 are the ones with a date attached.
+Phases 1 and 2 are the ones with a date attached, and that date is not ours to set.
 
 ---
 
 ## Key Design Decisions
 
+- **Extends `engagements`; does not define it.** The table earned its existence separately, for
+  reasons that had nothing to do with billing. That it is also the right anchor for time is
+  corroboration, not coincidence.
 - **Scoped by a real contract, not a general model.** Ambiguity gets resolved by reading the
   SOW, and the result is testable: the CMC terms either reproduce or they don't.
+- **`nature` and `billing_model` are separate axes**, with one CHECK tying the non-billable
+  corner together. Collapsing them would misprice a reduced-rate retainer.
 - **Ledger over balance field.** Corrections and refunds are rows, not mutations, and every
   reported number is derivable.
 - **Invoices are immutable once sent.** Void and reissue. The audit trail *is* the product in
@@ -250,10 +307,12 @@ Phases 1 and 2 are the ones with a date attached.
 | Risk | Mitigation |
 |---|---|
 | CMC signs before Phase 1 lands | Invoice #1 can be issued manually; the ledger can be backfilled. Time entry is the piece that must not slip, since hours are hard to reconstruct |
+| The board decision date is unknown, so the trigger is unscheduled | The opportunity sits at Approval with `decision_body = board`; capturing `decision_date` is what turns this from "someday" into a date |
 | Draw-ahead exceeds the 60-hour ceiling unnoticed | Enforced at entry, surfaced on the engagement view, not discovered at the checkpoint |
 | Retainer over-delivered (Phase 1 estimates 55 hours against 40 committed) | Effective-rate figure is a Phase 1 requirement, not a Phase 4 nicety |
 | NUMERIC-as-string bugs | Single `toMoney()` helper; this has now bitten twice |
 | Invoice number collision | Postgres sequence, never `MAX + 1` |
+| A second CMC engagement is modelled as a second client | `organization_id` makes one org with two engagements the natural shape |
 
 ---
 

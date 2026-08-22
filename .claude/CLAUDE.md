@@ -78,15 +78,28 @@ vercel.json             ← SPA rewrite config; /api passthrough MUST stay first
 **`profiles`** — extends `auth.users`
 - `id` (uuid, PK), `full_name`, `role` (`admin|manager|member|viewer`), `avatar_url`
 
-**`opportunities`** — partnerships (grant columns dropped in ADR-009)
-- `id`, `type_id` (`partnership`), `name`, `description`, `status`, `owner_id`
+**`organizations`** — the durable entity (ADR-012). Leads, opportunities and engagements point here.
+- `name`, `website`, `logo_url`, `relationship_tier` (`none|network|prospect|client`), `via_org_id`, `revisit_on`
+- An org is a **client** because it has an engagement — kept true by a trigger, not a dropdown.
+- Nurture is a state HERE, not a pipeline stage.
+
+**`leads`** — discovered postings, not yet judged. `status`: `new|declined|converted`.
+
+**`engagements`** — won work being delivered. ADR-010 logs time against this.
+- `organization_id`, `opportunity_id` (**nullable** — CMC predates the OMP), `nature`, `delivery_status`, `contract_value`, `fmv`
+
+**`opportunities`** — pursuits (`type_id` dropped in ADR-012)
+- `id`, `organization_id`, `name`, `description`, `status`, `owner_id`
 - Partnership fields: `partner_org`, `primary_contact`, `contact_email`, `partnership_type`, `mutual_commitments`, `agreement_date`, `renewal_date`, `estimated_value`, `alignment_notes`
 - Shared: `primary_deadline`, `source_url`, `tags`, `created_by`, `created_at`, `updated_at`
 
-**`opportunity_types`** — seeded: `partnership`
-**`pipeline_statuses`** — seeded per type (`partnership_prospecting` … `partnership_closed_won`)
+**`pipeline_statuses`** — `qualifying → discovery → proposal → evaluation → approval → negotiating → closed_won | closed_lost`
+- Carries its own ageing thresholds (`expected_days`, `amber_days`, `red_days`) — see `src/lib/stageAge.ts`
+- Read via `usePipelineStatuses()`; never hardcode the stage list.
 **`tasks`** — linked to opportunity; `status`: `not_started|in_progress|complete|blocked`
-**`task_templates`** + **`task_template_items`** — default templates seeded for both types
+**`opportunity_details`**, **`contacts`**, **`interactions`**, **`stage_tasks`**, **`stage_history`**
+- Renamed from `partnership_*` in ADR-012. **Contacts and interactions hang off the ORGANISATION**, with an optional opportunity.
+- `opportunity_details` embeds need the `!opportunity_id` hint — it has two FKs to `opportunities`, and without the hint PostgREST fails the whole query with PGRST201.
 **`documents`** — linked to opportunity; `storage_path` points to Supabase Storage
 **`activity_log`** — append-only; `actor_id`, `action`, `details` (jsonb)
 
@@ -114,9 +127,18 @@ Grants, AI grant writing, grant discovery, and board minutes now live in
 `confluence-co` against a separate Supabase project. ADR-001 through ADR-005 are
 **historical** for this repo — they describe features that no longer exist here.
 
+### ADR-012: Lead → Opportunity → Client
+**File:** `docs/ADR-012-lead-opportunity-client.md`
+**Status:** Phases 1–4 landed 2026-08-22. Phase 5 (UI) and 6 (ADR-010) remain.
+
+"Partnership" was Confluence vocabulary. WA has clients. More importantly, one table was doing
+three jobs — undecided leads, live pursuits, delivered work — which is where `isOpportunity()`
+and the `?tab=partnership` crash came from.
+
 ### ADR-010: Timekeeping & Billing
 **File:** `docs/ADR-010-timekeeping-billing.md`
-**Status:** Proposed — not started
+**Status:** Proposed — blocked on the CMC board decision. Rewritten 2026-08-22 against ADR-012;
+it now **extends** the existing `engagements` table rather than creating one.
 
 ### ADR-011: Opportunity Discovery
 **Status:** In progress
