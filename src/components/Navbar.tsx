@@ -26,11 +26,16 @@ export function Navbar() {
 
   return (
     <>
+      {/* At the top the bar is transparent over the dark hero; past 20px it
+          becomes solid white. This used to read `bg-white/92`, which Tailwind
+          never generated — 92 is not in the default opacity scale — so the top
+          state was accidentally transparent rather than translucent white, and
+          the gray links below were left unreadable against the navy. */}
       <nav
         className={`fixed top-0 w-full z-50 px-6 lg:px-12 h-[72px] flex items-center justify-between transition-all duration-300 ${
           scrolled
             ? 'bg-white/95 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,70,103,0.08)]'
-            : 'bg-white/92 backdrop-blur-md'
+            : 'bg-transparent'
         }`}
       >
         <a href="#" className="flex items-center no-underline" onClick={handleNavClick}>
@@ -43,7 +48,9 @@ export function Navbar() {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-gray-500 text-[0.92rem] font-medium hover:text-navy transition-colors relative group no-underline"
+                className={`text-[0.92rem] font-medium transition-colors relative group no-underline ${
+                  scrolled ? 'text-gray-500 hover:text-navy' : 'text-white/85 hover:text-white'
+                }`}
               >
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-river transition-all duration-300 group-hover:w-full" />
@@ -66,7 +73,9 @@ export function Navbar() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
-          {mobileOpen ? <X size={24} className="text-navy" /> : <Menu size={24} className="text-navy" />}
+          {mobileOpen
+            ? <X size={24} className="text-navy" />
+            : <Menu size={24} className={scrolled ? 'text-navy' : 'text-white'} />}
         </button>
       </nav>
 
