@@ -14,7 +14,6 @@ import { normalizePhone } from '../../lib/phone'
 
 // ── Shared fields ─────────────────────────────────────────────
 const baseSchema = z.object({
-  type_id:          z.literal('partnership'),
   name:             z.string().min(1, 'Name is required'),
   description:      z.string().optional(),
   primary_deadline: z.string().optional(),
@@ -24,7 +23,6 @@ const baseSchema = z.object({
 
 // ── Partnership extras ────────────────────────────────────────
 const partnershipSchema = baseSchema.extend({
-  type_id:          z.literal('partnership'),
   partner_org:      z.string().optional(),
   primary_contact:  z.string().optional(),
   contact_email:    z.string().email('Enter a valid email').or(z.literal('')).optional(),
@@ -140,7 +138,6 @@ export function NewOpportunity() {
 
     // Build the DB payload — coerce empty strings to null, numbers from strings
     const payload: Record<string, unknown> = {
-      type_id:          values.type_id,
       name:             values.name,
       description:      values.description || null,
       primary_deadline: values.primary_deadline || null,
@@ -170,7 +167,7 @@ export function NewOpportunity() {
     }
 
     // Save opportunity_details fields (trigger auto-created the row)
-    if (values.type_id === 'partnership') {
+    {
       const detailsPayload: Record<string, unknown> = {}
       if (values.org_size)         detailsPayload.org_size         = values.org_size
       if (values.pain_points)      detailsPayload.pain_points      = values.pain_points

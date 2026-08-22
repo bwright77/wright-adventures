@@ -45,25 +45,11 @@ const DELIVERY_LABELS: Record<string, string> = {
 // leaving them open puts dead work on somebody's My Tasks list forever.
 const LOST_STATUSES: ReadonlySet<string> = new Set([
   'closed_lost',
-  'lead_declined',
-  'lead_lost',
 ])
 
 // ── Pipeline config ───────────────────────────────────────────
 
 
-
-// ADR-011 — a pursued lead runs its own short pipeline
-const LEAD_STAGES = [
-  { id: 'lead_evaluating', label: 'Evaluating' },
-  { id: 'lead_pursuing',   label: 'Pursuing'   },
-  { id: 'lead_submitted',  label: 'Submitted'  },
-]
-const LEAD_TERMINAL = [
-  { id: 'lead_won',      label: 'Won'      },
-  { id: 'lead_lost',     label: 'Lost'     },
-  { id: 'lead_declined', label: 'Declined' },
-]
 
 // Which stages sit behind the close-out menu rather than on the stepper.
 // Nurture is no longer among them — it is a state of the ORGANISATION (ADR-012),
@@ -72,13 +58,8 @@ const PARTNERSHIP_TERMINAL_IDS = [
   'closed_won', 'closed_lost',
 ]
 
-// Lead labels stay local — the lead pipeline is short and fixed. Partnership
-// labels come from pipeline_statuses via usePipelineStatuses, because that list
-// changes and hardcoding it is what let the board and the filter drift apart.
-const LEAD_LABELS: Record<string, string> = Object.fromEntries(
-  [...LEAD_STAGES, ...LEAD_TERMINAL, { id: 'lead_discovered', label: 'Discovered' }]
-    .map(s => [s.id, s.label])
-)
+// Stage labels come from pipeline_statuses via usePipelineStatuses, because that
+// list changes and hardcoding it is what let the board and the filter drift apart.
 
 // ── Sub-components ────────────────────────────────────────────
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -336,7 +317,7 @@ function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
   // History spans stages that may since have been renamed or retired, so fall
   // back to the raw id rather than rendering an empty arrow.
   const { labels } = usePipelineStatuses()
-  const STATUS_LABELS = { ...LEAD_LABELS, ...labels }
+  const STATUS_LABELS = labels
 
   if (entries.length === 0) return <p className="text-sm text-gray-400 italic">No activity yet.</p>
 
@@ -636,9 +617,7 @@ export function OpportunityDetail() {
   // Leads have their own table and their own page (ADR-012); anything that
   // reaches this route is an opportunity.
   const isPartnership = true
-  const isLead        = false
-  // A lead's name is the posting title; the organization lives in posting_details.
-  const orgOrFunder   = isLead ? (leadDetails?.publisher ?? null) : opportunity.partner_org
+  const orgOrFunder   = opportunity.partner_org
   const owner         = profiles.find(p => p.id === opportunity.owner_id)
 
   // Closed-Won badge for the pipeline stepper area
@@ -690,20 +669,13 @@ export function OpportunityDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* EditOpportunity is partnership-shaped — its schema is a
-              z.literal('partnership') and every field it writes is a
-              partnership field. Opening it on a lead would present an empty
-              form and save nulls over the posting. Hidden until there is a
-              lead edit form. */}
-          {!isLead && (
-            <Link
-              to={`/admin/opportunities/${id}/edit`}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-2 transition-colors"
-            >
-              <Pencil size={13} />
-              Edit
-            </Link>
-          )}
+          <Link
+            to={`/admin/opportunities/${id}/edit`}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-2 transition-colors"
+          >
+            <Pencil size={13} />
+            Edit
+          </Link>
           {confirmDelete ? (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               <span className="text-xs text-red-700 font-medium">Delete?</span>
@@ -737,12 +709,8 @@ export function OpportunityDetail() {
       <div className="bg-white rounded-xl border border-gray-200 px-6 py-4 mb-6">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-3">Pipeline stage</p>
         <PipelineStepper
-          stages={isLead
-            ? LEAD_STAGES
-            : stages.filter(st => !PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
-          terminal={isLead
-            ? LEAD_TERMINAL
-            : stages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
+          stages={stages.filter(st => !PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
+          terminal={stages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
           currentStatus={opportunity.status}
           color="trail"
           onSelect={changeStatus}
@@ -826,42 +794,8 @@ export function OpportunityDetail() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">
-            {isLead ? 'The Posting' : 'Partnership Info'}
+            Opportunity Info
           </h2>
-          {isLead ? (
-            <>
-              {/* The organization, not the job title, is the thing being pursued. */}
-              <DetailRow label="Organization"  value={leadDetails?.publisher} />
-              <DetailRow label="Role"          value={opportunity.name} />
-              <DetailRow label="Kind"          value={leadDetails?.source_kind ? leadDetails.source_kind.toUpperCase() : null} />
-              <DetailRow label="Engagement"    value={leadDetails?.engagement_type} />
-              <DetailRow label="Compensation"  value={leadDetails?.compensation_raw} />
-              <DetailRow
-                label="Location"
-                value={leadDetails?.location
-                  ? `${leadDetails.location}${leadDetails.remote ? ' · remote or hybrid' : ''}`
-                  : (leadDetails?.remote ? 'Remote' : null)}
-              />
-              <DetailRow label="Posted"        value={leadDetails?.posted_date ? format(parseLocalDate(leadDetails.posted_date), 'MMM d, yyyy') : null} />
-              <DetailRow label="Closes"        value={leadDetails?.closes_date ? format(parseLocalDate(leadDetails.closes_date), 'MMM d, yyyy') : null} />
-              <DetailRow label="Found via"     value={opportunity.source} />
-              <DetailRow label="Fit score"     value={opportunity.ai_match_score != null ? `${opportunity.ai_match_score} / ${MAX_FIT_SCORE}` : null} />
-              <DetailRow label="Requirements"  value={leadDetails?.requirements} />
-              <DetailRow
-                label="Posting"
-                value={(leadDetails?.apply_url ?? opportunity.external_url)
-                  ? <a
-                      href={(leadDetails?.apply_url ?? opportunity.external_url) as string}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 hover:text-river transition-colors"
-                    >
-                      View original <ExternalLink size={12} />
-                    </a>
-                  : null}
-              />
-            </>
-          ) : (
             <>
               <DetailRow label="Partner org"   value={opportunity.partner_org} />
               <DetailRow label="Contact"       value={opportunity.primary_contact} />
@@ -892,8 +826,7 @@ export function OpportunityDetail() {
               {partnershipDetails?.org_size && (
                 <DetailRow label="Org size" value={partnershipDetails.org_size} />
               )}
-            </>
-          )}
+          </>
         </div>
       </div>
 
