@@ -339,40 +339,60 @@ async function syncOrgProfile(promptText: string): Promise<string | null> {
 }
 
 /**
- * Every closed-won engagement is a warm path, whether or not anyone remembered
- * to add it to the static list. Deriving them means the relationship network
- * grows as work is won, instead of going stale between edits — and a stale list
- * silently scores warm_path 0, which trips the downgrade gate.
+ * The warm-path network, computed from `organizations` (ADR-012).
+ *
+ * Two things mean we have a relationship, and that is the whole rule:
+ *
+ *   client  → direct. The work is the relationship.
+ *   network → network. We are nurturing them: someone we know who has no
+ *             opportunity for us yet, kept in touch with for when they do.
+ *             The placement itself is the claim.
+ *
+ * Everything else is cold. Being in the pipeline is NOT a relationship — an
+ * application to a posting we found on a job board says nothing about whether
+ * they have heard of us, and scoring it warm would corrupt the one dimension of
+ * the rubric that gates a band downgrade.
+ *
+ * This replaced three drifting sources: a hardcoded seed, an org_relationships
+ * table, and a query over closed-won opportunities. The nurtured organisations
+ * appeared in none of them.
  */
-async function storedRelationships(): Promise<ProfileRelationship[]> {
-  const { data } = await supabase
-    .from('org_relationships')
-    .select('org, basis, tier, via')
+async function warmPathRelationships(): Promise<ProfileRelationship[]> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('name, relationship_tier, relationship_basis, via:via_org_id(name), engagements(name, service_lines)')
+    .in('relationship_tier', ['client', 'network'])
     .eq('is_active', true)
-  return (data ?? []) as ProfileRelationship[]
-}
 
-async function wonEngagementRelationships(): Promise<ProfileRelationship[]> {
-  const { data } = await supabase
-    .from('opportunities')
-    .select('partner_org, name, service_lines')
-    .eq('status', 'closed_won')
-    .not('partner_org', 'is', null)
+  if (error) {
+    console.warn('warm path query failed:', error.message)
+    return []
+  }
 
-  return (data ?? [])
-    .filter(o => o.partner_org)
-    .map(o => {
-      const services = (o.service_lines ?? [])
-        .map((sl: string) => SERVICE_LINE_LABELS[sl] ?? sl)
-        .join(', ')
+  return (data ?? []).map((o: Record<string, any>): ProfileRelationship => {
+    const basis: string | null = o.relationship_basis?.trim() || null
+
+    if (o.relationship_tier === 'network') {
       return {
-        org: o.partner_org as string,
-        tier: 'direct' as const,
-        basis: services
-          ? `Closed-won client — ${services.toLowerCase()}`
-          : `Closed-won client — ${o.name}`,
+        org: o.name,
+        tier: 'network',
+        basis: basis ?? 'Being nurtured — known to us, no opportunity yet',
+        via: o.via?.name ?? null,
       }
-    })
+    }
+
+    const eng = (o.engagements ?? [])[0]
+    const services = (eng?.service_lines ?? [])
+      .map((sl: string) => SERVICE_LINE_LABELS[sl] ?? sl)
+      .join(', ')
+
+    return {
+      org: o.name,
+      tier: 'direct',
+      basis: basis
+        ?? (services ? `Client — ${services.toLowerCase()}` : eng ? `Client — ${eng.name}` : 'Client'),
+    }
+  })
 }
 
 /**
@@ -578,12 +598,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // The editable list from Settings, plus every closed-won client. Composed
-    // once per run; the static array in waOrgProfile is now only a seed.
-    const orgProfilePrompt = buildOrgProfilePrompt([
-      ...await storedRelationships(),
-      ...await wonEngagementRelationships(),
-    ])
+    // One source: organizations. The static array in waOrgProfile is a seed for
+    // anything not yet recorded as an org, and loses to a row on conflict.
+    const orgProfilePrompt = buildOrgProfilePrompt(await warmPathRelationships())
     const orgProfileId = await syncOrgProfile(orgProfilePrompt)
 
     let query = supabase.from('discovery_sources').select('*')

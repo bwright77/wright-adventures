@@ -121,15 +121,14 @@ export interface ProfileRelationship {
 }
 
 /**
- * Build the scoring prompt, optionally merging in relationships discovered at
- * runtime.
+ * Build the scoring prompt, merging in the warm-path network computed from
+ * `organizations` at runtime.
  *
- * The static list below covers relationships that are not opportunities —
- * Shane's Groundwork history, the Denver civic network. Closed-won engagements
- * are merged in from the database by the sync endpoint, because a hand-curated
- * list goes stale the moment work is won, and a missing organization scores
- * warm_path 0, which trips the downgrade gate and buries a real opportunity a
- * band lower than it deserves.
+ * The static list below is a seed for relationships that predate the org table.
+ * The live network arrives from the sync endpoint, because a hand-curated list
+ * goes stale the moment work is won or a relationship is struck, and a missing
+ * organization scores warm_path 0 — which trips the downgrade gate and buries a
+ * real opportunity a band lower than it deserves.
  *
  * De-duplicated by containment rather than exact match, because the same
  * organization is named differently in each place: "PeopleForBikes / BBSP" in
@@ -157,8 +156,8 @@ export function buildOrgProfilePrompt(extra: readonly ProfileRelationship[] = []
   }
 
   const merged: ProfileRelationship[] = [
-    // The static array is a SEED only — org_relationships in the database is the
-    // source of truth, editable from Settings. These entries default to direct.
+    // The static array is a SEED only — `organizations` is the source of truth
+    // (ADR-012), editable from Settings. These entries default to direct.
     ...WA_ORG_PROFILE.relationships.map(r => ({ org: r.org, basis: r.basis, tier: 'direct' as const })),
     ...extra.filter(r => {
       if (isDuplicate(r.org)) return false

@@ -408,8 +408,12 @@ export interface Organization {
   website: string | null
   logo_url: string | null
   sector: string | null
-  /** An org is a client because it has an engagement — kept true by a trigger. */
-  relationship_tier: 'none' | 'network' | 'prospect' | 'client'
+  /**
+   * How we know them — never where they sit in the pipeline.
+   * client is trigger-maintained from engagements; network is the nurture list.
+   * Warm path = client OR network.
+   */
+  relationship_tier: 'none' | 'network' | 'client'
   relationship_basis: string | null
   /** The warm path: who introduces us. NACTO is reachable via PeopleForBikes. */
   via_org_id: string | null

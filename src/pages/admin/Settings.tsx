@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Play, RefreshCw, Radar, Zap, AlertTriangle, CheckCircle2, Users, Plus, Trash2 } from 'lucide-react'
+import { Bell, Play, RefreshCw, Radar, Zap, AlertTriangle, CheckCircle2, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { NotificationPreference, DiscoverySource, DiscoveryRun, OrgRelationship } from '../../lib/types'
+import type { NotificationPreference, DiscoverySource, DiscoveryRun, Organization } from '../../lib/types'
 
 interface TokenBudget {
   id: string
@@ -25,125 +25,168 @@ function RelationshipsCard() {
   const [via, setVia]     = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const { data: rels = [], isLoading } = useQuery<OrgRelationship[]>({
-    queryKey: ['org_relationships'],
+  // The warm-path network now lives on `organizations` (ADR-012), which is what
+  // the discovery scorer actually reads. It used to be a separate
+  // org_relationships table, so edits here changed a list nothing consulted.
+  const { data: orgs = [], isLoading } = useQuery<Organization[]>({
+    queryKey: ['organizations'],
     queryFn: async () => {
       const { data, error: e } = await supabase
-        .from('org_relationships').select('*').order('tier').order('org')
+        .from('organizations').select('*').eq('is_active', true).order('name')
       if (e) throw e
-      return (data ?? []) as OrgRelationship[]
+      return (data ?? []) as Organization[]
     },
   })
 
+  const nameById = new Map(orgs.map(o => [o.id, o.name]))
+
+  // Mirrors warmPathRelationships() in api/discovery/sources-sync.ts: a client,
+  // or an org we are nurturing. Nothing else is a relationship.
+  const isWarm = (o: Organization) =>
+    o.relationship_tier === 'client' || o.relationship_tier === 'network'
+
+  const warm    = orgs.filter(isWarm)
+  const direct  = warm.filter(o => o.relationship_tier !== 'network')
+  const network = warm.filter(o => o.relationship_tier === 'network')
+  const cold    = orgs.filter(o => !isWarm(o))
+
   const add = useMutation({
     mutationFn: async () => {
-      const { error: e } = await supabase.from('org_relationships').insert({
-        org: org.trim(),
-        basis: basis.trim(),
-        tier,
-        via: tier === 'network' && via.trim() ? via.trim() : null,
-      })
+      const name = org.trim()
+      const existing = orgs.find(o => o.name.toLowerCase() === name.toLowerCase())
+      const viaId = tier === 'network' && via ? via : null
+      // 'client' is maintained by a trigger off engagements — never set by hand.
+      // 'client' is owned by the engagements trigger; everything a human marks
+      // as a relationship is network until work makes it a client.
+      const nextTier = existing?.relationship_tier === 'client' ? 'client' : 'network'
+
+      const payload = {
+        relationship_tier:  nextTier,
+        relationship_basis: basis.trim(),
+        via_org_id:         viaId,
+        updated_at:         new Date().toISOString(),
+      }
+      const { error: e } = existing
+        ? await supabase.from('organizations').update(payload).eq('id', existing.id)
+        : await supabase.from('organizations').insert({ name, ...payload })
       if (e) throw e
     },
     onSuccess: () => {
       setOrg(''); setBasis(''); setVia(''); setError(null)
-      queryClient.invalidateQueries({ queryKey: ['org_relationships'] })
+      queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (e: Error) => setError(e.message),
   })
 
+  // Removing a relationship must not delete the organisation — it may hold
+  // opportunities or engagements. Clear what makes it warm instead.
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error: e } = await supabase.from('org_relationships').delete().eq('id', id)
+    mutationFn: async (o: Organization) => {
+      const { error: e } = await supabase.from('organizations').update({
+        relationship_tier:  o.relationship_tier === 'client' ? 'client' : 'none',
+        relationship_basis: null,
+        via_org_id:         null,
+        updated_at:         new Date().toISOString(),
+      }).eq('id', o.id)
       if (e) throw e
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['org_relationships'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['organizations'] }),
   })
-
-  const direct  = rels.filter(r => r.tier === 'direct')
-  const network = rels.filter(r => r.tier === 'network')
 
   const inputCls = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20 bg-white'
 
-  function Row({ r }: { r: OrgRelationship }) {
+  function Row({ o }: { o: Organization }) {
     return (
       <li className="flex items-start gap-3 py-2">
         <div className="min-w-0 flex-1">
-          <span className="text-sm font-medium text-navy">{r.org}</span>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            {r.basis}{r.via && <span className="text-gray-300"> · via {r.via}</span>}
+          <span className="text-sm font-medium text-navy">{o.name}</span>
+          {o.relationship_tier === 'client' && (
+            <span className="ml-2 text-[0.65rem] uppercase tracking-wide text-trail-700 font-semibold">client</span>
+          )}
+          <p className="text-xs text-gray-600 leading-relaxed">
+            {o.relationship_basis ?? 'Relationship being nurtured — no basis recorded'}
+            {o.via_org_id && <span className="text-gray-500"> · via {nameById.get(o.via_org_id) ?? '—'}</span>}
           </p>
         </div>
         <button
-          onClick={() => remove.mutate(r.id)}
-          className="text-gray-300 hover:text-red-500 transition-colors shrink-0 mt-0.5"
-          aria-label={`Remove ${r.org}`}
+          onClick={() => remove.mutate(o)}
+          className="text-gray-400 hover:text-red-500 transition-colors shrink-0 mt-0.5"
+          aria-label={`Remove ${o.name} from the warm path`}
+          title={o.relationship_tier === 'client'
+            ? 'Clears the basis. A client stays a client while it has an engagement.'
+            : 'Removes the warm path. The organisation itself is kept.'}
         >
-          <Trash2 size={13} />
+          <X size={14} />
         </button>
       </li>
     )
   }
 
-  if (isLoading) return <div className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse" />
-
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-navy flex items-center gap-1.5">
-        <Users size={14} className="text-trail" /> Warm-path relationships
-      </h3>
-      <p className="text-xs text-gray-400 mt-0.5 mb-4">
-        Scored against for the <span className="font-medium">warm path</span> dimension. An organization
-        missing here scores 0, which drops a lead a whole band — so it is worth keeping current.
-        Closed-won clients are added automatically.
+    <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <h2 className="text-sm font-semibold text-navy mb-1">Warm path network</h2>
+      <p className="text-xs text-gray-600 mb-5 leading-relaxed">
+        Scores the <span className="font-medium">warm_path</span> dimension when discovery rates an
+        opportunity. Two things count: a client, and an organisation we are nurturing — someone we
+        know who has no opportunity for us yet. Pursuing a cold posting is not a relationship.
       </p>
 
-      <div className="mb-4">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-gray-400 mb-1">
-          Direct — a client, or a principal&rsquo;s own history
-        </p>
-        <ul className="divide-y divide-gray-50">
-          {direct.map(r => <Row key={r.id} r={r} />)}
-        </ul>
-      </div>
-
-      <div className="mb-5">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-gray-400 mb-1">
-          Network — an introduction is available
-        </p>
-        <ul className="divide-y divide-gray-50">
-          {network.length === 0
-            ? <li className="py-2 text-xs text-gray-300">None yet.</li>
-            : network.map(r => <Row key={r.id} r={r} />)}
-        </ul>
-      </div>
-
-      <div className="border-t border-gray-100 pt-4 space-y-2">
-        <div className="grid sm:grid-cols-2 gap-2">
-          <input className={inputCls} placeholder="Organization" value={org} onChange={e => setOrg(e.target.value)} />
-          <select className={inputCls} value={tier} onChange={e => setTier(e.target.value as 'direct' | 'network')}>
-            <option value="direct">Direct — client or history</option>
-            <option value="network">Network — via someone</option>
-          </select>
+      {isLoading ? (
+        <p className="text-xs text-gray-500">Loading…</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+              Direct — warm_path 3 <span className="text-gray-400 font-normal">({direct.length})</span>
+            </h3>
+            <ul className="divide-y divide-gray-100">
+              {direct.map(o => <Row key={o.id} o={o} />)}
+              {!direct.length && <li className="text-xs text-gray-500 py-2">None yet.</li>}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+              Network — warm_path 2 <span className="text-gray-400 font-normal">({network.length})</span>
+            </h3>
+            <ul className="divide-y divide-gray-100">
+              {network.map(o => <Row key={o.id} o={o} />)}
+              {!network.length && <li className="text-xs text-gray-500 py-2">None yet.</li>}
+            </ul>
+          </div>
         </div>
+      )}
+
+      <div className="border-t border-gray-100 pt-5 space-y-2">
+        <input className={inputCls} placeholder="Organisation" value={org} onChange={e => setOrg(e.target.value)} list="org-names" />
+        <datalist id="org-names">
+          {cold.map(o => <option key={o.id} value={o.name} />)}
+        </datalist>
+        <select className={inputCls} value={tier} onChange={e => setTier(e.target.value as 'direct' | 'network')}>
+          <option value="direct">We know them directly</option>
+          <option value="network">Reachable through someone we know</option>
+        </select>
         <input className={inputCls} placeholder="How we know them" value={basis} onChange={e => setBasis(e.target.value)} />
         {tier === 'network' && (
-          <input className={inputCls} placeholder="Reachable via (e.g. PeopleForBikes / BBSP)" value={via} onChange={e => setVia(e.target.value)} />
+          <select className={inputCls} value={via} onChange={e => setVia(e.target.value)}>
+            <option value="">Reachable via…</option>
+            {warm.filter(o => o.relationship_tier !== 'network').map(o => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
         )}
         {error && <p className="text-xs text-red-600">{error}</p>}
         <button
           onClick={() => add.mutate()}
           disabled={!org.trim() || !basis.trim() || add.isPending}
-          className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-navy text-white hover:bg-navy-800 disabled:opacity-40 transition-colors"
+          className="text-sm bg-navy text-white rounded-lg px-4 py-2 disabled:opacity-40 hover:bg-navy/90 transition-colors"
         >
-          <Plus size={12} /> Add relationship
+          {add.isPending ? 'Saving…' : 'Save relationship'}
         </button>
       </div>
     </div>
   )
 }
 
-// ── Discovery sources card ────────────────────────────────────
 function DiscoverySourcesCard() {
   const { session } = useAuth()
   const queryClient = useQueryClient()
