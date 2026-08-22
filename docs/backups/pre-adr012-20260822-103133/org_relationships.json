@@ -1,0 +1,156 @@
+[
+  {
+    "id": "d7d3ce73-ff3d-415e-a3d5-cd3aa1c90724",
+    "org": "Confluence Colorado",
+    "basis": "Shane is Executive Director; WA builds and runs their platform",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "ca14ebd8-7d53-42f2-be33-31ebea235234",
+    "org": "Colorado Mountain Club",
+    "basis": "Active engagement — hiring, ops, compliance",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "531b0314-c642-45cd-b75c-1ba0887ef540",
+    "org": "Groundwork Denver",
+    "basis": "Shane formerly Youth Program Director",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "8c86753b-3372-49a9-b509-8c54ac737c44",
+    "org": "GOBRP / Golden Optimists",
+    "basis": "Shane's Groundwork-era work with Ted Rains",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "c2517457-b1f8-4eca-9a0a-b91f1e1d2650",
+    "org": "Lincoln Hills Cares",
+    "basis": "Funding strategy and program infrastructure",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "fa19897b-077c-442f-b47a-6824fa19f754",
+    "org": "PeopleForBikes / BBSP",
+    "basis": "Digital legacy and archive engagement",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "1f4d88fc-eb27-4387-b5bb-8111d7140d3f",
+    "org": "Kady Youth Sheep Camp",
+    "basis": "Fiscal partner; brand and web",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "4ea10161-92e9-44df-afeb-36cce59f6b36",
+    "org": "River Sisters",
+    "basis": "Brand, bilingual web, advocacy engine",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "bd5ed5fe-830f-4401-8b60-08118eb84ffa",
+    "org": "Mo'Betta Green",
+    "basis": "Registration, donations, commerce on a custom admin",
+    "tier": "direct",
+    "via": null,
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "2897febd-08b7-4fa5-a26e-41703838b772",
+    "org": "City of Philadelphia",
+    "basis": "BBSP partner city",
+    "tier": "network",
+    "via": "PeopleForBikes / BBSP",
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "b5f2fa97-3db3-4ebd-b59e-4030b4dd9386",
+    "org": "NACTO",
+    "basis": "BBSP partner — National Association of City Transportation Officials",
+    "tier": "network",
+    "via": "PeopleForBikes / BBSP",
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "abca15f2-cde4-463d-a868-8ea0a0d82a85",
+    "org": "NABSA",
+    "basis": "BBSP partner — North American Bikeshare & Scootershare Association",
+    "tier": "network",
+    "via": "PeopleForBikes / BBSP",
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "f0f67d27-bc5b-4213-83e8-759e253e1928",
+    "org": "Tugo Bike Share",
+    "basis": "BBSP living lab",
+    "tier": "network",
+    "via": "PeopleForBikes / BBSP",
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  },
+  {
+    "id": "872b67fd-434b-4fab-a431-4a25e229e6d7",
+    "org": "Bike LA",
+    "basis": "BBSP living lab",
+    "tier": "network",
+    "via": "PeopleForBikes / BBSP",
+    "is_active": true,
+    "notes": null,
+    "created_at": "2026-08-19T15:27:25.721484+00:00",
+    "updated_at": "2026-08-19T15:27:25.721484+00:00"
+  }
+]

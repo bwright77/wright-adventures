@@ -1,0 +1,14 @@
+[
+  {
+    "id": "partnership",
+    "label": "Partnership",
+    "description": "Strategic relationships with organizations, agencies, or community groups",
+    "sort_order": 2
+  },
+  {
+    "id": "lead",
+    "label": "Lead",
+    "description": "Discovered RFP, contract, or role that Wright Adventures may pursue",
+    "sort_order": 1
+  }
+]

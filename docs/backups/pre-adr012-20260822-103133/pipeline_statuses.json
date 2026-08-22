@@ -1,0 +1,162 @@
+[
+  {
+    "id": "partnership_qualifying",
+    "type_id": "partnership",
+    "label": "Qualifying",
+    "sort_order": 1,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "partnership_discovery",
+    "type_id": "partnership",
+    "label": "Discovery",
+    "sort_order": 2,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "partnership_proposal",
+    "type_id": "partnership",
+    "label": "Proposal",
+    "sort_order": 3,
+    "is_active": true,
+    "expected_days": 21,
+    "amber_days": 30,
+    "red_days": 60
+  },
+  {
+    "id": "partnership_evaluation",
+    "type_id": "partnership",
+    "label": "Evaluation",
+    "sort_order": 4,
+    "is_active": true,
+    "expected_days": 21,
+    "amber_days": 30,
+    "red_days": 60
+  },
+  {
+    "id": "partnership_approval",
+    "type_id": "partnership",
+    "label": "Approval",
+    "sort_order": 5,
+    "is_active": true,
+    "expected_days": 45,
+    "amber_days": 60,
+    "red_days": 90
+  },
+  {
+    "id": "partnership_negotiating",
+    "type_id": "partnership",
+    "label": "Negotiation",
+    "sort_order": 6,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "partnership_closed_won",
+    "type_id": "partnership",
+    "label": "Closed Won",
+    "sort_order": 7,
+    "is_active": false,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "partnership_closed_lost",
+    "type_id": "partnership",
+    "label": "Closed Lost",
+    "sort_order": 8,
+    "is_active": false,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "partnership_nurture",
+    "type_id": "partnership",
+    "label": "Nurture",
+    "sort_order": 9,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_discovered",
+    "type_id": "lead",
+    "label": "Discovered",
+    "sort_order": 1,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_evaluating",
+    "type_id": "lead",
+    "label": "Evaluating",
+    "sort_order": 2,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_pursuing",
+    "type_id": "lead",
+    "label": "Pursuing",
+    "sort_order": 3,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_submitted",
+    "type_id": "lead",
+    "label": "Submitted",
+    "sort_order": 4,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_won",
+    "type_id": "lead",
+    "label": "Won",
+    "sort_order": 5,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_lost",
+    "type_id": "lead",
+    "label": "Lost",
+    "sort_order": 6,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "lead_declined",
+    "type_id": "lead",
+    "label": "Declined",
+    "sort_order": 7,
+    "is_active": true,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  }
+]
