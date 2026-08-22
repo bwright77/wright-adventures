@@ -75,7 +75,7 @@ export function OnAir() {
 
         {/* One column: the phrase anchors it, the station credentials it, the
             CTA closes it. */}
-        <div className="lg:border-l lg:border-gray-300/60 lg:pl-10">
+        <div>
           <figure>
             <blockquote>
               {/* Smaller than the 30px headline so that carries the section, and
