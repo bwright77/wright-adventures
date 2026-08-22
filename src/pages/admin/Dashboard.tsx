@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Users, CheckSquare, Briefcase } from 'lucide-react'
+import { Plus, Users, CheckSquare, Radar, Handshake } from 'lucide-react'
 import { format, isAfter, addDays } from 'date-fns'
 import { parseLocalDate } from '../../lib/dates'
 import type { LucideIcon } from 'lucide-react'
@@ -12,7 +12,12 @@ import type { Opportunity, Task } from '../../lib/types'
 // partnership_declined, partnership_completed — named three ids that have never
 // existed in pipeline_statuses, so the "active" count excluded nothing and
 // included closed work.
-const INACTIVE_PARTNERSHIP_STATUSES = ['partnership_closed_won', 'partnership_closed_lost']
+// Mirrors the Opportunities tabs. Nurture is deliberately not "pursuing" —
+// it is a warm relationship with nothing live to work on.
+const PURSUING_STATUSES = [
+  'partnership_qualifying', 'partnership_discovery', 'partnership_proposal',
+  'partnership_evaluation', 'partnership_approval', 'partnership_negotiating',
+]
 
 function MetricCard({ label, value, sub, icon: Icon, accent, to }: {
   label: string
@@ -76,8 +81,15 @@ export function Dashboard() {
   })
 
   const now = new Date()
-  const activePartnerships = opportunities.filter(o => o.type_id === 'partnership' && !INACTIVE_PARTNERSHIP_STATUSES.includes(o.status))
-  const overdueTasks       = myTasks.filter(t => t.due_date && !isAfter(new Date(t.due_date), now))
+
+  const leadsToReview = opportunities.filter(o =>
+    o.type_id === 'lead' && o.status === 'lead_discovered')
+  const pursuing = opportunities.filter(o =>
+    o.type_id === 'partnership' && PURSUING_STATUSES.includes(o.status))
+  const activeEngagements = opportunities.filter(o =>
+    o.type_id === 'partnership' && o.status === 'partnership_closed_won')
+
+  const overdueTasks = myTasks.filter(t => t.due_date && !isAfter(new Date(t.due_date), now))
 
   const upcomingDeadlines = opportunities
     .filter(o =>
@@ -110,14 +122,30 @@ export function Dashboard() {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
-          label="Partnerships"
-          value={activePartnerships.length}
-          sub="active"
+          label="Leads to review"
+          value={leadsToReview.length}
+          sub={leadsToReview.length === 0 ? 'queue clear' : 'awaiting triage'}
+          icon={Radar}
+          accent="bg-river"
+          to="/admin/leads"
+        />
+        <MetricCard
+          label="Pursuing"
+          value={pursuing.length}
+          sub="live opportunities"
           icon={Users}
-          accent="bg-trail"
+          accent="bg-navy"
           to="/admin/opportunities"
+        />
+        <MetricCard
+          label="Active"
+          value={activeEngagements.length}
+          sub="won engagements"
+          icon={Handshake}
+          accent="bg-trail"
+          to="/admin/opportunities?tab=active"
         />
         <MetricCard
           label="My Tasks"
@@ -126,16 +154,6 @@ export function Dashboard() {
           icon={CheckSquare}
           accent={overdueTasks.length > 0 ? 'bg-red-500' : 'bg-earth'}
           to="/admin/tasks"
-        />
-        <MetricCard
-          label="Total"
-          value={opportunities.filter(o =>
-            o.type_id !== 'lead' || !['lead_discovered', 'lead_declined'].includes(o.status)
-          ).length}
-          sub="in the pipeline"
-          icon={Briefcase}
-          accent="bg-navy"
-          to="/admin/opportunities"
         />
       </div>
 

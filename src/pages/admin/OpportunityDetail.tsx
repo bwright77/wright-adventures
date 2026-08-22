@@ -20,6 +20,7 @@ import type {
 import { toTelHref } from '../../lib/phone'
 import { MAX_FIT_SCORE } from '../../lib/discovery/fitRubric'
 import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
+import { usePipelineStatuses } from '../../lib/usePipelineStatuses'
 import { parseLocalDate } from '../../lib/dates'
 
 // How the engagement is priced (ADR: engagement_nature). Non-paid work is real
@@ -50,18 +51,6 @@ const LOST_STATUSES: ReadonlySet<string> = new Set([
 
 // ── Pipeline config ───────────────────────────────────────────
 
-// ADR-006 — new 7-stage sales pipeline
-const PARTNERSHIP_STAGES = [
-  { id: 'partnership_prospecting', label: 'Prospecting' },
-  { id: 'partnership_qualifying',  label: 'Qualifying'  },
-  { id: 'partnership_discovery',   label: 'Discovery'   },
-  { id: 'partnership_proposal',    label: 'Proposal'    },
-  { id: 'partnership_negotiating', label: 'Negotiating' },
-]
-const PARTNERSHIP_TERMINAL = [
-  { id: 'partnership_closed_won',  label: 'Closed-Won'  },
-  { id: 'partnership_closed_lost', label: 'Closed-Lost' },
-]
 
 
 // ADR-011 — a pursued lead runs its own short pipeline
@@ -76,9 +65,17 @@ const LEAD_TERMINAL = [
   { id: 'lead_declined', label: 'Declined' },
 ]
 
-const STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  [...PARTNERSHIP_STAGES, ...PARTNERSHIP_TERMINAL, ...LEAD_STAGES, ...LEAD_TERMINAL,
-   { id: 'lead_discovered', label: 'Discovered' }]
+// Which partnership stages sit behind the close-out menu rather than on the
+// stepper. Nurture is here too: it is a parking state, not a step forward.
+const PARTNERSHIP_TERMINAL_IDS = [
+  'partnership_closed_won', 'partnership_closed_lost', 'partnership_nurture',
+]
+
+// Lead labels stay local — the lead pipeline is short and fixed. Partnership
+// labels come from pipeline_statuses via usePipelineStatuses, because that list
+// changes and hardcoding it is what let the board and the filter drift apart.
+const LEAD_LABELS: Record<string, string> = Object.fromEntries(
+  [...LEAD_STAGES, ...LEAD_TERMINAL, { id: 'lead_discovered', label: 'Discovered' }]
     .map(s => [s.id, s.label])
 )
 
@@ -335,6 +332,11 @@ function QualificationTracker({
 
 // ── Activity log ──────────────────────────────────────────────
 function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
+  // History spans stages that may since have been renamed or retired, so fall
+  // back to the raw id rather than rendering an empty arrow.
+  const { labels } = usePipelineStatuses('partnership')
+  const STATUS_LABELS = { ...LEAD_LABELS, ...labels }
+
   if (entries.length === 0) return <p className="text-sm text-gray-400 italic">No activity yet.</p>
 
   function describe(entry: ActivityEntry): string {
@@ -386,6 +388,8 @@ function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
 export function OpportunityDetail() {
   const { id }      = useParams<{ id: string }>()
   const { user } = useAuth()
+  // Stages come from pipeline_statuses so the stepper cannot drift from the board.
+  const { all: partnershipStages } = usePipelineStatuses('partnership')
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
 
@@ -693,8 +697,12 @@ export function OpportunityDetail() {
       <div className="bg-white rounded-xl border border-gray-200 px-6 py-4 mb-6">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-3">Pipeline stage</p>
         <PipelineStepper
-          stages={isLead ? LEAD_STAGES : PARTNERSHIP_STAGES}
-          terminal={isLead ? LEAD_TERMINAL : PARTNERSHIP_TERMINAL}
+          stages={isLead
+            ? LEAD_STAGES
+            : partnershipStages.filter(st => !PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
+          terminal={isLead
+            ? LEAD_TERMINAL
+            : partnershipStages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
           currentStatus={opportunity.status}
           color="trail"
           onSelect={changeStatus}

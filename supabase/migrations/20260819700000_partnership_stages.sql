@@ -11,6 +11,13 @@
 --   losing it. Folding that into Negotiation makes the board unreadable. CMC is
 --   the live case: Ashley advocating, CEO bought in, board has not seen it.
 --
+--   EVALUATION — the prospect is actively assessing: interviews, reference
+--   checks, competitive comparison. Distinct from Approval by what WE are doing,
+--   not just where they are. In evaluation there is work owed — references to
+--   supply, questions to answer. In approval there is nothing to do but wait.
+--   Collapsing them means the board cannot tell you whether you owe someone
+--   something, which is the main thing a board is for.
+--
 --   NURTURE — not lost, not now. A parking state reachable from any active
 --   stage, requiring a revisit date. Without it, deprioritized work either
 --   clutters the board or disappears entirely.
@@ -52,18 +59,19 @@ BEGIN;
 -- 1. New stages. Ordered; sort_order drives board column position.
 -- -----------------------------------------------------------------------------
 INSERT INTO pipeline_statuses (id, type_id, label, sort_order, is_active) VALUES
-  ('partnership_identified', 'partnership', 'Identified', 1, true),
-  ('partnership_contacted',  'partnership', 'Contacted',  2, true),
-  ('partnership_approval',   'partnership', 'Approval',   5, true),
-  ('partnership_nurture',    'partnership', 'Nurture',    9, true)
+  ('partnership_identified', 'partnership', 'Identified', 1,  true),
+  ('partnership_contacted',  'partnership', 'Contacted',  2,  true),
+  ('partnership_evaluation', 'partnership', 'Evaluation', 5,  true),
+  ('partnership_approval',   'partnership', 'Approval',   6,  true),
+  ('partnership_nurture',    'partnership', 'Nurture',    10, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Re-order and relabel what already existed.
 UPDATE pipeline_statuses SET sort_order = 3, label = 'Discovery'   WHERE id = 'partnership_discovery';
 UPDATE pipeline_statuses SET sort_order = 4, label = 'Proposal'    WHERE id = 'partnership_proposal';
-UPDATE pipeline_statuses SET sort_order = 6, label = 'Negotiation' WHERE id = 'partnership_negotiating';
-UPDATE pipeline_statuses SET sort_order = 7, label = 'Closed Won'  WHERE id = 'partnership_closed_won';
-UPDATE pipeline_statuses SET sort_order = 8, label = 'Closed Lost' WHERE id = 'partnership_closed_lost';
+UPDATE pipeline_statuses SET sort_order = 7, label = 'Negotiation' WHERE id = 'partnership_negotiating';
+UPDATE pipeline_statuses SET sort_order = 8, label = 'Closed Won'  WHERE id = 'partnership_closed_won';
+UPDATE pipeline_statuses SET sort_order = 9, label = 'Closed Lost' WHERE id = 'partnership_closed_lost';
 
 -- -----------------------------------------------------------------------------
 -- 2. Migrate rows off the two retired stages before removing them.

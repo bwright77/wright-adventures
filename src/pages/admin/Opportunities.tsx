@@ -7,10 +7,12 @@ import { parseLocalDate } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import type { Opportunity, DealConfidence } from '../../lib/types'
 import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
+import { usePipelineStatuses, STATUS_COLORS } from '../../lib/usePipelineStatuses'
 
 type OpportunityWithLogo = Opportunity & {
   partnership_details?: {
     logo_url: string | null
+    revisit_on?: string | null
     confidence: DealConfidence | null
     next_action_date: string | null
   } | null
@@ -19,21 +21,26 @@ type OpportunityWithLogo = Opportunity & {
 // The three states that matter operationally: work we are doing, work we are
 // chasing, and work we lost. Replaced 'all | partnership | lead', which split by
 // record type rather than by anything anyone acts on.
-type TabFilter = 'pursuing' | 'active' | 'lost'
+type TabFilter = 'pursuing' | 'nurturing' | 'active' | 'lost'
 
+// Every stage must appear in exactly one tab. A stage missing from all of them
+// is invisible — which is what happened when Evaluation and Nurture were added
+// to pipeline_statuses without being added here.
 const TAB_STATUSES: Record<TabFilter, readonly string[]> = {
   pursuing: [
-    'partnership_prospecting', 'partnership_qualifying', 'partnership_discovery',
-    'partnership_proposal', 'partnership_negotiating',
+    'partnership_qualifying', 'partnership_discovery', 'partnership_proposal',
+    'partnership_evaluation', 'partnership_approval', 'partnership_negotiating',
   ],
-  active:   ['partnership_closed_won'],
-  lost:     ['partnership_closed_lost'],
+  nurturing: ['partnership_nurture'],
+  active:    ['partnership_closed_won'],
+  lost:      ['partnership_closed_lost'],
 }
 
 const TAB_LABELS: Record<TabFilter, string> = {
-  pursuing: 'Pursuing',
-  active:   'Active',
-  lost:     'Closed-Lost',
+  pursuing:  'Pursuing',
+  nurturing: 'Nurturing',
+  active:    'Active',
+  lost:      'Closed-Lost',
 }
 type ViewMode  = 'table' | 'kanban'
 
@@ -46,31 +53,6 @@ function isOpportunity(o: { type_id: string }): boolean {
   return o.type_id !== 'lead'
 }
 
-
-const PARTNERSHIP_COLS = [
-  { id: 'partnership_prospecting', label: 'Prospecting' },
-  { id: 'partnership_qualifying',  label: 'Qualifying'  },
-  { id: 'partnership_discovery',   label: 'Discovery'   },
-  { id: 'partnership_proposal',    label: 'Proposal'    },
-  { id: 'partnership_negotiating', label: 'Negotiating' },
-]
-
-
-// Full status lists (including terminal) for the filter dropdown
-const PARTNERSHIP_STATUSES = [
-  ...PARTNERSHIP_COLS,
-  { id: 'partnership_closed_won',  label: 'Closed-Won'  },
-  { id: 'partnership_closed_lost', label: 'Closed-Lost' },
-]
-
-const STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  PARTNERSHIP_STATUSES.map(s => [s.id, s.label])
-)
-
-const STATUS_COLORS: Record<string, string> = {
-  partnership_closed_won:  'bg-trail-50 text-trail',
-  partnership_closed_lost: 'bg-red-50 text-red-600',
-}
 
 // ── Score detail drawer ───────────────────────────────────────
 
@@ -172,6 +154,7 @@ function KanbanCol({
 // ── Main component ────────────────────────────────────────────
 export function Opportunities() {
   const queryClient  = useQueryClient()
+  const { labels: STATUS_LABELS, columnsFor } = usePipelineStatuses('partnership')
   const [searchParams, setSearchParams] = useSearchParams()
   // Validate rather than assert. `as TabFilter` on a URL param is a lie: any
   // stale link — ?tab=partnership from before the tabs were reworked — indexes
@@ -196,7 +179,8 @@ export function Opportunities() {
     setSearchParams(params, { replace: true })
   }
 
-  const statusOptions = PARTNERSHIP_STATUSES.filter(s2 => TAB_STATUSES[tab].includes(s2.id))
+  // Filter offers exactly the stages this tab contains — no more drift.
+  const statusOptions = columnsFor(TAB_STATUSES[tab])
   const [search, setSearch] = useState('')
   const [view, setView]     = useState<ViewMode>('table')
 
@@ -218,7 +202,7 @@ export function Opportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value)')
+        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value, revisit_on)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithLogo[]
@@ -259,6 +243,15 @@ export function Opportunities() {
     ),
   ) as Record<TabFilter, number>
 
+  // Nurture is worked off the revisit date — soonest first, undated last.
+  const defaultSorted = tab === 'nurturing'
+    ? [...filtered].sort((a, b) => {
+        const aT = a.partnership_details?.revisit_on ? new Date(a.partnership_details.revisit_on).getTime() : Infinity
+        const bT = b.partnership_details?.revisit_on ? new Date(b.partnership_details.revisit_on).getTime() : Infinity
+        return aT - bT
+      })
+    : filtered
+
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
         const dir = sortDir === 'asc' ? 1 : -1
@@ -271,9 +264,9 @@ export function Opportunities() {
         const bV = (b[sortKey] ?? '').toString().toLowerCase()
         return aV.localeCompare(bV) * dir
       })
-    : filtered
+    : defaultSorted
 
-  const kanbanCols = PARTNERSHIP_COLS
+  const kanbanCols = columnsFor(TAB_STATUSES.pursuing)
   const kanbanOpps = pipelineOpps.filter(o =>
     TAB_STATUSES.pursuing.includes(o.status) &&
     (!search || o.name.toLowerCase().includes(search.toLowerCase()))
@@ -287,7 +280,8 @@ export function Opportunities() {
           <h1 className="text-2xl font-bold text-navy">Opportunities</h1>
           <p className="text-sm text-gray-400 mt-0.5">
             {tab === 'active'   && `${filtered.length} engagement${filtered.length === 1 ? '' : 's'} in flight`}
-            {tab === 'pursuing' && `${filtered.length} in the pipeline`}
+            {tab === 'pursuing'  && `${filtered.length} in the pipeline`}
+            {tab === 'nurturing' && `${filtered.length} warm, no active opportunity`}
             {tab === 'lost'     && `${filtered.length} not won`}
           </p>
         </div>
