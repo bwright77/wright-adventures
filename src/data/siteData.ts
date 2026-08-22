@@ -175,3 +175,20 @@ export const VALUES = [
   { name: 'Equity', description: 'Ensuring underserved communities have access to the same tools, resources, and opportunities as everyone else.' },
   { name: 'Empathy', description: 'Leading with understanding. Every community and every organization has a unique story and context.' },
 ] as const
+
+// ── On the air ────────────────────────────────────────────────
+// The logo is served from our own public/ folder. It CANNOT be hot-linked:
+// kgnu.org returns 200 to curl but refuses the browser's cross-site request, so
+// the image silently fails to decode. Hosting it ourselves also means we don't
+// depend on their CDN layout or use their bandwidth.
+export const RADIO = {
+  station:     'KGNU Community Radio',
+  show:        'Metro',
+  airedOn:     'August 12, 2026',
+  episodeUrl:  'https://kgnu.org/shows/metro/08-12-2026/',
+  logo:        '/kgnu-logo.png',
+  logoAlt:     'KGNU Community Radio',
+  // Her phrase, not ours — worth keeping the attribution even in one clause.
+  pullQuote:   'Responsible technology.',
+  quoteSource: 'the phrase our host landed on, mid-conversation',
+} as const

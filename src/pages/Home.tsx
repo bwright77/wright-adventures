@@ -4,6 +4,7 @@ import { Services } from '../components/Services'
 import { Approach } from '../components/Approach'
 import { CaseStudies } from '../components/CaseStudies'
 import { Team } from '../components/Team'
+import { OnAir } from '../components/OnAir'
 import { Values } from '../components/Values'
 import { Contact } from '../components/Contact'
 
@@ -16,6 +17,7 @@ export function Home() {
       <Approach />
       <CaseStudies />
       <Team />
+      <OnAir />
       <Values />
       <Contact />
     </>
