@@ -73,8 +73,8 @@ export function OnAir() {
           </div>
         </div>
 
-        {/* One column: the phrase anchors it, the station credentials it, the
-            CTA closes it. */}
+        {/* One continuous thought: the phrase is the name we're giving the
+            conversation, so the show and station read as its subtitle. */}
         <div>
           <figure>
             <blockquote>
@@ -93,7 +93,7 @@ export function OnAir() {
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group block mt-9 pt-9 border-t border-gray-300/60"
+            className="group block mt-7"
           >
             <img
               src={RADIO.logo}
