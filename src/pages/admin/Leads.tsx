@@ -11,9 +11,9 @@ import {
   DIMENSION_LABELS, MAX_FIT_SCORE, BAND_PURSUE_HARD, BAND_PURSUE_LEAN,
   type FitAssessment, type FitAction, type FitDimension,
 } from '../../lib/discovery/fitRubric'
-import type { Opportunity, LeadDetails, DiscoveryRejection } from '../../lib/types'
+import type { Opportunity, PostingDetails, DiscoveryRejection } from '../../lib/types'
 
-type LeadRow = Opportunity & { lead_details: LeadDetails | null }
+type LeadRow = Opportunity & { posting_details: PostingDetails | null }
 
 const ACTION_STYLE: Record<FitAction, { label: string; cls: string }> = {
   pursue_hard: { label: 'Pursue hard', cls: 'bg-trail-50 text-trail border-trail/30' },
@@ -67,7 +67,7 @@ function LeadCard({ lead, onPursue, onDecline }: {
 }) {
   const [open, setOpen] = useState(false)
   const fit = lead.ai_score_detail as FitAssessment | null
-  const d = lead.lead_details
+  const d = lead.posting_details
   const total = lead.ai_match_score ?? 0
   const action = fit?.action ?? 'monitor'
 
@@ -302,10 +302,9 @@ export function Leads() {
     queryKey: ['leads'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('opportunities')
-        .select('*, lead_details(*)')
-        .eq('type_id', 'lead')
-        .eq('status', 'lead_discovered')
+        .from('leads')
+        .select('*, posting_details(*)')
+        .eq('status', 'new')
         .order('ai_match_score', { ascending: false })
       if (error) throw error
       return (data ?? []) as LeadRow[]
@@ -313,16 +312,16 @@ export function Leads() {
   })
 
   const sources = [...new Set((leads ?? []).map(l => l.source).filter(Boolean))] as string[]
-  const kinds   = [...new Set((leads ?? []).map(l => l.lead_details?.source_kind).filter(Boolean))] as string[]
+  const kinds   = [...new Set((leads ?? []).map(l => l.posting_details?.source_kind).filter(Boolean))] as string[]
 
   const visible = leads
     .filter(l => {
       const fit = l.ai_score_detail as FitAssessment | null
       if (actionFilter && (fit?.action ?? 'monitor') !== actionFilter) return false
       if (sourceFilter && l.source !== sourceFilter) return false
-      if (kindFilter && l.lead_details?.source_kind !== kindFilter) return false
+      if (kindFilter && l.posting_details?.source_kind !== kindFilter) return false
       if (search) {
-        const hay = `${l.name} ${l.lead_details?.publisher ?? ''}`.toLowerCase()
+        const hay = `${l.name} ${l.posting_details?.publisher ?? ''}`.toLowerCase()
         if (!hay.includes(search.toLowerCase())) return false
       }
       return true
@@ -334,12 +333,12 @@ export function Leads() {
                - new Date(a.discovered_at ?? a.created_at).getTime()
         case 'closes': {
           // Undated leads sort last rather than pretending to be urgent.
-          const aT = a.lead_details?.closes_date ? new Date(a.lead_details.closes_date).getTime() : Infinity
-          const bT = b.lead_details?.closes_date ? new Date(b.lead_details.closes_date).getTime() : Infinity
+          const aT = a.posting_details?.closes_date ? new Date(a.posting_details.closes_date).getTime() : Infinity
+          const bT = b.posting_details?.closes_date ? new Date(b.posting_details.closes_date).getTime() : Infinity
           return aT - bT
         }
         case 'publisher':
-          return (a.lead_details?.publisher ?? '').localeCompare(b.lead_details?.publisher ?? '')
+          return (a.posting_details?.publisher ?? '').localeCompare(b.posting_details?.publisher ?? '')
         default:
           return (b.ai_match_score ?? 0) - (a.ai_match_score ?? 0)
       }
@@ -347,14 +346,15 @@ export function Leads() {
 
   const { user, session } = useAuth()
 
-  // Pursuing converts the lead into a partnership opportunity at the discovery
-  // stage. Declining is only a status change — a declined lead is never an
-  // opportunity and should not acquire partnership machinery.
+  // Pursuing CREATES an opportunity (and an organisation for the employer) and
+  // marks the lead converted — the lead itself survives, so "how many leads did
+  // we act on?" stays answerable. Declining is only a status change: a declined
+  // lead never becomes an opportunity and acquires none of its machinery.
   const pursue = useMutation({
     mutationFn: async (lead: LeadRow) => {
       await convertLeadToOpportunity({
-        opportunity: lead,
-        details:     lead.lead_details,
+        lead,
+        details:     lead.posting_details,
         actorId:     user?.id ?? null,
         accessToken: session?.access_token ?? null,
       })
@@ -362,14 +362,15 @@ export function Leads() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+      queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
   })
 
   const decline = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('opportunities')
-        .update({ status: 'lead_declined', updated_at: new Date().toISOString() })
+        .from('leads')
+        .update({ status: 'declined', updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
     },

@@ -15,8 +15,8 @@ import type { Opportunity, Task } from '../../lib/types'
 // Mirrors the Opportunities tabs. Nurture is deliberately not "pursuing" —
 // it is a warm relationship with nothing live to work on.
 const PURSUING_STATUSES = [
-  'partnership_qualifying', 'partnership_discovery', 'partnership_proposal',
-  'partnership_evaluation', 'partnership_approval', 'partnership_negotiating',
+  'qualifying', 'discovery', 'proposal',
+  'evaluation', 'approval', 'negotiating',
 ]
 
 function MetricCard({ label, value, sub, icon: Icon, accent, to }: {
@@ -70,7 +70,7 @@ export function Dashboard() {
       if (!profile?.id) return []
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, opportunity:opportunities(id, name, type_id)')
+        .select('*, opportunity:opportunities(id, name)')
         .eq('assignee_id', profile.id)
         .neq('status', 'complete')
         .order('due_date', { ascending: true, nullsFirst: false })
@@ -82,12 +82,21 @@ export function Dashboard() {
 
   const now = new Date()
 
-  const leadsToReview = opportunities.filter(o =>
-    o.type_id === 'lead' && o.status === 'lead_discovered')
-  const pursuing = opportunities.filter(o =>
-    o.type_id === 'partnership' && PURSUING_STATUSES.includes(o.status))
-  const activeEngagements = opportunities.filter(o =>
-    o.type_id === 'partnership' && o.status === 'partnership_closed_won')
+  // Leads are their own table now (ADR-012) rather than opportunities wearing a
+  // type_id, so this is a count query instead of a filter over the wrong list.
+  const { data: leadsToReview = 0 } = useQuery<number>({
+    queryKey: ['leads', 'to-review'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'new')
+      if (error) throw error
+      return count ?? 0
+    },
+  })
+  const pursuing = opportunities.filter(o => PURSUING_STATUSES.includes(o.status))
+  const activeEngagements = opportunities.filter(o => o.status === 'closed_won')
 
   const overdueTasks = myTasks.filter(t => t.due_date && !isAfter(new Date(t.due_date), now))
 
@@ -125,8 +134,8 @@ export function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
           label="Leads to review"
-          value={leadsToReview.length}
-          sub={leadsToReview.length === 0 ? 'queue clear' : 'awaiting triage'}
+          value={leadsToReview}
+          sub={leadsToReview === 0 ? 'queue clear' : 'awaiting triage'}
           icon={Radar}
           accent="bg-river"
           to="/admin/leads"

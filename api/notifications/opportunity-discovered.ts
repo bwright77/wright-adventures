@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { record } = payload
 
   // Only notify for auto-discovered leads sitting in the review queue
-  if (record.status !== 'lead_discovered' || !record.auto_discovered) {
+  if (record.status !== 'new' || !record.auto_discovered) {
     return res.status(200).json({ ok: true, skipped: 'not_auto_discovered' })
   }
 
@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     errors: [] as string[],
   }
 
-  // The hiring organization lives in lead_details.publisher, not on the
+  // The hiring organization lives in posting_details.publisher, not on the
   // opportunities row this webhook fires from — and sources-sync writes it a
   // moment AFTER the insert, so a single read can lose the race. Retry briefly
   // rather than send an email that cannot say who is hiring.
@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   for (let attempt = 0; attempt < 4; attempt++) {
     const { data } = await supabase
-      .from('lead_details')
+      .from('posting_details')
       .select('publisher, engagement_type, compensation_raw, location, closes_date, apply_url')
       .eq('opportunity_id', record.id)
       .maybeSingle()

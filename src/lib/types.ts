@@ -4,7 +4,6 @@ import type { FitAssessment } from './discovery/fitRubric'
 // ============================================================
 
 export type UserRole = 'admin' | 'manager' | 'member' | 'viewer'
-export type OpportunityTypeId = 'partnership' | 'lead'
 export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
 export type DocType =
   | 'proposal' | 'budget' | 'loi' | 'agreement' | 'supporting'
@@ -21,7 +20,6 @@ export interface Profile {
 
 export interface PipelineStatus {
   id: string
-  type_id: OpportunityTypeId
   label: string
   sort_order: number
   is_active: boolean
@@ -82,7 +80,8 @@ export interface DiscoverySource {
 
 export interface Opportunity {
   id: string
-  type_id: OpportunityTypeId
+  /** ADR-012: the durable entity. Null only on rows created before the split. */
+  organization_id: string | null
   name: string
   description: string | null
   status: string
@@ -132,12 +131,11 @@ export interface Task {
   updated_at: string
   // Joined (optional)
   assignee?: Profile
-  opportunity?: Pick<Opportunity, 'id' | 'name' | 'type_id'>
+  opportunity?: Pick<Opportunity, 'id' | 'name'>
 }
 
 export interface TaskTemplate {
   id: string
-  type_id: OpportunityTypeId
   name: string
   is_default: boolean
   created_at: string
@@ -227,12 +225,10 @@ export type EngagementNature =
 /** Post-win lifecycle, orthogonal to pipeline status. */
 export type DeliveryStatus = 'in_delivery' | 'supporting' | 'complete' | 'dormant'
 
-export interface PartnershipDetails {
+export interface OpportunityDetails {
   opportunity_id: string
-  engagement_nature: EngagementNature
-  delivery_status: DeliveryStatus
-  /** NUMERIC — Supabase JS returns a string. Coerce with Number(). */
-  list_value: number | null
+  // engagement_nature, delivery_status and list_value moved to Engagement in
+  // ADR-012 — they describe work, and a pursuit that was never won has none.
   qualification_status: QualificationStatus
   qualification_notes: string | null
   pain_points: string | null
@@ -250,7 +246,7 @@ export interface PartnershipDetails {
   updated_at: string
 }
 
-export interface PartnershipContact {
+export interface Contact {
   id: string
   opportunity_id: string
   full_name: string
@@ -264,7 +260,7 @@ export interface PartnershipContact {
   updated_at: string
 }
 
-export interface PartnershipInteraction {
+export interface Interaction {
   id: string
   opportunity_id: string
   contact_id: string | null
@@ -277,11 +273,11 @@ export interface PartnershipInteraction {
   created_at: string
   updated_at: string
   // Joined (optional)
-  contact?: Pick<PartnershipContact, 'id' | 'full_name'>
+  contact?: Pick<Contact, 'id' | 'full_name'>
   logger?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
 }
 
-export interface PartnershipStageTask {
+export interface StageTask {
   id: string
   stage_id: string
   title: string
@@ -341,8 +337,8 @@ export interface AdvisorResponse {
 // ── Opportunity Discovery (ADR-011) ───────────────────────────
 
 // 1:1 extension of `opportunities` for type_id = 'lead'.
-// Mirrors the partnership_details pattern from ADR-006.
-export interface LeadDetails {
+// Mirrors the opportunity_details pattern from ADR-006.
+export interface PostingDetails {
   opportunity_id:   string
   source_kind:      'rfp' | 'contract' | 'job' | null
   publisher:        string | null
@@ -398,6 +394,81 @@ export interface OrgRelationship {
   via:        string | null
   is_active:  boolean
   notes:      string | null
+  created_at: string
+  updated_at: string
+}
+
+
+// ── ADR-012: Lead → Opportunity → Client ─────────────────────────────────────
+
+/** The durable entity. Leads, opportunities and engagements all point here. */
+export interface Organization {
+  id: string
+  name: string
+  website: string | null
+  logo_url: string | null
+  sector: string | null
+  /** An org is a client because it has an engagement — kept true by a trigger. */
+  relationship_tier: 'none' | 'network' | 'prospect' | 'client'
+  relationship_basis: string | null
+  /** The warm path: who introduces us. NACTO is reachable via PeopleForBikes. */
+  via_org_id: string | null
+  /** Nurture is a state of the ORG, not a pipeline stage. */
+  revisit_on: string | null
+  nurture_note: string | null
+  notes: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** A discovered posting, not yet judged. Converting one creates an Opportunity. */
+export interface Lead {
+  id: string
+  name: string
+  description: string | null
+  status: 'new' | 'declined' | 'converted'
+  organization_id: string | null
+  opportunity_id: string | null
+  primary_deadline: string | null
+  source: string | null
+  source_url: string | null
+  external_url: string | null
+  external_id: string | null
+  ai_match_score: number | null
+  ai_match_rationale: string | null
+  ai_score_detail: ScoreDetail | null
+  auto_discovered: boolean
+  discovered_at: string | null
+  discovery_source_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * Won work being delivered. ADR-010 logs time against this — an opportunity is
+ * not a thing you can bill to.
+ *
+ * opportunity_id is nullable on purpose: CMC's contract predates the OMP, and
+ * requiring a pursuit record would mean inventing a fake won deal to describe
+ * work that actually exists.
+ */
+export interface Engagement {
+  id: string
+  organization_id: string
+  opportunity_id: string | null
+  name: string
+  nature: EngagementNature
+  delivery_status: DeliveryStatus
+  /** NUMERIC — Supabase JS returns a string. Coerce with Number(). */
+  contract_value: number | string | null
+  /** What the work is worth at market rate, whatever was collected. */
+  fmv: number | string | null
+  fmv_basis: string | null
+  service_lines: string[]
+  started_on: string | null
+  ended_on: string | null
+  notes: string | null
   created_at: string
   updated_at: string
 }

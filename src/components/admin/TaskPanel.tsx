@@ -5,15 +5,13 @@ import { format, isAfter, addDays } from 'date-fns'
 import { parseLocalDate, toDateInput } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Task, OpportunityTypeId, Profile } from '../../lib/types'
+import type { Task, Profile } from '../../lib/types'
 
-const TEMPLATE_IDS: Partial<Record<OpportunityTypeId, string>> = {
-  partnership: '00000000-0000-0000-0000-000000000002',
-}
+// One kind of opportunity since ADR-012, so there is nothing to key on.
+const DEFAULT_TEMPLATE_ID = '00000000-0000-0000-0000-000000000002'
 
 interface TaskPanelProps {
   opportunityId:   string
-  typeId:          OpportunityTypeId
   primaryDeadline: string | null
   ownerId:         string | null
 }
@@ -194,7 +192,7 @@ function TaskRow({
   )
 }
 
-export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: TaskPanelProps) {
+export function TaskPanel({ opportunityId, primaryDeadline, ownerId }: TaskPanelProps) {
   const { user }    = useAuth()
   const queryClient = useQueryClient()
   const [adding, setAdding]   = useState(false)
@@ -299,10 +297,7 @@ export function TaskPanel({ opportunityId, typeId, primaryDeadline, ownerId }: T
 
   const generateTasks = useMutation({
     mutationFn: async () => {
-      // Leads have no default task template — bail rather than querying with
-      // an undefined template_id.
-      const templateId = TEMPLATE_IDS[typeId]
-      if (!templateId) return
+      const templateId = DEFAULT_TEMPLATE_ID
 
       const { data: items, error } = await supabase
         .from('task_template_items')

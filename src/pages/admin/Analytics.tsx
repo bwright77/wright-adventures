@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { computePartnershipMetrics, fmtCurrency } from '../../lib/analytics'
-import type { OpportunityWithDetails } from '../../lib/analytics'
+import type { OpportunityWithDetails, EngagementForMetrics } from '../../lib/analytics'
 import { MetricCard } from '../../components/admin/analytics/MetricCard'
 import { PartnershipFunnel } from '../../components/admin/analytics/PartnershipFunnel'
 
@@ -12,19 +12,32 @@ export function Analytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-              // The !opportunity_id hint is required, not decorative. partnership_details
-      // has TWO foreign keys to opportunities — opportunity_id (its primary key)
-      // and previous_opportunity_id (set when a lost deal is reopened as a new
-      // record). PostgREST cannot infer which one an embed means and fails the
-      // whole query with PGRST201, which silently empties the list.
-      .select('*, partnership_details!opportunity_id(logo_url, confidence, next_action_date, engagement_nature, list_value)')
+        // The !opportunity_id hint is required, not decorative. opportunity_details
+        // has TWO foreign keys to opportunities — opportunity_id (its primary key)
+        // and previous_opportunity_id (set when a lost deal is reopened as a new
+        // record). PostgREST cannot infer which one an embed means and fails the
+        // whole query with PGRST201, which silently empties the list.
+        .select('*, opportunity_details!opportunity_id(logo_url, confidence, next_action_date)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithDetails[]
     },
   })
 
-  const partnershipMetrics = computePartnershipMetrics(opportunities)
+  // Nature and FMV live on engagements now (ADR-012) — the contributed-value and
+  // win-rate splits need them.
+  const { data: engagements = [] } = useQuery<EngagementForMetrics[]>({
+    queryKey: ['engagements', 'metrics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('engagements')
+        .select('opportunity_id, nature, contract_value, fmv')
+      if (error) throw error
+      return (data ?? []) as EngagementForMetrics[]
+    },
+  })
+
+  const partnershipMetrics = computePartnershipMetrics(opportunities, engagements)
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

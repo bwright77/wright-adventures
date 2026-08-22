@@ -8,12 +8,13 @@ import { supabase } from '../../lib/supabase'
 import type { Opportunity, DealConfidence } from '../../lib/types'
 import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
 import { usePipelineStatuses, STATUS_COLORS } from '../../lib/usePipelineStatuses'
-import { computeStageAge } from '../../lib/stageAge'
+import { computeStageAge, computeRevisitAge } from '../../lib/stageAge'
 import type { StageAge } from '../../lib/stageAge'
 import { StageAgeBadge } from '../../components/admin/StageAgeBadge'
 
 type OpportunityWithLogo = Opportunity & {
-  partnership_details?: {
+  organizations?: { name: string; logo_url: string | null } | null
+  opportunity_details?: {
     logo_url: string | null
     revisit_on?: string | null
     confidence: DealConfidence | null
@@ -34,12 +35,15 @@ type TabFilter = 'pursuing' | 'nurturing' | 'active' | 'lost'
 // to pipeline_statuses without being added here.
 const TAB_STATUSES: Record<TabFilter, readonly string[]> = {
   pursuing: [
-    'partnership_qualifying', 'partnership_discovery', 'partnership_proposal',
-    'partnership_evaluation', 'partnership_approval', 'partnership_negotiating',
+    'qualifying', 'discovery', 'proposal',
+    'evaluation', 'approval', 'negotiating',
   ],
-  nurturing: ['partnership_nurture'],
-  active:    ['partnership_closed_won'],
-  lost:      ['partnership_closed_lost'],
+  // Nurturing holds no statuses: it lists ORGANISATIONS we are keeping warm,
+  // not opportunities. An org being nurtured has no deal by definition — that is
+  // what distinguishes it from a pursuit (ADR-012).
+  nurturing: [],
+  active:    ['closed_won'],
+  lost:      ['closed_lost'],
 }
 
 const TAB_LABELS: Record<TabFilter, string> = {
@@ -50,14 +54,6 @@ const TAB_LABELS: Record<TabFilter, string> = {
 }
 type ViewMode  = 'table' | 'kanban'
 
-// ── Pipeline definitions ──────────────────────────────────────
-// Leads never appear here. Pursuing one converts it into a partnership at the
-// discovery stage (see src/lib/leads.ts), so anything still carrying
-// type_id='lead' is either awaiting triage or declined — neither is an
-// opportunity.
-function isOpportunity(o: { type_id: string }): boolean {
-  return o.type_id !== 'lead'
-}
 
 
 // ── Score detail drawer ───────────────────────────────────────
@@ -162,10 +158,81 @@ function KanbanCol({
   )
 }
 
+interface NurtureOrg {
+  id: string
+  name: string
+  logo_url: string | null
+  revisit_on: string | null
+  nurture_note: string | null
+  relationship_basis: string | null
+  via: { name: string } | null
+}
+
+// Organisations we are deliberately keeping warm. There is no deal here yet —
+// that is the point. The revisit date is the only thing that makes this list
+// different from a pile of names nobody looks at again.
+function NurtureTable({ orgs, today }: { orgs: NurtureOrg[]; today: Date }) {
+  if (!orgs.length) {
+    return (
+      <div className="py-20 text-center bg-white rounded-xl border border-gray-200">
+        <p className="text-gray-400 text-sm">No organisations are being nurtured.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-100">
+            <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-[0.07em] px-5 py-3">Organisation</th>
+            <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-[0.07em] px-5 py-3 hidden md:table-cell">Why we know them</th>
+            <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-[0.07em] px-5 py-3">Revisit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orgs.map(o => (
+            <tr key={o.id} className="border-t border-gray-50 hover:bg-gray-50 transition-colors">
+              <td className="px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <OrgAvatar logo={o.logo_url} name={o.name} />
+                  <div>
+                    <p className="text-sm font-medium text-navy">{o.name}</p>
+                    {o.via && (
+                      <p className="text-xs text-gray-400 mt-0.5">via {o.via.name}</p>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className="px-5 py-4 hidden md:table-cell">
+                <p className="text-xs text-gray-500 max-w-md">
+                  {o.relationship_basis ?? o.nurture_note ?? <span className="text-gray-300">—</span>}
+                </p>
+              </td>
+              <td className="px-5 py-4">
+                {o.revisit_on ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">
+                      {format(parseLocalDate(o.revisit_on), 'MMM d, yyyy')}
+                    </span>
+                    <StageAgeBadge age={computeRevisitAge(o.revisit_on, today)} />
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-300">no date set</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────
 export function Opportunities() {
   const queryClient  = useQueryClient()
-  const { labels: STATUS_LABELS, columnsFor, all: allStages } = usePipelineStatuses('partnership')
+  const { labels: STATUS_LABELS, columnsFor, all: allStages } = usePipelineStatuses()
   const [searchParams, setSearchParams] = useSearchParams()
   // Validate rather than assert. `as TabFilter` on a URL param is a lie: any
   // stale link — ?tab=partnership from before the tabs were reworked — indexes
@@ -213,15 +280,30 @@ export function Opportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-              // The !opportunity_id hint is required, not decorative. partnership_details
+              // The !opportunity_id hint is required, not decorative. opportunity_details
       // has TWO foreign keys to opportunities — opportunity_id (its primary key)
       // and previous_opportunity_id (set when a lost deal is reopened as a new
       // record). PostgREST cannot infer which one an embed means and fails the
       // whole query with PGRST201, which silently empties the list.
-      .select('*, partnership_details!opportunity_id(logo_url, confidence, next_action_date, engagement_nature, list_value, revisit_on, stage_entered_at, decision_date, decision_body)')
+      .select('*, organizations(name, logo_url), opportunity_details!opportunity_id(logo_url, confidence, next_action_date, stage_entered_at, decision_date, decision_body)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithLogo[]
+    },
+  })
+
+  // Nurtured ORGANISATIONS. Not opportunities — an org being nurtured has no
+  // deal yet, which is exactly why it cannot live in the pipeline (ADR-012).
+  const { data: nurtureOrgs = [] } = useQuery<NurtureOrg[]>({
+    queryKey: ['organizations', 'nurture'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, logo_url, revisit_on, nurture_note, relationship_basis, via:via_org_id(name)')
+        .eq('relationship_tier', 'network')
+        .eq('is_active', true)
+      if (error) throw error
+      return (data ?? []) as unknown as NurtureOrg[]
     },
   })
 
@@ -244,7 +326,7 @@ export function Opportunities() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
   })
 
-  const pipelineOpps = opportunities.filter(isOpportunity)
+  const pipelineOpps = opportunities
 
   const filtered = pipelineOpps.filter(o => {
     if (!TAB_STATUSES[tab].includes(o.status)) return false
@@ -258,15 +340,16 @@ export function Opportunities() {
       [t, pipelineOpps.filter(o => TAB_STATUSES[t].includes(o.status)).length],
     ),
   ) as Record<TabFilter, number>
+  // Nurturing counts organisations, not opportunities.
+  tabCounts.nurturing = nurtureOrgs.length
 
   // Nurture is worked off the revisit date — soonest first, undated last.
-  const defaultSorted = tab === 'nurturing'
-    ? [...filtered].sort((a, b) => {
-        const aT = a.partnership_details?.revisit_on ? new Date(a.partnership_details.revisit_on).getTime() : Infinity
-        const bT = b.partnership_details?.revisit_on ? new Date(b.partnership_details.revisit_on).getTime() : Infinity
-        return aT - bT
-      })
-    : filtered
+  const sortedNurture = [...nurtureOrgs].sort((a, b) => {
+    const aT = a.revisit_on ? new Date(a.revisit_on).getTime() : Infinity
+    const bT = b.revisit_on ? new Date(b.revisit_on).getTime() : Infinity
+    return aT - bT
+  })
+  const defaultSorted = filtered
 
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
@@ -289,10 +372,9 @@ export function Opportunities() {
   const ageOf = (o: OpportunityWithLogo): StageAge | null =>
     computeStageAge({
       status:         o.status,
-      stageEnteredAt: o.partnership_details?.stage_entered_at ?? null,
-      decisionDate:   o.partnership_details?.decision_date ?? null,
-      decisionBody:   o.partnership_details?.decision_body ?? null,
-      revisitOn:      o.partnership_details?.revisit_on ?? null,
+      stageEnteredAt: o.opportunity_details?.stage_entered_at ?? null,
+      decisionDate:   o.opportunity_details?.decision_date ?? null,
+      decisionBody:   o.opportunity_details?.decision_body ?? null,
       stage:          stageById.get(o.status),
       today,
     })
@@ -312,7 +394,7 @@ export function Opportunities() {
           <p className="text-sm text-gray-400 mt-0.5">
             {tab === 'active'   && `${filtered.length} engagement${filtered.length === 1 ? '' : 's'} in flight`}
             {tab === 'pursuing'  && `${filtered.length} in the pipeline`}
-            {tab === 'nurturing' && `${filtered.length} warm, no active opportunity`}
+            {tab === 'nurturing' && `${nurtureOrgs.length} warm, no active opportunity`}
             {tab === 'lost'     && `${filtered.length} not won`}
           </p>
         </div>
@@ -395,7 +477,9 @@ export function Opportunities() {
         <div className="py-20 flex justify-center">
           <div className="w-5 h-5 border-2 border-river border-t-transparent rounded-full animate-spin" />
         </div>
-            ) : view === 'kanban' ? (
+      ) : tab === 'nurturing' ? (
+        <NurtureTable orgs={sortedNurture} today={today} />
+      ) : view === 'kanban' ? (
         <div>
           <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {kanbanCols.map(col => (
@@ -464,7 +548,12 @@ export function Opportunities() {
                 <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2.5">
-                      <OrgAvatar logo={o.partnership_details?.logo_url ?? null} name={o.partner_org ?? o.name} />
+                      {/* The organisation owns its logo (ADR-012); the per-deal
+                          copy is a fallback for rows predating the split. */}
+                      <OrgAvatar
+                        logo={o.organizations?.logo_url ?? o.opportunity_details?.logo_url ?? null}
+                        name={o.organizations?.name ?? o.partner_org ?? o.name}
+                      />
                       <div>
                         <Link
                           to={`/admin/opportunities/${o.id}`}

@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
-import type { OpportunityTypeId, CompanySize } from '../../lib/types'
+import type { CompanySize } from '../../lib/types'
 import { SERVICE_LINES } from '../../lib/serviceLines'
 import { normalizePhone } from '../../lib/phone'
 
@@ -32,7 +32,7 @@ const partnershipSchema = baseSchema.extend({
   service_lines:    z.array(z.string()).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
-  // partnership_details fields
+  // opportunity_details fields
   org_size:         z.enum(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']).or(z.literal('')).optional(),
   pain_points:      z.string().optional(),
   tech_stack_notes: z.string().optional(),
@@ -46,10 +46,10 @@ const partnershipSchema = baseSchema.extend({
 const schema = partnershipSchema
 type FormValues = z.infer<typeof schema>
 
-// ── Default statuses ──────────────────────────────────────────
-const DEFAULT_STATUS: Partial<Record<OpportunityTypeId, string>> = {
-  partnership: 'partnership_prospecting',
-}
+// Where a hand-created opportunity starts. This said 'partnership_prospecting'
+// long after that stage was removed, so every new opportunity was failing its
+// foreign key to pipeline_statuses.
+const DEFAULT_STATUS = 'qualifying'
 
 // ── Field helpers ─────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
@@ -110,10 +110,9 @@ export function NewOpportunity() {
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { type_id: 'partnership' },
+      defaultValues: {},
     })
 
-  const typeId   = watch('type_id') as OpportunityTypeId
   const sourceUrl = watch('source_url') ?? ''
   const logoUrl   = (watch as (k: string) => string | undefined)('logo_url') ?? ''
 
@@ -146,7 +145,7 @@ export function NewOpportunity() {
       description:      values.description || null,
       primary_deadline: values.primary_deadline || null,
       source_url:       values.source_url || null,
-      status:           DEFAULT_STATUS[values.type_id],
+      status:           DEFAULT_STATUS,
       tags,
       created_by:       user?.id ?? null,
     }
@@ -170,7 +169,7 @@ export function NewOpportunity() {
       return
     }
 
-    // Save partnership_details fields (trigger auto-created the row)
+    // Save opportunity_details fields (trigger auto-created the row)
     if (values.type_id === 'partnership') {
       const detailsPayload: Record<string, unknown> = {}
       if (values.org_size)         detailsPayload.org_size         = values.org_size
@@ -183,7 +182,7 @@ export function NewOpportunity() {
       if (values.list_value)        detailsPayload.list_value        = Number(values.list_value)
       if (Object.keys(detailsPayload).length > 0) {
         await supabase
-          .from('partnership_details')
+          .from('opportunity_details')
           .update({ ...detailsPayload, updated_at: new Date().toISOString() })
           .eq('opportunity_id', data.id)
       }
@@ -231,9 +230,7 @@ export function NewOpportunity() {
                 <Input {...register('source_url')} type="url" placeholder="https://…" error={e.source_url?.message} />
               </div>
             </div>
-            {typeId === 'partnership' && (
-              <ScrapePanel sourceUrl={sourceUrl} onApply={handleScrapeApply} />
-            )}
+            <ScrapePanel sourceUrl={sourceUrl} onApply={handleScrapeApply} />
             <div>
               <Label>Tags</Label>
               <Input {...register('tags')} placeholder="watershed, youth, federal (comma-separated)" />

@@ -6,15 +6,23 @@
 import { differenceInDays } from 'date-fns'
 import type { Opportunity, DealConfidence, EngagementNature } from './types'
 
-// Opportunity extended with partnership_details fields needed for analytics
+// Opportunity extended with opportunity_details fields needed for analytics
 export type OpportunityWithDetails = Opportunity & {
-  partnership_details?: {
+  opportunity_details?: {
     logo_url: string | null
     confidence: DealConfidence | null
     next_action_date: string | null
-    engagement_nature?: EngagementNature | null
-    list_value?: number | string | null   // NUMERIC arrives as a string
   } | null
+}
+
+// Nature and worth moved to engagements in ADR-012: they describe the WORK, and
+// an opportunity that was never won has no work to describe. Only the minimum
+// needed here.
+export interface EngagementForMetrics {
+  opportunity_id: string | null
+  nature: EngagementNature
+  contract_value: number | string | null   // NUMERIC arrives as a string
+  fmv: number | string | null
 }
 
 // Work that is real but is not a sales outcome. Counting it would put win rate
@@ -27,24 +35,33 @@ export type OpportunityWithDetails = Opportunity & {
 // numbers honest.
 const NON_COMMERCIAL: ReadonlySet<string> = new Set(['portfolio', 'pro_bono', 'strategic'])
 
-function isCommercial(o: OpportunityWithDetails): boolean {
-  return !NON_COMMERCIAL.has(o.partnership_details?.engagement_nature ?? 'paid')
+/** Nature is only known once work exists, so it is looked up by opportunity. */
+function makeIsCommercial(engagements: EngagementForMetrics[]) {
+  const natureByOpp = new Map(
+    engagements.filter(e => e.opportunity_id).map(e => [e.opportunity_id as string, e.nature]),
+  )
+  return (o: OpportunityWithDetails): boolean =>
+    !NON_COMMERCIAL.has(natureByOpp.get(o.id) ?? 'paid')
 }
 
 // ── Stage definitions ─────────────────────────────────────────
 
+// Mirrors pipeline_statuses. 'partnership_prospecting' used to sit at the top of
+// this list and matched no row in the database at all, so the funnel silently
+// showed an always-empty first stage.
 export const PARTNERSHIP_STAGES = [
-  { id: 'partnership_prospecting', label: 'Prospecting' },
-  { id: 'partnership_qualifying',  label: 'Qualifying'  },
-  { id: 'partnership_discovery',   label: 'Discovery'   },
-  { id: 'partnership_proposal',    label: 'Proposal'    },
-  { id: 'partnership_negotiating', label: 'Negotiating' },
-  { id: 'partnership_closed_won',  label: 'Closed-Won'  },
-  { id: 'partnership_closed_lost', label: 'Closed-Lost' },
+  { id: 'qualifying',  label: 'Qualifying'  },
+  { id: 'discovery',   label: 'Discovery'   },
+  { id: 'proposal',    label: 'Proposal'    },
+  { id: 'evaluation',  label: 'Evaluation'  },
+  { id: 'approval',    label: 'Approval'    },
+  { id: 'negotiating', label: 'Negotiation' },
+  { id: 'closed_won',  label: 'Closed-Won'  },
+  { id: 'closed_lost', label: 'Closed-Lost' },
 ] as const
 
 const CLOSED_PARTNERSHIP_STATUSES = new Set([
-  'partnership_closed_won', 'partnership_closed_lost',
+  'closed_won', 'closed_lost',
 ])
 
 const CONFIDENCE_MULTIPLIERS: Record<DealConfidence, number> = {
@@ -79,20 +96,25 @@ export interface PartnershipMetrics {
 
 // ── Computation ───────────────────────────────────────────────
 
-export function computePartnershipMetrics(opps: OpportunityWithDetails[]): PartnershipMetrics {
-  const partnerships  = opps.filter(o => o.type_id === 'partnership')
+export function computePartnershipMetrics(
+  opps: OpportunityWithDetails[],
+  engagements: EngagementForMetrics[] = [],
+): PartnershipMetrics {
+  const isCommercial  = makeIsCommercial(engagements)
+  // Leads live in their own table now — everything here is an opportunity.
+  const partnerships  = opps
   const active        = partnerships.filter(o => !CLOSED_PARTNERSHIP_STATUSES.has(o.status))
   const activeCount   = active.length
   const totalPipelineValue = active.filter(isCommercial).reduce((s, o) => s + (o.estimated_value ?? 0), 0)
 
   // What the portfolio and pro-bono work would have been worth at standard rate.
-  const contributedValue = partnerships
-    .filter(o => !isCommercial(o))
-    .reduce((sum, o) => {
-      const listed = o.partnership_details?.list_value
-      return sum + (listed != null ? Number(listed) : (o.estimated_value ?? 0))
-    }, 0)
-  const contributedCount = partnerships.filter(o => !isCommercial(o)).length
+  // Read off the engagements themselves: the contributed work is the work, and
+  // FMV is what it was worth whatever was actually collected.
+  const contributed = engagements.filter(e => NON_COMMERCIAL.has(e.nature))
+  const contributedValue = contributed.reduce(
+    (sum, e) => sum + Number(e.fmv ?? e.contract_value ?? 0), 0,
+  )
+  const contributedCount = contributed.length
 
   const total = partnerships.length
   const stages: PartnershipStageStat[] = PARTNERSHIP_STAGES.map(stage => {
@@ -100,7 +122,7 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
     const count         = inStage.length
     const totalValue    = inStage.reduce((s, o) => s + (o.estimated_value ?? 0), 0)
     const weightedValue = inStage.reduce((s, o) => {
-      const conf = o.partnership_details?.confidence ?? null
+      const conf = o.opportunity_details?.confidence ?? null
       const m    = conf ? CONFIDENCE_MULTIPLIERS[conf] : CONFIDENCE_MULTIPLIERS.low
       return s + (o.estimated_value ?? 0) * m
     }, 0)
@@ -108,8 +130,8 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
   })
 
   const commercial  = partnerships.filter(isCommercial)
-  const closedWon   = commercial.filter(o => o.status === 'partnership_closed_won').length
-  const closedLost  = commercial.filter(o => o.status === 'partnership_closed_lost').length
+  const closedWon   = commercial.filter(o => o.status === 'closed_won').length
+  const closedLost  = commercial.filter(o => o.status === 'closed_lost').length
   const closedTotal = closedWon + closedLost
   const winRate     = closedTotal > 0 ? Math.round((closedWon / closedTotal) * 100) : null
 
@@ -119,19 +141,19 @@ export function computePartnershipMetrics(opps: OpportunityWithDetails[]): Partn
     : null
 
   const weightedPipeline = active.reduce((s, o) => {
-    const conf = o.partnership_details?.confidence ?? null
+    const conf = o.opportunity_details?.confidence ?? null
     const m    = conf ? CONFIDENCE_MULTIPLIERS[conf] : CONFIDENCE_MULTIPLIERS.low
     return s + (o.estimated_value ?? 0) * m
   }, 0)
 
   const dealsAtRisk = active.filter(o => {
-    const nad = o.partnership_details?.next_action_date
+    const nad = o.opportunity_details?.next_action_date
     return !nad || new Date(nad) < now
   }).length
 
   const confidenceCounts = { low: 0, medium: 0, high: 0 }
   for (const o of active) {
-    const conf = o.partnership_details?.confidence ?? 'low'
+    const conf = o.opportunity_details?.confidence ?? 'low'
     confidenceCounts[conf]++
   }
 

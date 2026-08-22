@@ -130,17 +130,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Fetch opportunity + details ─────────────────────────────
   const { data: opp, error: oppError } = await supabase
     .from('opportunities')
-    .select('id, name, description, status, partner_org, partnership_type, estimated_value, type_id')
+    .select('id, name, description, status, partner_org, partnership_type, estimated_value')
     .eq('id', opportunity_id)
     .single()
 
   if (oppError || !opp) return res.status(404).json({ error: 'Opportunity not found' })
-  if (opp.type_id !== 'partnership') {
-    return res.status(400).json({ error: 'Opportunity is not a partnership' })
-  }
 
   const { data: pd, error: pdError } = await supabase
-    .from('partnership_details')
+    .from('opportunity_details')
     .select('org_size, pain_points, tech_stack_notes, qualification_notes, ai_solution_summary, ai_solution_updated_at')
     .eq('opportunity_id', opportunity_id)
     .single()
@@ -205,7 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Cache in DB
     await supabase
-      .from('partnership_details')
+      .from('opportunity_details')
       .update({
         ai_solution_summary:    JSON.stringify(parsed),
         ai_solution_updated_at: parsed.generated_at,

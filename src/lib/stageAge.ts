@@ -68,14 +68,13 @@ export interface StageAgeInput {
   stageEnteredAt: string | null
   decisionDate: string | null
   decisionBody: string | null
-  revisitOn: string | null
   /** The stage row, for its duration thresholds. */
   stage: PipelineStatus | undefined
   today: Date
 }
 
 export function computeStageAge(input: StageAgeInput): StageAge | null {
-  const { status, decisionDate, decisionBody, revisitOn, stage, today } = input
+  const { status, decisionDate, decisionBody, stage, today } = input
   const now = new Date(today.getFullYear(), today.getMonth(), today.getDate())
 
   // ---------------------------------------------------------------------------
@@ -83,7 +82,7 @@ export function computeStageAge(input: StageAgeInput): StageAge | null {
   // ---------------------------------------------------------------------------
   const awaited: Array<{ basis: AgeBasis; date: Date; noun: string; ahead: (n: number) => string; past: (n: number) => string }> = []
 
-  const decision = status === 'partnership_approval' && decisionDate ? toLocalDay(decisionDate) : null
+  const decision = status === 'approval' && decisionDate ? toLocalDay(decisionDate) : null
   if (decision) {
     const body = decisionBody?.trim() || 'decision'
     awaited.push({
@@ -95,16 +94,6 @@ export function computeStageAge(input: StageAgeInput): StageAge | null {
     })
   }
 
-  const revisit = status === 'partnership_nurture' && revisitOn ? toLocalDay(revisitOn) : null
-  if (revisit) {
-    awaited.push({
-      basis: 'revisit_on',
-      date: revisit,
-      noun: 'revisit',
-      ahead: n => `revisit in ${plural(n, 'day')}`,
-      past: n => `revisit ${plural(n, 'day')} overdue`,
-    })
-  }
 
   if (awaited.length) {
     const a = awaited[0]
@@ -154,5 +143,43 @@ export function computeStageAge(input: StageAgeInput): StageAge | null {
         : `${plural(days, 'day')} in ${stage.label} — typical is around ${stage.expected_days} days, and this passed ${stage.amber_days} on ${
             level === 'red' ? `its way past ${stage.red_days}` : 'the way up'
           }.`,
+  }
+}
+
+/**
+ * The same clock, for an ORGANISATION we are keeping warm. Nurture is no longer
+ * a pipeline stage (ADR-012) — an org being nurtured has no opportunity by
+ * definition — but the question is identical: a date we said we would come back
+ * on, and whether it has slipped. Sharing the thresholds keeps a revisit that is
+ * a week late looking exactly as urgent as a board decision that is a week late.
+ */
+export function computeRevisitAge(revisitOn: string | null, today: Date): StageAge | null {
+  if (!revisitOn) return null
+  const date = toLocalDay(revisitOn)
+  if (!date) return null
+
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const past = daysBetween(date, now)
+
+  if (past < 0) {
+    return {
+      level: 'ok',
+      days: past,
+      basis: 'revisit_on',
+      label: `revisit in ${plural(-past, 'day')}`,
+      detail: 'Parked deliberately. Nothing is overdue until the revisit date passes.',
+    }
+  }
+
+  const level: AgeLevel = past >= PAST_DUE_RED ? 'red' : past >= PAST_DUE_AMBER ? 'amber' : 'ok'
+  return {
+    level,
+    days: past,
+    basis: 'revisit_on',
+    label: past === 0 ? 'revisit due today' : `revisit ${plural(past, 'day')} overdue`,
+    detail:
+      level === 'red'
+        ? `The revisit date passed ${plural(past, 'day')} ago — this is the exact failure nurture exists to prevent.`
+        : 'The revisit date has arrived.',
   }
 }

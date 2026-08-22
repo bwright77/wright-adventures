@@ -14,7 +14,7 @@ import { InteractionsLog } from '../../components/admin/InteractionsLog'
 import { PartnershipAdvisorPanel } from '../../components/admin/PartnershipAdvisorPanel'
 import type {
   Opportunity, ActivityEntry, Profile,
-  PartnershipDetails, PartnershipStageTask, LeadDetails,
+  OpportunityDetails, StageTask, PostingDetails, Engagement,
   DealConfidence, QualificationStatus,
 } from '../../lib/types'
 import { toTelHref } from '../../lib/phone'
@@ -44,7 +44,7 @@ const DELIVERY_LABELS: Record<string, string> = {
 // Statuses that end pursuit. Reaching one clears any unfinished tasks —
 // leaving them open puts dead work on somebody's My Tasks list forever.
 const LOST_STATUSES: ReadonlySet<string> = new Set([
-  'partnership_closed_lost',
+  'closed_lost',
   'lead_declined',
   'lead_lost',
 ])
@@ -65,10 +65,11 @@ const LEAD_TERMINAL = [
   { id: 'lead_declined', label: 'Declined' },
 ]
 
-// Which partnership stages sit behind the close-out menu rather than on the
-// stepper. Nurture is here too: it is a parking state, not a step forward.
+// Which stages sit behind the close-out menu rather than on the stepper.
+// Nurture is no longer among them — it is a state of the ORGANISATION (ADR-012),
+// not somewhere an opportunity can be parked.
 const PARTNERSHIP_TERMINAL_IDS = [
-  'partnership_closed_won', 'partnership_closed_lost', 'partnership_nurture',
+  'closed_won', 'closed_lost',
 ]
 
 // Lead labels stay local — the lead pipeline is short and fixed. Partnership
@@ -165,9 +166,9 @@ function PipelineStepper({
 
 // ── Qualification tracker ─────────────────────────────────────
 const QUAL_STAGES = new Set([
-  'partnership_qualifying', 'partnership_discovery',
-  'partnership_proposal', 'partnership_negotiating',
-  'partnership_closed_won', 'partnership_closed_lost',
+  'qualifying', 'discovery',
+  'proposal', 'negotiating',
+  'closed_won', 'closed_lost',
 ])
 
 const CONFIDENCE_COLORS: Record<DealConfidence, string> = {
@@ -182,7 +183,7 @@ function QualificationTracker({
   currentStatus,
 }: {
   opportunityId: string
-  details:       PartnershipDetails
+  details:       OpportunityDetails
   currentStatus: string
 }) {
   const queryClient = useQueryClient()
@@ -190,13 +191,13 @@ function QualificationTracker({
   const [notesValue, setNotesValue]     = useState(details.qualification_notes ?? '')
 
   const showQual      = QUAL_STAGES.has(currentStatus)
-  const showConfidence = ['partnership_proposal','partnership_negotiating','partnership_closed_won','partnership_closed_lost'].includes(currentStatus)
-  const showExpClose   = ['partnership_proposal','partnership_negotiating','partnership_closed_won'].includes(currentStatus)
+  const showConfidence = ['proposal','negotiating','closed_won','closed_lost'].includes(currentStatus)
+  const showExpClose   = ['proposal','negotiating','closed_won'].includes(currentStatus)
 
   const updateDetails = useMutation({
-    mutationFn: async (patch: Partial<PartnershipDetails>) => {
+    mutationFn: async (patch: Partial<OpportunityDetails>) => {
       const { error } = await supabase
-        .from('partnership_details')
+        .from('opportunity_details')
         .update({ ...patch, updated_at: new Date().toISOString() })
         .eq('opportunity_id', opportunityId)
       if (error) throw error
@@ -314,7 +315,7 @@ function QualificationTracker({
       </div>
 
       {/* Lost reason — only on closed_lost */}
-      {currentStatus === 'partnership_closed_lost' && (
+      {currentStatus === 'closed_lost' && (
         <div className="mt-4">
           <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">Loss reason</label>
           <input
@@ -334,7 +335,7 @@ function QualificationTracker({
 function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
   // History spans stages that may since have been renamed or retired, so fall
   // back to the raw id rather than rendering an empty arrow.
-  const { labels } = usePipelineStatuses('partnership')
+  const { labels } = usePipelineStatuses()
   const STATUS_LABELS = { ...LEAD_LABELS, ...labels }
 
   if (entries.length === 0) return <p className="text-sm text-gray-400 italic">No activity yet.</p>
@@ -389,7 +390,7 @@ export function OpportunityDetail() {
   const { id }      = useParams<{ id: string }>()
   const { user } = useAuth()
   // Stages come from pipeline_statuses so the stepper cannot drift from the board.
-  const { all: partnershipStages } = usePipelineStatuses('partnership')
+  const { all: stages } = usePipelineStatuses()
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
 
@@ -430,37 +431,53 @@ export function OpportunityDetail() {
   })
 
   // Partnership details (extension table)
-  const { data: leadDetails } = useQuery<LeadDetails | null>({
-    queryKey: ['lead_details', id],
+  const { data: leadDetails } = useQuery<PostingDetails | null>({
+    queryKey: ['posting_details', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('lead_details').select('*').eq('opportunity_id', id!).maybeSingle()
+        .from('posting_details').select('*').eq('opportunity_id', id!).maybeSingle()
       if (error) throw error
-      return data as LeadDetails | null
+      return data as PostingDetails | null
     },
-    // Not gated on type_id: a converted partnership keeps its lead_details row,
+    // Not gated on type_id: a converted partnership keeps its posting_details row,
     // and that provenance (which board, what it scored) is worth keeping visible.
     enabled: !!id,
   })
 
-  const { data: partnershipDetails } = useQuery<PartnershipDetails | null>({
+  const { data: partnershipDetails } = useQuery<OpportunityDetails | null>({
     queryKey: ['partnership-details', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('partnership_details')
+        .from('opportunity_details')
         .select('*')
         .eq('opportunity_id', id!)
         .maybeSingle()
       if (error) throw error
       return data
     },
-    enabled: !!id && opportunity?.type_id === 'partnership',
+    enabled: !!id,
+  })
+
+  // The engagement this opportunity produced, if it was won. Null for anything
+  // still in the pipeline — there is no work to describe yet.
+  const { data: engagement } = useQuery<Engagement | null>({
+    queryKey: ['engagement', 'by-opportunity', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('engagements')
+        .select('*')
+        .eq('opportunity_id', id!)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
+    enabled: !!id,
   })
 
   // ── Partnership stage-triggered tasks (ADR-006) ─────────────
   const generateStageTasks = async (newStatus: string) => {
     const { data: stageTasks } = await supabase
-      .from('partnership_stage_tasks')
+      .from('stage_tasks')
       .select('*')
       .eq('stage_id', newStatus)
       .order('sort_order')
@@ -474,7 +491,7 @@ export function OpportunityDetail() {
     const existingTitles = new Set((existing ?? []).map((t: { title: string }) => t.title))
 
     const newTasks = stageTasks.filter(
-      (st: PartnershipStageTask) => !existingTitles.has(st.title)
+      (st: StageTask) => !existingTitles.has(st.title)
     )
     if (!newTasks.length) return
 
@@ -487,22 +504,22 @@ export function OpportunityDetail() {
     // meaningless besides. Read the anchors as of this moment: the decision date
     // is frequently set in the same flow that moves the opportunity here.
     const { data: anchors } = await supabase
-      .from('partnership_details')
-      .select('decision_date, revisit_on')
+      .from('opportunity_details')
+      .select('decision_date')
       .eq('opportunity_id', id!)
       .maybeSingle()
 
     const anchorDate = (anchor: string): Date => {
-      const raw =
-        anchor === 'decision_date' ? anchors?.decision_date :
-        anchor === 'revisit_on'    ? anchors?.revisit_on    : null
+      // revisit_on moved to organizations in ADR-012, so a task anchored to it
+      // has nothing to read here and falls back to stage entry.
+      const raw = anchor === 'decision_date' ? anchors?.decision_date : null
       // Unset anchor falls back to stage entry so the task still appears rather
       // than vanishing — it gets a wrong-ish date instead of no existence.
       return raw ? parseLocalDate(raw) : now
     }
 
     await supabase.from('tasks').insert(
-      newTasks.map((st: PartnershipStageTask, i: number) => ({
+      newTasks.map((st: StageTask, i: number) => ({
         opportunity_id: id,
         title:          st.title,
         due_date:       addDays(anchorDate(st.date_anchor ?? 'stage_entry'), st.days_after_entry).toISOString(),
@@ -616,15 +633,17 @@ export function OpportunityDetail() {
     )
   }
 
-  const isPartnership = opportunity.type_id === 'partnership'
-  const isLead        = opportunity.type_id === 'lead'
-  // A lead's name is the posting title; the organization lives in lead_details.
+  // Leads have their own table and their own page (ADR-012); anything that
+  // reaches this route is an opportunity.
+  const isPartnership = true
+  const isLead        = false
+  // A lead's name is the posting title; the organization lives in posting_details.
   const orgOrFunder   = isLead ? (leadDetails?.publisher ?? null) : opportunity.partner_org
   const owner         = profiles.find(p => p.id === opportunity.owner_id)
 
   // Closed-Won badge for the pipeline stepper area
-  const isClosedWon  = opportunity.status === 'partnership_closed_won'
-  const isClosedLost = opportunity.status === 'partnership_closed_lost'
+  const isClosedWon  = opportunity.status === 'closed_won'
+  const isClosedLost = opportunity.status === 'closed_lost'
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
@@ -653,7 +672,6 @@ export function OpportunityDetail() {
             <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${
               'bg-trail-50 text-trail'
             }`}>
-              {opportunity.type_id}
             </span>
             {isClosedWon && (
               <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-800">
@@ -721,10 +739,10 @@ export function OpportunityDetail() {
         <PipelineStepper
           stages={isLead
             ? LEAD_STAGES
-            : partnershipStages.filter(st => !PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
+            : stages.filter(st => !PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
           terminal={isLead
             ? LEAD_TERMINAL
-            : partnershipStages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
+            : stages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
           currentStatus={opportunity.status}
           color="trail"
           onSelect={changeStatus}
@@ -864,14 +882,12 @@ export function OpportunityDetail() {
               <DetailRow label="Agreement"     value={opportunity.agreement_date ? format(parseLocalDate(opportunity.agreement_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Renewal"       value={opportunity.renewal_date ? format(parseLocalDate(opportunity.renewal_date), 'MMM d, yyyy') : null} />
               <DetailRow label="Est. value"    value={opportunity.estimated_value != null ? `$${opportunity.estimated_value.toLocaleString()}` : null} />
-              <DetailRow label="Engagement"    value={ENGAGEMENT_LABELS[partnershipDetails?.engagement_nature ?? 'paid'] ?? null} />
-              <DetailRow
-                label="Delivery"
-                value={opportunity.status === 'partnership_closed_won'
-                  ? (DELIVERY_LABELS[partnershipDetails?.delivery_status ?? 'in_delivery'] ?? null)
-                  : null}
-              />
-              <DetailRow label="At std. rate"  value={partnershipDetails?.list_value != null ? `$${Number(partnershipDetails.list_value).toLocaleString()}` : null} />
+              {/* Nature, delivery and worth describe the WORK, which only exists
+                  once the opportunity is won — they live on the engagement now
+                  (ADR-012) rather than on a deal that may never have happened. */}
+              <DetailRow label="Engagement"    value={engagement ? (ENGAGEMENT_LABELS[engagement.nature] ?? engagement.nature) : null} />
+              <DetailRow label="Delivery"      value={engagement ? (DELIVERY_LABELS[engagement.delivery_status] ?? engagement.delivery_status) : null} />
+              <DetailRow label="At std. rate"  value={engagement?.fmv != null ? `$${Number(engagement.fmv).toLocaleString()}` : null} />
               <DetailRow label="Alignment"     value={opportunity.alignment_notes} />
               {partnershipDetails?.org_size && (
                 <DetailRow label="Org size" value={partnershipDetails.org_size} />
@@ -882,7 +898,7 @@ export function OpportunityDetail() {
       </div>
 
       {/* Where a converted lead came from. Only rendered when the row still
-          carries lead_details, i.e. it was discovered rather than entered by hand. */}
+          carries posting_details, i.e. it was discovered rather than entered by hand. */}
       {isPartnership && leadDetails && (
         <div className="bg-river-50/40 border border-river/20 rounded-xl px-5 py-3 mb-6 flex items-center gap-x-6 gap-y-1 flex-wrap">
           <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-river shrink-0">
@@ -987,7 +1003,6 @@ export function OpportunityDetail() {
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
             <TaskPanel
               opportunityId={id!}
-              typeId={opportunity.type_id}
               primaryDeadline={opportunity.primary_deadline}
               ownerId={opportunity.owner_id}
             />

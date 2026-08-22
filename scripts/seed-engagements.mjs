@@ -4,7 +4,7 @@
 //   node --env-file=.env.local scripts/seed-engagements.mjs
 //
 // Idempotent by partner_org: an existing row is updated, not duplicated.
-// Colorado Mountain Club already existed at partnership_negotiating, so it is
+// Colorado Mountain Club already existed at negotiating, so it is
 // updated in place rather than re-created.
 //
 // Sources: BBSP invoice WA-BBSP-2026-02-01, CMC SOW (Aug 2026).
@@ -27,7 +27,7 @@ const ENGAGEMENTS = [
         'Preserved twelve years of Better Bike Share Partnership work at its 2026 sunset: a nine-section ' +
         'long-scroll retrospective site, a press-ready print edition, and migration of the 500+ story archive ' +
         'with original URLs intact — backed by a four-year funded hosting reserve running Aug 2026 – Jul 2030.',
-      status: 'partnership_closed_won',
+      status: 'closed_won',
       partnership_type: 'other',
       primary_contact: 'Martina Haggerty',
       contact_email: 'martina@peopleforbikes.org',
@@ -66,7 +66,7 @@ const ENGAGEMENTS = [
         'as the sponsorship pitch and the grant report. Five revenue paths identified — pay-it-forward produce ' +
         'boxes, tax-deductible gifts via Confluence Colorado, season share presales, market sponsorships, and ' +
         'supporter membership. Taken largely as portfolio work.',
-      status: 'partnership_closed_won',
+      status: 'closed_won',
       partnership_type: 'other',
       primary_contact: 'Beverly Grant',
       estimated_value: 600,
@@ -103,7 +103,7 @@ const ENGAGEMENTS = [
         'Administrative, financial, and digital backbone for a Diné youth apprenticeship in Teec Nos Pos, ' +
         'Arizona teaching traditional lifeways through raising Navajo-Churro sheep. Fiscal partner, web ' +
         'presence, and fundraising strategy — the community holds final say over how its story is told. Pro bono.',
-      status: 'partnership_closed_won',
+      status: 'closed_won',
       partnership_type: 'in_kind',
       estimated_value: 0,
       owner_id: shane,
@@ -129,7 +129,7 @@ const ENGAGEMENTS = [
         'Brand identity, bilingual website, and a sustainable social and advocacy engine for a community-led ' +
         "coalition advancing recognition for Colorado's rivers. Wright Adventures produces and builds; the " +
         "coalition's cultural leadership holds every approval and the community artist owns the mark. Pro bono.",
-      status: 'partnership_closed_won',
+      status: 'closed_won',
       partnership_type: 'coalition',
       estimated_value: 0,
       owner_id: shane,
@@ -156,7 +156,7 @@ const CMC_UPDATE = {
       'Four-phase engagement: extract and assess Marketing Cloud, repair the membership data at its source, ' +
       'move onto the selected sending platform before Marketing Cloud closes, then onboard the twelve local ' +
       'groups and hand over documentation. 40 hrs/month, 160 total.',
-    status: 'partnership_negotiating',
+    status: 'negotiating',
     primary_contact: 'Ashley Hanlon',
     contact_email: 'ahanlon@cmc.org',
     partnership_type: 'other',
@@ -188,9 +188,9 @@ const CMC_UPDATE = {
 }
 
 async function upsertDetails(opportunityId, details) {
-  // The AFTER INSERT trigger creates the partnership_details row.
-  const { error } = await db.from('partnership_details').update(details).eq('opportunity_id', opportunityId)
-  if (error) throw new Error(`partnership_details: ${error.message}`)
+  // The AFTER INSERT trigger creates the opportunity_details row.
+  const { error } = await db.from('opportunity_details').update(details).eq('opportunity_id', opportunityId)
+  if (error) throw new Error(`opportunity_details: ${error.message}`)
 }
 
 for (const e of ENGAGEMENTS) {
@@ -222,5 +222,5 @@ if (cmc) {
   await upsertDetails(cmc.id, CMC_UPDATE.details)
   console.log(`updated  ${CMC_UPDATE.opportunity.name}`)
 } else {
-  console.error('CMC row not found — expected an existing partnership_negotiating record')
+  console.error('CMC row not found — expected an existing negotiating record')
 }

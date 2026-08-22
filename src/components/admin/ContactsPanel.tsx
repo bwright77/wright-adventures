@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { Plus, Star, Pencil, Trash2, Linkedin, Mail, Phone, X, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { PartnershipContact } from '../../lib/types'
+import type { Contact } from '../../lib/types'
 import { normalizePhone, toTelHref } from '../../lib/phone'
 
 // ── Schema ────────────────────────────────────────────────────
@@ -28,10 +28,10 @@ function ContactCard({
   onEdit,
   onDelete,
 }: {
-  contact:      PartnershipContact
+  contact:      Contact
   canEdit:      boolean
   onSetPrimary: (id: string) => void
-  onEdit:       (contact: PartnershipContact) => void
+  onEdit:       (contact: Contact) => void
   onDelete:     (id: string) => void
 }) {
   return (
@@ -129,7 +129,7 @@ function ContactFormPanel({
   onClose,
 }: {
   opportunityId: string
-  editing:       PartnershipContact | null
+  editing:       Contact | null
   onClose:       () => void
 }) {
   const queryClient = useQueryClient()
@@ -157,13 +157,13 @@ function ContactFormPanel({
       }
       if (editing) {
         const { error } = await supabase
-          .from('partnership_contacts')
+          .from('contacts')
           .update({ ...payload, updated_at: new Date().toISOString() })
           .eq('id', editing.id)
         if (error) throw error
       } else {
         const { error } = await supabase
-          .from('partnership_contacts')
+          .from('contacts')
           .insert({ ...payload, opportunity_id: opportunityId })
         if (error) throw error
       }
@@ -274,16 +274,16 @@ export function ContactsPanel({ opportunityId }: { opportunityId: string }) {
   const { profile }    = useAuth()
   const queryClient    = useQueryClient()
   const [adding, setAdding]   = useState(false)
-  const [editing, setEditing] = useState<PartnershipContact | null>(null)
+  const [editing, setEditing] = useState<Contact | null>(null)
 
   const canEdit = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'member'
   const canDelete = profile?.role === 'admin' || profile?.role === 'manager'
 
-  const { data: contacts = [], isLoading } = useQuery<PartnershipContact[]>({
+  const { data: contacts = [], isLoading } = useQuery<Contact[]>({
     queryKey: ['contacts', opportunityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('partnership_contacts')
+        .from('contacts')
         .select('*')
         .eq('opportunity_id', opportunityId)
         .order('is_primary', { ascending: false })
@@ -297,11 +297,11 @@ export function ContactsPanel({ opportunityId }: { opportunityId: string }) {
     mutationFn: async (contactId: string) => {
       // Clear all primaries for this opportunity then set the new one
       await supabase
-        .from('partnership_contacts')
+        .from('contacts')
         .update({ is_primary: false, updated_at: new Date().toISOString() })
         .eq('opportunity_id', opportunityId)
       const { error } = await supabase
-        .from('partnership_contacts')
+        .from('contacts')
         .update({ is_primary: true, updated_at: new Date().toISOString() })
         .eq('id', contactId)
       if (error) throw error
@@ -312,7 +312,7 @@ export function ContactsPanel({ opportunityId }: { opportunityId: string }) {
   const deleteContact = useMutation({
     mutationFn: async (contactId: string) => {
       const { error } = await supabase
-        .from('partnership_contacts')
+        .from('contacts')
         .delete()
         .eq('id', contactId)
       if (error) throw error

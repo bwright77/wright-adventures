@@ -11,7 +11,7 @@ import {
 import { format, formatDistanceToNow } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import type { PartnershipInteraction, PartnershipContact, InteractionType, InteractionDirection } from '../../lib/types'
+import type { Interaction, Contact, InteractionType, InteractionDirection } from '../../lib/types'
 
 // ── Icon map ──────────────────────────────────────────────────
 const TYPE_ICONS: Record<InteractionType, React.ReactNode> = {
@@ -68,7 +68,7 @@ const interactionSchema = z.object({
 type InteractionForm = z.infer<typeof interactionSchema>
 
 // ── InteractionEntry ──────────────────────────────────────────
-function InteractionEntry({ interaction }: { interaction: PartnershipInteraction }) {
+function InteractionEntry({ interaction }: { interaction: Interaction }) {
   const [expanded, setExpanded] = useState(false)
   const hasNotes = interaction.notes.trim().length > 0
   const longNotes = interaction.notes.length > 140
@@ -144,7 +144,7 @@ function QuickAddForm({
   onClose,
 }: {
   opportunityId: string
-  contacts:      Pick<PartnershipContact, 'id' | 'full_name' | 'title'>[]
+  contacts:      Pick<Contact, 'id' | 'full_name' | 'title'>[]
   onClose:       () => void
 }) {
   const { user } = useAuth()
@@ -161,7 +161,7 @@ function QuickAddForm({
 
   const addInteraction = useMutation({
     mutationFn: async (data: InteractionForm) => {
-      const { error } = await supabase.from('partnership_interactions').insert({
+      const { error } = await supabase.from('interactions').insert({
         opportunity_id:   opportunityId,
         interaction_type: data.interaction_type,
         direction:        data.direction,
@@ -312,14 +312,14 @@ export function InteractionsLog({ opportunityId }: { opportunityId: string }) {
 
   const canAdd = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'member'
 
-  const { data: interactions = [], isLoading } = useQuery<PartnershipInteraction[]>({
+  const { data: interactions = [], isLoading } = useQuery<Interaction[]>({
     queryKey: ['interactions', opportunityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('partnership_interactions')
+        .from('interactions')
         .select(`
           *,
-          contact:partnership_contacts(id, full_name),
+          contact:contacts(id, full_name),
           logger:profiles!logged_by(id, full_name, avatar_url)
         `)
         .eq('opportunity_id', opportunityId)
@@ -329,17 +329,17 @@ export function InteractionsLog({ opportunityId }: { opportunityId: string }) {
     },
   })
 
-  const { data: contacts = [] } = useQuery<Pick<PartnershipContact, 'id' | 'full_name' | 'title'>[]>({
+  const { data: contacts = [] } = useQuery<Pick<Contact, 'id' | 'full_name' | 'title'>[]>({
     queryKey: ['contacts', opportunityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('partnership_contacts')
+        .from('contacts')
         .select('id, full_name, title')
         .eq('opportunity_id', opportunityId)
         .order('is_primary', { ascending: false })
         .order('created_at')
       if (error) throw error
-      return (data ?? []) as Pick<PartnershipContact, 'id' | 'full_name' | 'title'>[]
+      return (data ?? []) as Pick<Contact, 'id' | 'full_name' | 'title'>[]
     },
   })
 

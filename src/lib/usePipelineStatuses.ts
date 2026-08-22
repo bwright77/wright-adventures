@@ -20,15 +20,26 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import type { PipelineStatus } from './types'
 
-/** Terminal stages get colour; the rest inherit the neutral default. */
+/**
+ * Terminal stages get colour; the rest inherit the neutral default.
+ * Nurture is no longer here — it is a state of the ORGANISATION now (ADR-012),
+ * not a stage an opportunity can sit in.
+ */
 export const STATUS_COLORS: Record<string, string> = {
-  partnership_closed_won:  'bg-trail-50 text-trail',
-  partnership_closed_lost: 'bg-red-50 text-red-600',
-  partnership_nurture:     'bg-amber-50 text-amber-700',
+  closed_won:  'bg-trail-50 text-trail',
+  closed_lost: 'bg-red-50 text-red-600',
 }
 
 export interface PipelineStages {
-  /** Every stage for the type, in sort_order. */
+  /**
+   * EVERY stage, in sort_order — including the terminal ones.
+   *
+   * This used to filter on is_active, and closed_won/closed_lost are flagged
+   * inactive. So the close-out menu, which is built by filtering this list for
+   * terminal stages, came back empty: there was no way to mark an opportunity
+   * won or lost from the UI at all. Callers that want board columns ask for
+   * specific ids via columnsFor(), so nothing here needs to pre-filter.
+   */
   all: PipelineStatus[]
   /** id → label, for rendering a status without a lookup dance. */
   labels: Record<string, string>
@@ -37,15 +48,13 @@ export interface PipelineStages {
   isLoading: boolean
 }
 
-export function usePipelineStatuses(typeId: string): PipelineStages {
+export function usePipelineStatuses(): PipelineStages {
   const { data: all = [], isLoading } = useQuery<PipelineStatus[]>({
-    queryKey: ['pipeline_statuses', typeId],
+    queryKey: ['pipeline_statuses'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pipeline_statuses')
         .select('*')
-        .eq('type_id', typeId)
-        .eq('is_active', true)
         .order('sort_order')
       if (error) throw error
       return (data ?? []) as PipelineStatus[]

@@ -1,4 +1,4 @@
-import type { Opportunity, PartnershipDetails } from '../types'
+import type { Opportunity, OpportunityDetails } from '../types'
 
 // ── System prompt ─────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ You must return ONLY a valid JSON object matching the specified schema. No markd
 
 export function buildAdvisorPrompt(
   opp: Pick<Opportunity, 'name' | 'description' | 'status' | 'partner_org' | 'service_lines' | 'estimated_value'>,
-  pd: Pick<PartnershipDetails, 'org_size' | 'pain_points' | 'tech_stack_notes' | 'qualification_notes'>,
+  pd: Pick<OpportunityDetails, 'org_size' | 'pain_points' | 'tech_stack_notes' | 'qualification_notes'>,
 ): string {
   const lines: string[] = [
     'Analyze this consulting opportunity and return a fit recommendation.',

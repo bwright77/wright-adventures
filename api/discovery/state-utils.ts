@@ -242,9 +242,8 @@ export async function isDuplicate(
   // posting keeps its permalink.
   if (candidate.url) {
     const { data: byUrl } = await supabase
-      .from('opportunities')
+      .from('leads')
       .select('id')
-      .eq('type_id', 'lead')
       .or(`external_url.eq.${candidate.url},source_url.eq.${candidate.url}`)
       .limit(1)
     if (byUrl?.length) return true
@@ -254,10 +253,9 @@ export async function isDuplicate(
   // more here than it did for grants: "Development Director" is a near-universal
   // title, so an unscoped name comparison would collapse unrelated postings.
   const { data: existing, error } = await supabase
-    .from('opportunities')
-    .select('id, name, lead_details!inner(publisher)')
-    .eq('type_id', 'lead')
-    .eq('lead_details.publisher', candidate.publisher)
+    .from('leads')
+    .select('id, name, posting_details!inner(publisher)')
+    .eq('posting_details.publisher', candidate.publisher)
 
   if (error) {
     console.warn('isDuplicate query error:', error.message)

@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { ScrapePanel } from '../../components/admin/ScrapePanel'
 import type { ScrapedFields } from '../../components/admin/ScrapePanel'
-import type { Opportunity, PartnershipDetails, CompanySize } from '../../lib/types'
+import type { Opportunity, OpportunityDetails, CompanySize } from '../../lib/types'
 import { SERVICE_LINES } from '../../lib/serviceLines'
 import { normalizePhone } from '../../lib/phone'
 
@@ -30,15 +30,13 @@ const partnershipSchema = baseSchema.extend({
   service_lines:    z.array(z.string()).optional(),
   estimated_value:  z.string().optional(),
   alignment_notes:  z.string().optional(),
-  // partnership_details fields
+  // opportunity_details fields
   org_size:         z.enum(['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']).or(z.literal('')).optional(),
   pain_points:      z.string().optional(),
   tech_stack_notes: z.string().optional(),
   next_action:      z.string().optional(),
   next_action_date: z.string().optional(),
   logo_url:         z.string().url('Enter a valid URL').or(z.literal('')).optional(),
-  engagement_nature: z.enum(['paid', 'reduced_rate', 'portfolio', 'pro_bono', 'strategic']).optional(),
-  list_value:        z.string().optional(),
 })
 
 type AnyOppForm = z.infer<typeof partnershipSchema>
@@ -100,11 +98,11 @@ export function EditOpportunity() {
   })
 
 
-  const { data: partnershipDetails } = useQuery<PartnershipDetails | null>({
+  const { data: partnershipDetails } = useQuery<OpportunityDetails | null>({
     queryKey: ['partnership-details', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('partnership_details')
+        .from('opportunity_details')
         .select('*')
         .eq('opportunity_id', id!)
         .maybeSingle()
@@ -140,7 +138,7 @@ export function EditOpportunity() {
     if (fields.logo_url)         sv('logo_url', fields.logo_url)
   }
 
-  function buildDefaults(o: Opportunity, pd: PartnershipDetails | null = null) {
+  function buildDefaults(o: Opportunity, pd: OpportunityDetails | null = null) {
     const base = {
       name:             o.name,
       description:      o.description ?? '',
@@ -163,8 +161,6 @@ export function EditOpportunity() {
       next_action:      pd?.next_action ?? '',
       next_action_date: toDateInput(pd?.next_action_date),
       logo_url:         pd?.logo_url ?? '',
-      engagement_nature: pd?.engagement_nature ?? 'paid',
-      list_value:        pd?.list_value != null ? String(pd.list_value) : '',
     }
   }
 
@@ -201,7 +197,7 @@ export function EditOpportunity() {
 
     if (error) { setSubmitError(error.message); return }
 
-    // Save partnership_details fields
+    // Save opportunity_details fields
     {
       const v = values as z.infer<typeof partnershipSchema>
       const detailsPayload: Record<string, unknown> = {
@@ -211,12 +207,10 @@ export function EditOpportunity() {
         next_action:      v.next_action || null,
         next_action_date: v.next_action_date ? new Date(v.next_action_date).toISOString() : null,
         logo_url:         v.logo_url || null,
-        engagement_nature: v.engagement_nature || 'paid',
-        list_value:        v.list_value ? Number(v.list_value) : null,
         updated_at:       new Date().toISOString(),
       }
       await supabase
-        .from('partnership_details')
+        .from('opportunity_details')
         .update(detailsPayload)
         .eq('opportunity_id', id!)
     }
@@ -256,9 +250,6 @@ export function EditOpportunity() {
 
       <div className="flex items-center gap-3 mb-8">
         <h1 className="text-2xl font-bold text-navy">Edit Opportunity</h1>
-        <span className="text-xs font-medium px-2 py-0.5 rounded capitalize bg-trail-50 text-trail">
-          {opp.type_id}
-        </span>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -330,21 +321,6 @@ export function EditOpportunity() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><Label>Contact phone</Label><Input {...register('contact_phone' as never)} placeholder="(555) 000-0000" /></div>
                 <div><Label>Estimated value ($)</Label><Input {...register('estimated_value' as never)} type="number" min="0" placeholder="0" /></div>
-                <div>
-                  <Label>Engagement nature</Label>
-                  <Select {...register('engagement_nature' as never)}>
-                    <option value="paid">Paid — full rate</option>
-                    <option value="reduced_rate">Reduced rate — discounted</option>
-                    <option value="portfolio">Portfolio — nominal fee</option>
-                    <option value="pro_bono">Pro bono — no fee</option>
-                    <option value="strategic">Strategic — indirect return</option>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Value at standard rate ($)</Label>
-                  <Input {...register('list_value' as never)} type="number" min="0" placeholder="0" />
-                  <p className="mt-1 text-xs text-gray-400">Before any discount. For pro-bono and portfolio work this is the contributed value.</p>
-                </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>

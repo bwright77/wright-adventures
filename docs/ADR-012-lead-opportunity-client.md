@@ -1,6 +1,6 @@
 # ADR-012 — Lead → Opportunity → Client
 
-**Status:** Accepted — Phase 1 landed 2026-08-22
+**Status:** Accepted — Phases 1–4 landed 2026-08-22
 **Date:** 2026-08-22
 **Supersedes:** the `partnership_*` vocabulary introduced in ADR-006
 
@@ -130,9 +130,9 @@ indexes — no copy, no downtime.
 | Phase | Work |
 |---|---|
 | 1 | ✅ `organizations` + backfill; folded in `org_relationships` → 19 orgs |
-| 2 | `leads` table; move the ~24 lead rows out of `opportunities`; drop `type_id` |
-| 3 | Rename `partnership_*` → `opportunity_*`; restage the status ids |
-| 4 | `engagements` from the 5 closed-won rows + `delivery_status` / FMV |
+| 2 | ✅ `leads` table; 24 rows moved; `type_id` and `opportunity_types` gone |
+| 3 | ✅ Renamed; contacts/interactions moved to the org; nurture stage removed |
+| 4 | ✅ `engagements` — 6 rows; client tier now trigger-maintained |
 | 5 | UI: Clients as its own view; Opportunities = pursuit + sidelined lane |
 | 6 | ADR-010 timekeeping hangs off `engagements` |
 

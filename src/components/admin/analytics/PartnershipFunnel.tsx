@@ -3,8 +3,8 @@ import { fmtCurrency } from '../../../lib/analytics'
 import type { PartnershipMetrics } from '../../../lib/analytics'
 
 const STAGE_BAR_CLASS: Record<string, string> = {
-  partnership_closed_won:  'bg-trail/30',
-  partnership_closed_lost: 'bg-red-100',
+  closed_won:  'bg-trail/30',
+  closed_lost: 'bg-red-100',
 }
 
 const CONFIDENCE_BADGE: Record<string, string> = {

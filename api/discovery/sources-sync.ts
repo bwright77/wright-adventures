@@ -356,8 +356,7 @@ async function wonEngagementRelationships(): Promise<ProfileRelationship[]> {
   const { data } = await supabase
     .from('opportunities')
     .select('partner_org, name, service_lines')
-    .eq('type_id', 'partnership')
-    .eq('status', 'partnership_closed_won')
+    .eq('status', 'closed_won')
     .not('partner_org', 'is', null)
 
   return (data ?? [])
@@ -713,15 +712,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
 
           const { data: inserted, error: insertError } = await supabase
-            .from('opportunities')
+            .from('leads')
             .insert({
-              type_id:             'lead',
               name:                candidate.name,
               description:         candidate.description ?? null,
-              status:              'lead_discovered',
+              status:              'new',
               primary_deadline:    normalizeDate(candidate.deadline),
               source_url:          candidate.url ?? source.url,
-              tags:                [],
               source:              source.label,
               external_url:        candidate.url ?? null,
               auto_discovered:     true,
@@ -742,9 +739,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             continue
           }
 
-          // The AFTER INSERT trigger created the lead_details row; fill it in.
+          // ADR-012: leads are their own table, and the trigger that used to
+          // auto-create this row went with the type_id it keyed on. Insert it.
           const comp = parseCompensation(candidate.compensation_raw)
-          await supabase.from('lead_details').update({
+          await supabase.from('posting_details').insert({
+            lead_id:          inserted.id,
             source_kind:      candidate.source_kind ?? null,
             publisher:        candidate.publisher,
             location:         candidate.location ?? null,
@@ -757,7 +756,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             closes_date:      normalizeDate(candidate.deadline),
             apply_url:        candidate.url ?? null,
             requirements:     candidate.requirements ?? null,
-          }).eq('opportunity_id', inserted.id)
+          })
 
           stats.opportunities_inserted++
         }

@@ -39,7 +39,7 @@ function TaskRow({ task, onComplete }: { task: Task; onComplete: (id: string) =>
             className="text-xs text-gray-400 hover:text-river mt-0.5 capitalize transition-colors"
             onClick={e => e.stopPropagation()}
           >
-            {task.opportunity.type_id} · {task.opportunity.name}
+            {task.opportunity.name}
           </Link>
         )}
       </div>
@@ -86,7 +86,7 @@ export function MyTasks() {
       if (!profile?.id) return []
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, opportunity:opportunities(id, name, type_id)')
+        .select('*, opportunity:opportunities(id, name)')
         .eq('assignee_id', profile.id)
         .neq('status', 'complete')
         .order('due_date', { ascending: true, nullsFirst: false })
