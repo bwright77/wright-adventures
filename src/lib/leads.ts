@@ -53,7 +53,10 @@ async function findOrCreateOrganization(name: string): Promise<string> {
 
   const { data: created, error: createError } = await supabase
     .from('organizations')
-    .insert({ name, relationship_tier: 'prospect' })
+    // Cold by default. We found this org on a job board or a procurement
+    // portal; pursuing them is not the same as knowing them, and marking it
+    // otherwise would feed the scorer a warm path that does not exist.
+    .insert({ name, relationship_tier: 'none' })
     .select('id')
     .single()
   if (createError) throw createError
