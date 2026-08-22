@@ -8,7 +8,11 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Opportunity, Task } from '../../lib/types'
 
-const INACTIVE_PARTNERSHIP_STATUSES = ['partnership_archived', 'partnership_declined', 'partnership_completed']
+// The real terminal statuses. The previous list — partnership_archived,
+// partnership_declined, partnership_completed — named three ids that have never
+// existed in pipeline_statuses, so the "active" count excluded nothing and
+// included closed work.
+const INACTIVE_PARTNERSHIP_STATUSES = ['partnership_closed_won', 'partnership_closed_lost']
 
 function MetricCard({ label, value, sub, icon: Icon, accent, to }: {
   label: string
@@ -113,7 +117,7 @@ export function Dashboard() {
           sub="active"
           icon={Users}
           accent="bg-trail"
-          to="/admin/opportunities?tab=partnership&status=active"
+          to="/admin/opportunities"
         />
         <MetricCard
           label="My Tasks"

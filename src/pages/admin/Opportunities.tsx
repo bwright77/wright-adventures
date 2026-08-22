@@ -173,8 +173,17 @@ function KanbanCol({
 export function Opportunities() {
   const queryClient  = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab          = (searchParams.get('tab')    ?? 'pursuing') as TabFilter
-  const statusFilter =  searchParams.get('status') ?? ''
+  // Validate rather than assert. `as TabFilter` on a URL param is a lie: any
+  // stale link — ?tab=partnership from before the tabs were reworked — indexes
+  // TAB_STATUSES with a missing key and throws on .includes().
+  const rawTab       = searchParams.get('tab')
+  const tab: TabFilter = rawTab !== null && Object.prototype.hasOwnProperty.call(TAB_STATUSES, rawTab)
+    ? rawTab as TabFilter
+    : 'pursuing'
+  // Same defence for status: a stale ?status=active is not a status id, and
+  // would silently filter the list to nothing rather than crashing.
+  const rawStatus    = searchParams.get('status') ?? ''
+  const statusFilter = TAB_STATUSES[tab].includes(rawStatus) ? rawStatus : ''
 
   function setTab(t: TabFilter) {
     // Switching tabs clears status filter
