@@ -1,5 +1,6 @@
 import { useFadeIn } from '../hooks/useFadeIn'
 import { VALUES } from '../data/siteData'
+import { OnAir } from './OnAir'
 
 function ValueCard({ value, index }: { value: typeof VALUES[number]; index: number }) {
   const { ref, style } = useFadeIn({ delay: index * 60 })
@@ -18,11 +19,11 @@ export function Values() {
       <div className="max-w-7xl mx-auto">
         <span className="section-label">Our Values</span>
         <h2 className="section-title">What guides every engagement</h2>
-        {/* Closes the arc that Team opens and On the Air carries: these read as
-            a summary of what was just said on air, not as claims made cold. */}
+        {/* Six words are a claim. The interview beneath them is the evidence,
+            which is why it lives inside this section rather than beside it. */}
         <p className="section-desc">
-          Six words for what you just heard — and the test we hold our own work to, including the
-          question Shane asks out loud: are we part of the problem, or part of the solution?
+          Not a list written for a website — the test we hold our own work to, in the words we
+          use when someone else is asking the questions.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-12">
@@ -30,6 +31,8 @@ export function Values() {
             <ValueCard key={value.name} value={value} index={i} />
           ))}
         </div>
+
+        <OnAir />
       </div>
     </section>
   )
