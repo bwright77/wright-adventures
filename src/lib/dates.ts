@@ -6,3 +6,16 @@
 export function parseLocalDate(s: string): Date {
   return new Date(s.slice(0, 10) + 'T00:00:00')
 }
+
+/**
+ * Format a stored date value for an `<input type="date">`, which only ever
+ * accepts YYYY-MM-DD.
+ *
+ * Same slice as parseLocalDate, and for the same reason: due_date is a
+ * timestamptz written inconsistently — some rows at UTC midnight, others
+ * carrying a time from `addDays(...).toISOString()`. Taking the date portion
+ * verbatim avoids a timezone shift moving the day.
+ */
+export function toDateInput(s: string | null | undefined): string {
+  return s ? s.slice(0, 10) : ''
+}

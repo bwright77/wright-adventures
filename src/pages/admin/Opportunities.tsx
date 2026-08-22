@@ -19,20 +19,20 @@ type OpportunityWithLogo = Opportunity & {
 // The three states that matter operationally: work we are doing, work we are
 // chasing, and work we lost. Replaced 'all | partnership | lead', which split by
 // record type rather than by anything anyone acts on.
-type TabFilter = 'active' | 'pursuing' | 'lost'
+type TabFilter = 'pursuing' | 'active' | 'lost'
 
 const TAB_STATUSES: Record<TabFilter, readonly string[]> = {
-  active:   ['partnership_closed_won'],
   pursuing: [
     'partnership_prospecting', 'partnership_qualifying', 'partnership_discovery',
     'partnership_proposal', 'partnership_negotiating',
   ],
+  active:   ['partnership_closed_won'],
   lost:     ['partnership_closed_lost'],
 }
 
 const TAB_LABELS: Record<TabFilter, string> = {
-  active:   'Active',
   pursuing: 'Pursuing',
+  active:   'Active',
   lost:     'Closed-Lost',
 }
 type ViewMode  = 'table' | 'kanban'
@@ -173,16 +173,16 @@ function KanbanCol({
 export function Opportunities() {
   const queryClient  = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab          = (searchParams.get('tab')    ?? 'active') as TabFilter
+  const tab          = (searchParams.get('tab')    ?? 'pursuing') as TabFilter
   const statusFilter =  searchParams.get('status') ?? ''
 
   function setTab(t: TabFilter) {
     // Switching tabs clears status filter
-    setSearchParams(t === 'active' ? {} : { tab: t }, { replace: true })
+    setSearchParams(t === 'pursuing' ? {} : { tab: t }, { replace: true })
   }
   function setStatus(s: string) {
     const params: Record<string, string> = {}
-    if (tab !== 'active') params.tab = tab
+    if (tab !== 'pursuing') params.tab = tab
     if (s) params.status = s
     setSearchParams(params, { replace: true })
   }
