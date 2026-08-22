@@ -51,7 +51,7 @@ export function Hero() {
         {/* Right — stats card */}
         <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-sm">
-            <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-white/40 mb-7">
+            <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-white/70 mb-7">
               Track Record
             </h3>
             {STATS.map((stat, i) => (

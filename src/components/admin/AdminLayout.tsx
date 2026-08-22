@@ -69,7 +69,7 @@ export function AdminLayout() {
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-river/20 text-river'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+                  : 'text-white/75 hover:text-white hover:bg-white/[0.06]'
               }`
             }
           >
@@ -158,13 +158,13 @@ export function AdminLayout() {
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-white truncate">{displayName}</p>
               {profile?.role && (
-                <p className="text-[0.7rem] text-white/40 capitalize">{profile.role}</p>
+                <p className="text-xs text-white/70 capitalize">{profile.role}</p>
               )}
             </div>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/75 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <LogOut size={16} />
             Sign out

@@ -25,7 +25,7 @@ export function Footer() {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-white/40 text-sm no-underline hover:text-river transition-colors"
+                className="text-white/70 text-sm no-underline hover:text-river transition-colors"
               >
                 {link.label}
               </a>
@@ -34,8 +34,8 @@ export function Footer() {
         </ul>
 
         <div className="flex items-center gap-4">
-          <div className="text-white/30 text-xs">{BRAND.location}</div>
-          <Link to="/login" className="text-white/20 text-xs hover:text-white/40 transition-colors">
+          <div className="text-white/70 text-xs">{BRAND.location}</div>
+          <Link to="/login" className="text-white/60 text-xs hover:text-white transition-colors">
             Login
           </Link>
         </div>

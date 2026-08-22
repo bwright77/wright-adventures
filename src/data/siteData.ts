@@ -218,7 +218,9 @@ export const RADIO = {
     },
   ],
 
-  // Her phrase. She named it mid-sentence, listening to Ben, so she is named.
-  pullQuote:   'And a couple of words are coming to mind, listening to you, Ben — and that’s responsible technology. That language has to exist.',
-  quoteSource: 'Miss Beverly Grant, host of Metro on KGNU',
+  // Two words carry further than the sentence they arrived in. She named it
+  // listening to Ben, so she is named — and it is said plainly that the phrase
+  // is hers rather than ours.
+  pullQuote:   'Responsible technology.',
+  quoteSource: 'Miss Beverly Grant’s words, not ours — the name she gave it, mid-conversation.',
 } as const

@@ -20,6 +20,12 @@ export default {
           DEFAULT: '#009DD6',
           light: '#F0F9FF',
           50: '#F0F9FF',
+          // Text-safe cyan. The brand #009DD6 measures 2.8–3.1:1 as small text
+          // on our light backgrounds, well under the 4.5:1 AA needs. This is the
+          // same hue darkened until it clears 4.5:1 on white, river-50, navy-50,
+          // gray-50 and the cream (worst case 4.68:1). Use it for small text on
+          // light; keep DEFAULT for text on navy and for fills.
+          700: '#00749E',
         },
         earth: {
           DEFAULT: '#B44B00',
@@ -31,6 +37,8 @@ export default {
           DEFAULT: '#4A7C59',
           light: '#EDF5F0',
           50: '#EDF5F0',
+          // 4.38:1 on trail-50 — just under AA for small text.
+          700: '#477755',
         },
         warm: {
           gray: '#F5F3F0',

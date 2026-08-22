@@ -35,12 +35,12 @@ export function OnAir() {
   const { ref, style } = useFadeIn()
 
   return (
-    <div id="on-air" ref={ref} style={style} className="mt-20 pt-14 border-t border-gray-200/80">
+    <div id="on-air" ref={ref} style={style} className="mt-12 pt-9 border-t border-gray-200/80">
       <span className="section-label">On the Air</span>
       <h3 className="text-2xl sm:text-3xl font-bold text-navy tracking-tight mt-1">
         In our own words
       </h3>
-      <p className="mt-3 text-base text-gray-500 max-w-2xl leading-relaxed font-light">
+      <p className="mt-3 text-base text-gray-600 max-w-2xl leading-relaxed font-light">
         Shane and Ben joined {RADIO.host} on{' '}
         <span className="font-medium text-navy">{RADIO.show}</span> at {RADIO.station} — an hour on
         rivers, technology, and building for organizations that have been priced out of good
@@ -71,21 +71,23 @@ export function OnAir() {
             loading="lazy"
             className="w-[132px] max-w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
           />
+          {/* gray-400 on the cream measures 2.29:1 where AA wants 4.5:1, and
+              0.7rem made it worse. gray-600 is 6.82:1; nothing goes below xs. */}
           <p className="mt-3 text-sm font-semibold text-navy">{RADIO.show}</p>
-          <p className="text-xs text-gray-400 mt-0.5 font-light">{RADIO.airedOn}</p>
-          <p className="text-[0.7rem] text-gray-400 mt-1.5 font-light">{RADIO.stationDial}</p>
+          <p className="text-xs text-gray-600 mt-1">{RADIO.airedOn}</p>
+          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{RADIO.stationDial}</p>
         </a>
       </div>
 
-      {/* The host's phrase, given the last word — it is the name for all of
-          the above, and it is hers, not ours. */}
-      <figure className="mt-12 border-t border-gray-200/80 pt-9">
-        <blockquote className="max-w-3xl">
-          <p className="text-xl sm:text-2xl text-navy font-medium leading-snug">
+      {/* The host's phrase gets the last word: the two words are the whole
+          point, and the sentence they arrived in only diluted them. */}
+      <figure className="mt-11 border-t border-gray-200/80 pt-9">
+        <blockquote>
+          <p className="text-3xl sm:text-4xl text-navy font-bold tracking-tight">
             “{RADIO.pullQuote}”
           </p>
         </blockquote>
-        <figcaption className="mt-3 text-sm text-gray-400 font-light">
+        <figcaption className="mt-3 text-sm text-gray-600 max-w-xl">
           {RADIO.quoteSource}
         </figcaption>
       </figure>

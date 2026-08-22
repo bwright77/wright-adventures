@@ -37,7 +37,7 @@
   }
 
   .section-label {
-    @apply inline-block text-xs font-semibold uppercase tracking-[0.12em] text-river mb-3;
+    @apply inline-block text-xs font-semibold uppercase tracking-[0.12em] text-river-700 mb-3;
   }
 
   .section-title {
@@ -45,7 +45,7 @@
   }
 
   .section-desc {
-    @apply text-lg text-gray-500 max-w-xl leading-relaxed font-light;
+    @apply text-lg text-gray-600 max-w-xl leading-relaxed font-light;
   }
 
   .topo-pattern {

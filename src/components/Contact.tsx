@@ -38,7 +38,7 @@ export function Contact() {
   }
 
   const inputClass =
-    'w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-river/50 focus:ring-1 focus:ring-river/30 transition-all font-light'
+    'w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-4 py-3 text-white text-sm placeholder:text-white/60 focus:outline-none focus:border-river/50 focus:ring-1 focus:ring-river/30 transition-all font-light'
   const selectClass =
     'w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-river/50 focus:ring-1 focus:ring-river/30 transition-all font-light appearance-none'
 
@@ -107,7 +107,7 @@ export function Contact() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-white/40 mb-4">
+                <h3 className="text-xs font-medium uppercase tracking-[0.1em] text-white/70 mb-4">
                   Tell us about your organization
                 </h3>
 

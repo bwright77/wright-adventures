@@ -20,8 +20,8 @@ const ORG_LOGOS: Record<string, string | string[]> = {
 }
 
 const TAG_COLORS = {
-  trail: 'bg-trail-50 text-trail',
-  river: 'bg-river-50 text-river',
+  trail: 'bg-trail-50 text-trail-700',
+  river: 'bg-river-50 text-river-700',
   earth: 'bg-earth-50 text-earth',
 } as const
 
@@ -154,7 +154,7 @@ export function CaseStudies() {
                         <strong className="block text-2xl font-bold text-navy leading-tight">
                           {metric.value}
                         </strong>
-                        <span className="text-xs text-gray-400">{metric.label}</span>
+                        <span className="text-xs text-gray-600">{metric.label}</span>
                       </div>
                     ))}
                   </div>
