@@ -156,7 +156,7 @@ export const TEAM = [
     role: 'Founder & Executive Director',
     icon: 'Network',
     gradient: 'from-trail to-[#5A9C6D]',
-    bio: '20+ years leading youth development, conservation, and community programs across Colorado. Former director of GroundWork Denver and architect of the Lincoln Hills Cares pathways initiative. Deep relationships across the nonprofit, foundation, and government sectors.',
+    bio: '20+ years leading youth development, conservation, and community programs across Colorado. Former director at GroundWork Denver and architect of the Lincoln Hills Cares pathways initiative. Deep relationships across the nonprofit, foundation, and government sectors.',
   },
   {
     name: 'Benjamin Wright',
