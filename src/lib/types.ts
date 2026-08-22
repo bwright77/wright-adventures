@@ -25,6 +25,11 @@ export interface PipelineStatus {
   label: string
   sort_order: number
   is_active: boolean
+  // Ageing thresholds, in days since stage entry. NULL on terminal stages and on
+  // nurture, which ages off revisit_on instead. See src/lib/stageAge.ts.
+  expected_days: number | null
+  amber_days: number | null
+  red_days: number | null
 }
 
 // `opportunities.ai_score_detail` holds a FitAssessment (ADR-011).
@@ -284,6 +289,8 @@ export interface PartnershipStageTask {
   days_after_entry: number
   sort_order: number
   created_at: string
+  /** What days_after_entry is measured from. See 20260819900000_stage_task_audit.sql. */
+  date_anchor: 'stage_entry' | 'decision_date' | 'revisit_on'
 }
 
 export interface ScrapeResult {

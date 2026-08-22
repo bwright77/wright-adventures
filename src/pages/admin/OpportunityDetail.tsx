@@ -479,11 +479,33 @@ export function OpportunityDetail() {
     if (!newTasks.length) return
 
     const now = new Date()
+
+    // days_after_entry is measured from whatever date_anchor names, not always
+    // from now. An approval task at -7/decision_date means "check in with the
+    // champion the week before the board meets" — anchoring that to stage entry
+    // makes it due a week in the PAST, so it lands already overdue and is
+    // meaningless besides. Read the anchors as of this moment: the decision date
+    // is frequently set in the same flow that moves the opportunity here.
+    const { data: anchors } = await supabase
+      .from('partnership_details')
+      .select('decision_date, revisit_on')
+      .eq('opportunity_id', id!)
+      .maybeSingle()
+
+    const anchorDate = (anchor: string): Date => {
+      const raw =
+        anchor === 'decision_date' ? anchors?.decision_date :
+        anchor === 'revisit_on'    ? anchors?.revisit_on    : null
+      // Unset anchor falls back to stage entry so the task still appears rather
+      // than vanishing — it gets a wrong-ish date instead of no existence.
+      return raw ? parseLocalDate(raw) : now
+    }
+
     await supabase.from('tasks').insert(
       newTasks.map((st: PartnershipStageTask, i: number) => ({
         opportunity_id: id,
         title:          st.title,
-        due_date:       addDays(now, st.days_after_entry).toISOString(),
+        due_date:       addDays(anchorDate(st.date_anchor ?? 'stage_entry'), st.days_after_entry).toISOString(),
         assignee_id:    opportunity!.owner_id ?? user?.id ?? null,
         sort_order:     (existing?.length ?? 0) + i,
         status:         'not_started',

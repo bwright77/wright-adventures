@@ -12,7 +12,12 @@ export function Analytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value)')
+              // The !opportunity_id hint is required, not decorative. partnership_details
+      // has TWO foreign keys to opportunities — opportunity_id (its primary key)
+      // and previous_opportunity_id (set when a lost deal is reopened as a new
+      // record). PostgREST cannot infer which one an embed means and fails the
+      // whole query with PGRST201, which silently empties the list.
+      .select('*, partnership_details!opportunity_id(logo_url, confidence, next_action_date, engagement_nature, list_value)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithDetails[]

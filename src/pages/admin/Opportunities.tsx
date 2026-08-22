@@ -8,6 +8,9 @@ import { supabase } from '../../lib/supabase'
 import type { Opportunity, DealConfidence } from '../../lib/types'
 import { SERVICE_LINE_LABELS } from '../../lib/serviceLines'
 import { usePipelineStatuses, STATUS_COLORS } from '../../lib/usePipelineStatuses'
+import { computeStageAge } from '../../lib/stageAge'
+import type { StageAge } from '../../lib/stageAge'
+import { StageAgeBadge } from '../../components/admin/StageAgeBadge'
 
 type OpportunityWithLogo = Opportunity & {
   partnership_details?: {
@@ -15,6 +18,9 @@ type OpportunityWithLogo = Opportunity & {
     revisit_on?: string | null
     confidence: DealConfidence | null
     next_action_date: string | null
+    stage_entered_at?: string | null
+    decision_date?: string | null
+    decision_body?: string | null
   } | null
 }
 
@@ -87,7 +93,7 @@ function OrgAvatar({ logo, name }: { logo: string | null; name: string }) {
   )
 }
 
-function KanbanCard({ opp }: { opp: Opportunity }) {
+function KanbanCard({ opp, age }: { opp: OpportunityWithLogo; age: StageAge | null }) {
   const org = opp.partner_org
 
   return (
@@ -99,11 +105,14 @@ function KanbanCard({ opp }: { opp: Opportunity }) {
     >
       <p className="text-sm font-medium text-navy leading-snug">{opp.name}</p>
       {org && <p className="text-xs text-gray-400 mt-0.5 truncate">{org}</p>}
-      {opp.primary_deadline && (
-        <p className="text-xs text-gray-400 mt-2">
-          {format(parseLocalDate(opp.primary_deadline), 'MMM d')}
-        </p>
-      )}
+      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <StageAgeBadge age={age} />
+        {opp.primary_deadline && (
+          <span className="text-xs text-gray-400">
+            {format(parseLocalDate(opp.primary_deadline), 'MMM d')}
+          </span>
+        )}
+      </div>
     </Link>
   )
 }
@@ -113,10 +122,12 @@ function KanbanCol({
   col,
   opportunities,
   onDrop,
+  ageOf,
 }: {
   col:           { id: string; label: string }
-  opportunities: Opportunity[]
+  opportunities: OpportunityWithLogo[]
   onDrop:        (id: string, status: string) => void
+  ageOf:         (o: OpportunityWithLogo) => StageAge | null
 }) {
   const [over, setOver] = useState(false)
 
@@ -144,7 +155,7 @@ function KanbanCol({
         }`}
       >
         {opportunities.map(o => (
-          <KanbanCard key={o.id} opp={o} />
+          <KanbanCard key={o.id} opp={o} age={ageOf(o)} />
         ))}
       </div>
     </div>
@@ -154,7 +165,7 @@ function KanbanCol({
 // ── Main component ────────────────────────────────────────────
 export function Opportunities() {
   const queryClient  = useQueryClient()
-  const { labels: STATUS_LABELS, columnsFor } = usePipelineStatuses('partnership')
+  const { labels: STATUS_LABELS, columnsFor, all: allStages } = usePipelineStatuses('partnership')
   const [searchParams, setSearchParams] = useSearchParams()
   // Validate rather than assert. `as TabFilter` on a URL param is a lie: any
   // stale link — ?tab=partnership from before the tabs were reworked — indexes
@@ -202,7 +213,12 @@ export function Opportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, partnership_details(logo_url, confidence, next_action_date, engagement_nature, list_value, revisit_on)')
+              // The !opportunity_id hint is required, not decorative. partnership_details
+      // has TWO foreign keys to opportunities — opportunity_id (its primary key)
+      // and previous_opportunity_id (set when a lost deal is reopened as a new
+      // record). PostgREST cannot infer which one an embed means and fails the
+      // whole query with PGRST201, which silently empties the list.
+      .select('*, partnership_details!opportunity_id(logo_url, confidence, next_action_date, engagement_nature, list_value, revisit_on, stage_entered_at, decision_date, decision_body)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as OpportunityWithLogo[]
@@ -265,6 +281,21 @@ export function Opportunities() {
         return aV.localeCompare(bV) * dir
       })
     : defaultSorted
+
+  // One `today` for the whole render, so every badge on screen agrees, and one
+  // stage lookup rather than a find() per row.
+  const today = new Date()
+  const stageById = new Map(allStages.map(st => [st.id, st]))
+  const ageOf = (o: OpportunityWithLogo): StageAge | null =>
+    computeStageAge({
+      status:         o.status,
+      stageEnteredAt: o.partnership_details?.stage_entered_at ?? null,
+      decisionDate:   o.partnership_details?.decision_date ?? null,
+      decisionBody:   o.partnership_details?.decision_body ?? null,
+      revisitOn:      o.partnership_details?.revisit_on ?? null,
+      stage:          stageById.get(o.status),
+      today,
+    })
 
   const kanbanCols = columnsFor(TAB_STATUSES.pursuing)
   const kanbanOpps = pipelineOpps.filter(o =>
@@ -373,6 +404,7 @@ export function Opportunities() {
                 col={col}
                 opportunities={kanbanOpps.filter(o => o.status === col.id)}
                 onDrop={(oppId, status) => moveCard.mutate({ id: oppId, status })}
+                ageOf={ageOf}
               />
             ))}
           </div>
@@ -468,10 +500,13 @@ export function Opportunities() {
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
-                      STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {STATUS_LABELS[o.status] ?? o.status}
+                    <span className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                        STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {STATUS_LABELS[o.status] ?? o.status}
+                      </span>
+                      <StageAgeBadge age={ageOf(o)} />
                     </span>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 hidden md:table-cell">
