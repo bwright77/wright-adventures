@@ -57,19 +57,8 @@ export function OnAir() {
       <h3 className="text-2xl sm:text-3xl font-bold text-navy tracking-tight mt-1">
         In our own words
       </h3>
-      {/* The divider above stays full-bleed, but the reading content is held to
-          a sane measure. Inheriting the parent's 7xl ran the quotes to ~1300px —
-          about 160 characters a line, double a comfortable measure — and the
-          over-wide left column also sat shorter than the sidebar, so the right
-          overhung it. 60rem is the widest setting where the quotes still wrap to
-          a ~68-character measure; past it the line length jumps to ~102 and the
-          left column collapses to two lines, which is what made the sidebar
-          overhang by ~80px. Line length and column balance are the same knob. */}
-      <div className="grid lg:grid-cols-[1fr_340px] gap-10 lg:gap-12 mt-8 items-start max-w-[64rem]">
-        {/* Left is the conversation, right is what to take from it. The intro
-            sits here rather than full-width above so the two columns carry
-            comparable weight — two quotes alone left the right column
-            overhanging. */}
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-10 lg:gap-12 mt-8 items-start">
+        {/* Left is the conversation, right is what to take from it. */}
         <div>
           <p className="text-base text-gray-600 leading-relaxed font-light mb-8">
             Shane and Ben joined {RADIO.host} on{' '}
@@ -84,18 +73,13 @@ export function OnAir() {
           </div>
         </div>
 
-        {/* One column, not three stranded pieces. The host's phrase anchors it,
-            the station is the credential under it, and the CTA closes it — so
-            the block reads as two balanced halves instead of a thin strip of
-            logo beside a short list. */}
+        {/* One column: the phrase anchors it, the station credentials it, the
+            CTA closes it. */}
         <div className="lg:border-l lg:border-gray-300/60 lg:pl-10">
           <figure>
             <blockquote>
-              {/* 22px against the 30px headline, so "In our own words" carries
-                  the section and this defers to it — they were 28 and 30, near
-                  enough to compete. At 22px the phrase needs 257px on one line
-                  and the column now offers 300px, so it never wraps: breaking
-                  "Responsible / technology." across two lines was killing it. */}
+              {/* Smaller than the 30px headline so that carries the section, and
+                  small enough to stay on one line. */}
               <p className="text-[1.375rem] leading-tight text-navy font-bold tracking-tight whitespace-nowrap">
                 “{RADIO.pullQuote}”
               </p>
