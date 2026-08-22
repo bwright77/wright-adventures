@@ -40,7 +40,15 @@ export function OnAir() {
       <h3 className="text-2xl sm:text-3xl font-bold text-navy tracking-tight mt-1">
         In our own words
       </h3>
-      <div className="grid lg:grid-cols-[1fr_300px] gap-10 lg:gap-14 mt-8 items-start">
+      {/* The divider above stays full-bleed, but the reading content is held to
+          a sane measure. Inheriting the parent's 7xl ran the quotes to ~1300px —
+          about 160 characters a line, double a comfortable measure — and the
+          over-wide left column also sat shorter than the sidebar, so the right
+          overhung it. 60rem is the widest setting where the quotes still wrap to
+          a ~68-character measure; past it the line length jumps to ~102 and the
+          left column collapses to two lines, which is what made the sidebar
+          overhang by ~80px. Line length and column balance are the same knob. */}
+      <div className="grid lg:grid-cols-[1fr_300px] gap-10 lg:gap-12 mt-8 items-start max-w-[60rem]">
         {/* Left is the conversation, right is what to take from it. The intro
             sits here rather than full-width above so the two columns carry
             comparable weight — two quotes alone left the right column
@@ -79,7 +87,7 @@ export function OnAir() {
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group block mt-7 pt-7 border-t border-gray-300/60"
+            className="group block mt-6 pt-6 border-t border-gray-300/60"
           >
             <img
               src={RADIO.logo}
@@ -91,14 +99,14 @@ export function OnAir() {
             />
             <p className="mt-3 text-sm font-semibold text-navy">{RADIO.show}</p>
             <p className="text-xs text-gray-600 mt-1">{RADIO.airedOn}</p>
-            <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{RADIO.stationDial}</p>
+            <p className="text-xs text-gray-600 mt-1">{RADIO.stationDial}</p>
           </a>
 
           <a
             href={RADIO.episodeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-center gap-2.5 mt-6 w-full bg-navy hover:bg-navy/90 text-white text-sm font-medium px-5 py-3.5 rounded-lg transition-colors"
+            className="group flex items-center justify-center gap-2.5 mt-5 w-full bg-navy hover:bg-navy/90 text-white text-sm font-medium px-5 py-3.5 rounded-lg transition-colors"
           >
             <Radio size={17} strokeWidth={1.75} />
             Listen to the conversation
