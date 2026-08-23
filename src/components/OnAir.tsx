@@ -84,7 +84,7 @@ export function OnAir() {
                 “{RADIO.pullQuote}”
               </p>
             </blockquote>
-            <figcaption className="mt-2.5 text-xs text-gray-600 leading-relaxed">
+            <figcaption className="mt-2.5 text-sm text-gray-600 leading-relaxed">
               {RADIO.quoteSource}
             </figcaption>
           </figure>
@@ -103,9 +103,9 @@ export function OnAir() {
               loading="lazy"
               className="w-[124px] max-w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
             />
-            <p className="mt-3 text-sm font-semibold text-navy">{RADIO.show}</p>
-            <p className="text-xs text-gray-600 mt-1">{RADIO.airedOn}</p>
-            <p className="text-xs text-gray-600 mt-1">{RADIO.stationDial}</p>
+            <p className="mt-3 text-base font-semibold text-navy">{RADIO.show}</p>
+            <p className="text-sm text-gray-600 mt-1">{RADIO.airedOn}</p>
+            <p className="text-sm text-gray-600 mt-1">{RADIO.stationDial}</p>
           </a>
 
           <a
