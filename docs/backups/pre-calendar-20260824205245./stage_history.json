@@ -1,0 +1,29 @@
+[
+  {
+    "id": "005dd676-9b78-4721-a566-b904f01645df",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "from_stage": "discovery",
+    "to_stage": "nurture",
+    "changed_at": "2026-08-22T15:37:53.206857+00:00",
+    "changed_by": null,
+    "note": "No active opportunity right now; relationship worth keeping warm."
+  },
+  {
+    "id": "73f07500-e9f3-4390-a46e-b46e24c67ff1",
+    "opportunity_id": "beee1d11-a302-4fd6-9e91-f8191e726d4b",
+    "from_stage": "negotiating",
+    "to_stage": "approval",
+    "changed_at": "2026-08-22T16:00:00.172972+00:00",
+    "changed_by": null,
+    "note": "SOW delivered and agreed with Ashley; CEO bought in. Awaiting the board."
+  },
+  {
+    "id": "9bb1dae4-b62d-4a74-aa57-00447e3a693e",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "from_stage": "proposal",
+    "to_stage": "evaluation",
+    "changed_at": "2026-08-20T00:00:00+00:00",
+    "changed_by": null,
+    "note": "Moved into the interview stage Thu 2026-08-20 (recorded 08-22)."
+  }
+]

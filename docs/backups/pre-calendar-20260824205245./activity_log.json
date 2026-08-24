@@ -1,0 +1,319 @@
+[
+  {
+    "id": "3e005e8d-07a3-4556-975c-a964ff713a28",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "status_changed",
+    "details": {
+      "to": "partnership_outreach",
+      "from": "partnership_prospecting"
+    },
+    "created_at": "2026-03-05T17:08:39.290262+00:00"
+  },
+  {
+    "id": "81b5308d-0799-457e-80bc-36c74d8eb02f",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "owner_changed",
+    "details": {
+      "to": "Benjamin Wright"
+    },
+    "created_at": "2026-03-06T17:49:48.997717+00:00"
+  },
+  {
+    "id": "4ace480e-d790-4db1-94f8-0dd82dbb185c",
+    "opportunity_id": "f76148c1-c3b2-4797-8037-6ae9e7689a65",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_qualifying",
+      "from_stage": "partnership_prospecting"
+    },
+    "created_at": "2026-03-06T17:53:27.187301+00:00"
+  },
+  {
+    "id": "5159b898-06fc-4d36-9669-8032aacc0d46",
+    "opportunity_id": "f76148c1-c3b2-4797-8037-6ae9e7689a65",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_tasks_generated",
+    "details": {
+      "count": 2,
+      "stage": "partnership_qualifying"
+    },
+    "created_at": "2026-03-06T17:53:27.837112+00:00"
+  },
+  {
+    "id": "2bf87faa-d0ea-4d06-85e7-18f640de45ca",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "contact_added",
+    "details": {
+      "contact_name": "Sara Studdard",
+      "contact_title": "Partner"
+    },
+    "created_at": "2026-03-06T17:58:28.518183+00:00"
+  },
+  {
+    "id": "dc1f21cb-deae-4316-9acc-420763126518",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "contact_added",
+    "details": {
+      "contact_name": "Zoe Kircos",
+      "contact_title": "Partner"
+    },
+    "created_at": "2026-03-06T17:59:22.769804+00:00"
+  },
+  {
+    "id": "23ea6b38-87f0-48df-9cef-daf016d0e28e",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-03-06T18:07:24.642473+00:00"
+  },
+  {
+    "id": "970e22e4-82df-42a6-955d-6abac794cb24",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-03-06T18:22:27.131179+00:00"
+  },
+  {
+    "id": "ce0401d5-9069-4261-9ae6-7fef44414ba6",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-03-06T18:24:54.900224+00:00"
+  },
+  {
+    "id": "d6e47f91-ae7e-46ab-b6f5-0081f8c9d24f",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-03-06T19:22:49.985644+00:00"
+  },
+  {
+    "id": "4b30b567-1289-4148-bf10-aae03d83b1ea",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_discovery",
+      "from_stage": "partnership_prospecting"
+    },
+    "created_at": "2026-03-06T19:24:32.695298+00:00"
+  },
+  {
+    "id": "2c6af34b-7319-4dbd-9837-a16995fd49d3",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_tasks_generated",
+    "details": {
+      "count": 3,
+      "stage": "partnership_discovery"
+    },
+    "created_at": "2026-03-06T19:24:33.366196+00:00"
+  },
+  {
+    "id": "e591aa4a-21a2-4b5a-948e-ce1cb521d93e",
+    "opportunity_id": "f76148c1-c3b2-4797-8037-6ae9e7689a65",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_closed_lost",
+      "from_stage": "partnership_qualifying"
+    },
+    "created_at": "2026-08-18T19:59:00.170437+00:00"
+  },
+  {
+    "id": "5454b78a-fbaf-4416-bffc-d262aabe5d42",
+    "opportunity_id": "f76148c1-c3b2-4797-8037-6ae9e7689a65",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_tasks_generated",
+    "details": {
+      "count": 1,
+      "stage": "partnership_closed_lost"
+    },
+    "created_at": "2026-08-18T19:59:00.627847+00:00"
+  },
+  {
+    "id": "6d20a4e6-9901-4a43-8f25-3429d67618a8",
+    "opportunity_id": "beee1d11-a302-4fd6-9e91-f8191e726d4b",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_negotiating",
+      "from_stage": "partnership_prospecting"
+    },
+    "created_at": "2026-08-18T19:59:16.938933+00:00"
+  },
+  {
+    "id": "eace47e6-bda9-4e42-9784-8b043645f6ba",
+    "opportunity_id": "beee1d11-a302-4fd6-9e91-f8191e726d4b",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_tasks_generated",
+    "details": {
+      "count": 3,
+      "stage": "partnership_negotiating"
+    },
+    "created_at": "2026-08-18T19:59:17.327921+00:00"
+  },
+  {
+    "id": "dd5cd85d-7f78-4907-a1d1-d28dc38e2b35",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "lead_converted",
+    "details": {
+      "to": "partnership",
+      "from": "lead",
+      "note": "Proposal delivered — \"500 bikes a year. Now the funding to match.\" (Aug 2026)",
+      "stage": "partnership_proposal",
+      "source": "Colorado Nonprofit Association",
+      "fit_score": 16
+    },
+    "created_at": "2026-08-19T15:11:23.859839+00:00"
+  },
+  {
+    "id": "bf47dff9-cfb9-423e-862b-d06702a850ca",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "interaction_logged",
+    "details": {
+      "subject": "Check-in on proposal submission",
+      "direction": "outbound",
+      "contact_id": null,
+      "interaction_type": "email"
+    },
+    "created_at": "2026-08-19T15:13:46.975957+00:00"
+  },
+  {
+    "id": "a57a9d50-c847-4db0-9a60-ade18a0317bc",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "owner_changed",
+    "details": {
+      "to": "Shane Wright"
+    },
+    "created_at": "2026-08-19T15:14:49.726738+00:00"
+  },
+  {
+    "id": "7b8d2616-0e28-412f-ae79-2641cac37c9e",
+    "opportunity_id": "f76148c1-c3b2-4797-8037-6ae9e7689a65",
+    "actor_id": null,
+    "action": "tasks_cleared",
+    "details": {
+      "note": "backfill — predates the closed-lost rule",
+      "count": 3,
+      "reason": "partnership_closed_lost"
+    },
+    "created_at": "2026-08-19T15:39:22.830804+00:00"
+  },
+  {
+    "id": "f0546e88-85ff-416f-8459-9b76572b0068",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "lead_converted",
+    "details": {
+      "to": "partnership",
+      "from": "lead",
+      "stage": "partnership_discovery",
+      "source": "Colorado Nonprofit Association",
+      "fit_score": 12,
+      "publisher": "Climate Democracy Initiative (CDI)"
+    },
+    "created_at": "2026-08-20T02:23:56.125283+00:00"
+  },
+  {
+    "id": "494e9cdc-a072-4543-9ff7-a7012725c1f8",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "owner_changed",
+    "details": {
+      "to": "Benjamin Wright"
+    },
+    "created_at": "2026-08-20T02:24:15.81414+00:00"
+  },
+  {
+    "id": "689cb482-9aa8-4d94-b85b-c48998e3f752",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-08-20T02:25:49.776689+00:00"
+  },
+  {
+    "id": "2c1b5a51-b730-41cc-90cd-68678cf70a1b",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-08-20T02:29:03.337747+00:00"
+  },
+  {
+    "id": "371a0327-45b1-48ab-891b-bba74dede74b",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_proposal",
+      "from_stage": "partnership_discovery"
+    },
+    "created_at": "2026-08-21T15:00:53.504346+00:00"
+  },
+  {
+    "id": "f6b22256-bacc-4a33-8dc5-c3a54d3f3503",
+    "opportunity_id": "08aa280a-bcb9-4873-a119-5b8946e79708",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "stage_tasks_generated",
+    "details": {
+      "count": 4,
+      "stage": "partnership_proposal"
+    },
+    "created_at": "2026-08-21T15:00:54.750274+00:00"
+  },
+  {
+    "id": "49dfc01b-c663-4cdf-a2ee-2d3e44d571d5",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "actor_id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "action": "opportunity_edited",
+    "details": null,
+    "created_at": "2026-08-22T15:32:16.380763+00:00"
+  },
+  {
+    "id": "b8e7c20e-d819-4ad2-8e96-4acc13991cda",
+    "opportunity_id": "81148190-f2cf-43fa-87ed-1bfc765d419e",
+    "actor_id": null,
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_nurture",
+      "from_stage": "partnership_discovery"
+    },
+    "created_at": "2026-08-22T15:37:53.206857+00:00"
+  },
+  {
+    "id": "9f0d083c-85d7-4784-86fc-1cd121e2d392",
+    "opportunity_id": "beee1d11-a302-4fd6-9e91-f8191e726d4b",
+    "actor_id": null,
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_approval",
+      "from_stage": "partnership_negotiating"
+    },
+    "created_at": "2026-08-22T16:00:00.172972+00:00"
+  },
+  {
+    "id": "8d80b8ba-6150-4439-8199-cdfe47d151f2",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "actor_id": null,
+    "action": "stage_changed",
+    "details": {
+      "to_stage": "partnership_evaluation",
+      "from_stage": "partnership_proposal"
+    },
+    "created_at": "2026-08-22T16:28:06.458907+00:00"
+  }
+]

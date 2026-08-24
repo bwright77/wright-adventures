@@ -1,0 +1,1191 @@
+[
+  {
+    "id": "789a0fb2-2230-4cc3-a3fe-56da14c7b568",
+    "name": "Senior Director of Strategic Communications & Investor Experience",
+    "description": "Serve as organizational owner of investor messaging, strategy, and editorial standards; oversee the Investor Experience team responsible for producing investor communications and events; translate complex ideas and results into compelling donor materials.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-09-12T00:00:00+00:00",
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/senior-director-of-strategic-communications-investor-experience-in-denver-colorado-us/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/senior-director-of-strategic-communications-investor-experience-in-denver-colorado-us/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is an explicitly full-time W-2 senior director hire at a well-funded political reform organization — the engagement shape is the hardest possible barrier, and no relationship exists to reframe the conversation toward a fractional or contract arrangement. The strongest case for pursuit is that Unite America's investor communications work almost certainly sits on top of donor data infrastructure (CRM, segmentation, event logistics systems, reporting pipelines) where Wright Adventures' combined fundraising narrative and technical capability could displace a messier status quo — but that case cannot be made until the posting shape changes or a warm introduction surfaces.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is an explicitly full-time W-2 senior director hire at a well-funded political reform organization — the engagement shape is the hardest possible barrier, and no relationship exists to reframe the conversation toward a fractional or contract arrangement. The strongest case for pursuit is that Unite America's investor communications work almost certainly sits on top of donor data infrastructure (CRM, segmentation, event logistics systems, reporting pipelines) where Wright Adventures' combined fundraising narrative and technical capability could displace a messier status quo — but that case cannot be made until the posting shape changes or a warm introduction surfaces.",
+      "red_flags": [
+        "Full-time, benefits, W-2 hire — explicitly not a contract or fractional engagement",
+        "No mention of RFP, firm, contract, or vendor — no opening to reframe as a consulting engagement",
+        "No existing relationship with Unite America — entirely cold outreach required"
+      ],
+      "uncertain": [
+        "warm_path",
+        "both_halves"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($140,000–$175,000) signals a serious, funded engagement",
+        "Deadline of 2026-09-12 suggests active, near-term hiring cycle"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:58:40.982+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:58:41.118165+00:00",
+    "updated_at": "2026-08-18T22:01:53.5+00:00"
+  },
+  {
+    "id": "9a0c9bf4-12f5-4a25-a105-78dd0db38bf5",
+    "name": "Senior Director, Foundation Operations",
+    "description": "Serve as key strategic and operational leader within the U.S. Olympic & Paralympic Foundation, leading division-wide planning, business operations, financial management, and strategic initiatives to drive organizational effectiveness and long-term growth.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-08-28T00:00:00+00:00",
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/senior-director-foundation-operations-remote-in-denver-colorado-us/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/senior-director-foundation-operations-remote-in-denver-colorado-us/",
+    "external_id": null,
+    "ai_match_score": 11,
+    "ai_match_rationale": "The USOPC Foundation is a well-resourced organization in the outdoor recreation and Paralympic space with genuine operational complexity — budgeting, cross-functional planning, and foundation business management — where both halves of Wright Adventures could plausibly show up in a fractional proposal. However, this is posted as a full-time W-2 Senior Director role with no signal whatsoever that a firm engagement would be considered, making the engagement shape a hard zero and the path to a contract bid essentially nonexistent without a warm internal champion to reframe the conversation.",
+    "ai_score_detail": {
+      "total": 11,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 1,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "The USOPC Foundation is a well-resourced organization in the outdoor recreation and Paralympic space with genuine operational complexity — budgeting, cross-functional planning, and foundation business management — where both halves of Wright Adventures could plausibly show up in a fractional proposal. However, this is posted as a full-time W-2 Senior Director role with no signal whatsoever that a firm engagement would be considered, making the engagement shape a hard zero and the path to a contract bid essentially nonexistent without a warm internal champion to reframe the conversation.",
+      "red_flags": [
+        "Full-time, benefits, W-2 hire — no signal the role is open to a firm or contract arrangement",
+        "Colorado Springs primary location — outside Wright Adventures' Denver-centered network",
+        "No mention of RFP, RFQ, vendor, or contractor language anywhere in the posting",
+        "Senior Director title implies embedded organizational authority that does not translate to fractional engagement"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($140,000–$160,000) signals a real, funded position with budget authority",
+        "Outdoor recreation and Paralympic mission is adjacent to Wright Adventures' sector relationships"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:58:23.45+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:58:23.575313+00:00",
+    "updated_at": "2026-08-18T22:01:56.884+00:00"
+  },
+  {
+    "id": "7441bdaa-eb59-4c3f-9c00-d925254eb69d",
+    "name": "Chief Executive Officer",
+    "description": "Lead the Foundation's mission execution through the Board-approved Strategic Plan (2024-2028), including asset development, donor relations, board governance, community partnerships, and organizational management.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-09-12T00:00:00+00:00",
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/chief-executive-officer-in-colorado-springs-colorado-us/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/chief-executive-officer-in-colorado-springs-colorado-us/",
+    "external_id": null,
+    "ai_match_score": 11,
+    "ai_match_rationale": "This is an unambiguous full-time W-2 CEO hire at a major community foundation — the engagement shape is the disqualifying fact, and no reframing converts it into a fractional or contract arrangement a firm could bid. The both_halves score reflects that a community foundation of this scale almost certainly carries donor CRM complexity, gift processing burden, and reporting infrastructure that would benefit from Wright Adventures' combined capability, but that upside is irrelevant when the door is a permanent employment offer.",
+    "ai_score_detail": {
+      "total": 11,
+      "action": "decline",
+      "scores": {
+        "expansion": 1,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is an unambiguous full-time W-2 CEO hire at a major community foundation — the engagement shape is the disqualifying fact, and no reframing converts it into a fractional or contract arrangement a firm could bid. The both_halves score reflects that a community foundation of this scale almost certainly carries donor CRM complexity, gift processing burden, and reporting infrastructure that would benefit from Wright Adventures' combined capability, but that upside is irrelevant when the door is a permanent employment offer.",
+      "red_flags": [
+        "Full-time, W-2, benefits — explicitly a permanent hire, not a contract or fractional engagement",
+        "Must be local to Colorado Springs — Wright Adventures is Denver-based",
+        "Requires minimum 10 years senior executive management experience framed as an employee credential, not a firm qualification",
+        "No indication the organization would consider a firm or fractional arrangement"
+      ],
+      "uncertain": [],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($225,000–$250,000) signals organizational seriousness and budget clarity"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:57:23.219+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:57:23.390511+00:00",
+    "updated_at": "2026-08-18T22:01:49.284+00:00"
+  },
+  {
+    "id": "cfd06e8c-f12d-44bf-9c09-1d88646276d9",
+    "name": "Senior Director, Foundation Operations",
+    "description": "Strategic and operational leader within the U.S. Olympic & Paralympic Foundation driving organizational effectiveness, financial stewardship, and long-term growth. Leads division-wide planning, business operations, financial management, and strategic initiatives while serving as connector between Development, Finance, Hospitality, and Strategic Advancement.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-08-28T00:00:00+00:00",
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/united-states-olympic-paralympic-committee-senior-director-foundation-operations/",
+    "external_url": "https://coloradononprofits.org/careers/united-states-olympic-paralympic-committee-senior-director-foundation-operations/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is a full-time W-2 senior director role at a major national sports organization — the engagement shape is the hardest possible barrier, and nothing in the posting signals openness to a firm or contract arrangement. The underlying work (development operations, financial stewardship, Salesforce and ERP oversight, campaign planning) does genuinely span both halves Wright Adventures offers, and confluenceco.org is a credible analogue on the donor/grant systems axis, but none of that matters if the USOPC is hiring an employee and not a vendor.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 senior director role at a major national sports organization — the engagement shape is the hardest possible barrier, and nothing in the posting signals openness to a firm or contract arrangement. The underlying work (development operations, financial stewardship, Salesforce and ERP oversight, campaign planning) does genuinely span both halves Wright Adventures offers, and confluenceco.org is a credible analogue on the donor/grant systems axis, but none of that matters if the USOPC is hiring an employee and not a vendor.",
+      "red_flags": [
+        "Full-time, exempt, W-2 hire — not a contract or firm engagement",
+        "No language suggesting RFP, RFQ, consulting, or firm welcome",
+        "Colorado Springs location — outside Denver metro; hybrid offered but not guaranteed remote",
+        "Role requires supporting executive leadership and board in an employee capacity"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($140,000–$160,000) signals budget seriousness",
+        "Explicit mention of Salesforce, ERP systems, and dashboarding tools — systems work is named",
+        "Cross-functional connector role implies multiple vendors or teams already involved",
+        "Large-scale campaign planning experience required — suggests a funded initiative with defined scope"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:29:13.29+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:29:13.465086+00:00",
+    "updated_at": "2026-08-18T22:29:13.465086+00:00"
+  },
+  {
+    "id": "018d86a3-246a-4559-b79f-d230a571af7a",
+    "name": "Accessibility Program Coordinator",
+    "description": "Coordinate accessibility initiatives and programs including Trailability and adaptive recreation, manage volunteers, develop communications, and build community partnerships to expand outdoor access for people of all abilities.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/el-paso-county-nature-centers-accessibility-program-coordinator/",
+    "external_url": "https://coloradononprofits.org/careers/el-paso-county-nature-centers-accessibility-program-coordinator/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "Outdoor recreation access and adaptive programming land squarely in Wright Adventures' mission areas, and the independent contractor structure is at least arguable for a firm — but the role as described is a coordinator-level execution position (volunteer management, social media, scheduling) with no evident technical or fundraising systems component that would pull through both halves. The geographic requirement (El Paso County) and the absence of any stated compensation or budget signal make this a speculative, likely low-value engagement.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "monitor",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 1,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 2,
+        "mission_alignment": 3
+      },
+      "rationale": "Outdoor recreation access and adaptive programming land squarely in Wright Adventures' mission areas, and the independent contractor structure is at least arguable for a firm — but the role as described is a coordinator-level execution position (volunteer management, social media, scheduling) with no evident technical or fundraising systems component that would pull through both halves. The geographic requirement (El Paso County) and the absence of any stated compensation or budget signal make this a speculative, likely low-value engagement.",
+      "red_flags": [
+        "Compensation not stated, no budget signal",
+        "Must be local to El Paso County — outside Wright Adventures' primary Denver geography",
+        "Heavy coordination and clerical component — volunteer management, scheduling, social media posting",
+        "No 990 or public financials referenced; small nature center program with no budget signal",
+        "Role framed as a single coordinator hire, not a firm or project engagement"
+      ],
+      "uncertain": [
+        "contract_value",
+        "engagement_shape"
+      ],
+      "downgrades": [],
+      "green_flags": [
+        "Independent contractor / 1099 engagement structure",
+        "Fixed program scope (Trailability, adaptive recreation) suggests a defined deliverable window"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:33:56.872+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:33:57.062082+00:00",
+    "updated_at": "2026-08-18T22:33:57.062082+00:00"
+  },
+  {
+    "id": "5e32b2ce-ba1b-4633-bed5-382edf73843d",
+    "name": "Managing Director",
+    "description": "Leads organizational operations, fundraising, and sustainability during a strategic transition period. Oversees DACAWorks flagship program supporting DACA renewals, legal education, clinics, and grantmaking. Reports to Board of Directors and supervises DACAWorks Program Manager.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/juntos-community-managing-director/",
+    "external_url": "https://coloradononprofits.org/careers/juntos-community-managing-director/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is a full-time W-2 Managing Director hire — the engagement shape is the hardest possible wall, and no amount of mission fit or technical pull-through changes that structural fact. The bilingual requirement and immigrant-services mission do create a plausible reframe (riversisterscolorado.com is the closest portfolio analogue on both the bilingual and equity-centered community axes), and an organization running DACA clinics, grantmaking, and legal education almost certainly has CRM and data infrastructure problems that would benefit from both halves — but none of that matters if the organization is only willing to hire a person.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 Managing Director hire — the engagement shape is the hardest possible wall, and no amount of mission fit or technical pull-through changes that structural fact. The bilingual requirement and immigrant-services mission do create a plausible reframe (riversisterscolorado.com is the closest portfolio analogue on both the bilingual and equity-centered community axes), and an organization running DACA clinics, grantmaking, and legal education almost certainly has CRM and data infrastructure problems that would benefit from both halves — but none of that matters if the organization is only willing to hire a person.",
+      "red_flags": [
+        "Full-time, W-2, benefits-eligible hire — engagement_shape is 0",
+        "Bilingual English/Spanish strongly preferred — Wright Adventures would need to address this gap explicitly",
+        "No 990 or public financials surfaced to confirm organizational stability during stated transition period",
+        "Heavy operational supervision component (Board management, staff supervision) that is difficult to deliver fractionally"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Compensation range stated ($80,000–$89,000), confirming budget exists and is substantial",
+        "Strategic transition period signals a time-bounded, high-stakes engagement where outside expertise is often more appropriate than a permanent hire",
+        "Grantmaking and legal clinic operations imply data, compliance, and reporting infrastructure that would benefit from technical capability"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:32:51.495+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:32:51.691598+00:00",
+    "updated_at": "2026-08-19T14:55:07.48+00:00"
+  },
+  {
+    "id": "3b083a9f-aa2e-4b55-a1ec-469c8b8a65ae",
+    "name": "Director of Operations",
+    "description": "Lead organizational infrastructure, systems, and people operations for a growing nonprofit. Develop internal processes, oversee HR functions, strengthen financial systems, and prepare the organization for sustainable growth in the local food sector.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/boulder-county-farmers-markets-director-of-operations/",
+    "external_url": "https://coloradononprofits.org/careers/boulder-county-farmers-markets-director-of-operations/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is a full-time W-2 Director of Operations hire — the engagement shape is the hardest possible barrier, and no language in the posting suggests openness to a firm or contract arrangement. The strongest case for Wright Adventures is that the underlying need (HR systems, financial infrastructure, compliance, organizational scaling) sits directly on top of the kind of data and process work the firm does, and Mo'Betta Green demonstrates commerce and admin capability in the local food/market sector, making a same-sector reference available if a fractional conversation could be opened.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 Director of Operations hire — the engagement shape is the hardest possible barrier, and no language in the posting suggests openness to a firm or contract arrangement. The strongest case for Wright Adventures is that the underlying need (HR systems, financial infrastructure, compliance, organizational scaling) sits directly on top of the kind of data and process work the firm does, and Mo'Betta Green demonstrates commerce and admin capability in the local food/market sector, making a same-sector reference available if a fractional conversation could be opened.",
+      "red_flags": [
+        "Full-time, exempt W-2 hire — the posting is unambiguously an employment search, not a contract or RFP",
+        "No language suggesting openness to a firm, fractional arrangement, or contract engagement",
+        "Heavy operational/HR management component (staff management, internal process ownership) that is difficult to deliver fractionally"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($70,000–$80,000 annually) signals budget seriousness and translates to a contract value well above the $5k floor if reframed as fractional",
+        "Explicit systems-building mandate (HR, financial systems, compliance, organizational infrastructure) creates natural pull-through for both halves"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:29:41.34+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:29:41.523681+00:00",
+    "updated_at": "2026-08-18T22:29:41.523681+00:00"
+  },
+  {
+    "id": "1e29a302-1857-49dd-875b-d69f30e8522a",
+    "name": "Request for Qualifications: Development & Communications Contractor",
+    "description": "Provides development, communications, and related administrative support services including donor stewardship, fundraising campaign support, newsletter and social media content development, website updates, and administrative project support.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/united-way-of-eagle-river-valley-request-for-qualifications-development-communications-contractor/",
+    "external_url": "https://coloradononprofits.org/careers/united-way-of-eagle-river-valley-request-for-qualifications-development-communications-contractor/",
+    "external_id": null,
+    "ai_match_score": 14,
+    "ai_match_rationale": "This is a genuine RFQ for contractor services covering donor stewardship, CRM (Salesforce named), communications, and website work — exactly the combination where Wright Adventures displaces a solo generalist with a firm that brings both fundraising judgment and technical capability together. The hard counter is the strong geographic preference for Western Slope community knowledge, which is a real disadvantage for a Denver-based firm with no stated Eagle River Valley connections.",
+    "ai_score_detail": {
+      "total": 14,
+      "action": "pursue_lean",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 3,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 3,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a genuine RFQ for contractor services covering donor stewardship, CRM (Salesforce named), communications, and website work — exactly the combination where Wright Adventures displaces a solo generalist with a firm that brings both fundraising judgment and technical capability together. The hard counter is the strong geographic preference for Western Slope community knowledge, which is a real disadvantage for a Denver-based firm with no stated Eagle River Valley connections.",
+      "red_flags": [
+        "Compensation not stated — no budget signal",
+        "Strong geographic preference for Western Slope / Eagle River Valley knowledge — Denver-based firm is disadvantaged",
+        "No deadline stated — procurement timeline unclear",
+        "Heavy communications and administrative support component — newsletter, social media, scheduling-adjacent work"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [],
+      "green_flags": [
+        "The words 'RFQ' appear in the posting title — explicitly open to contractor/firm bids",
+        "Salesforce named as preferred CRM — signals data and systems work underneath the development role",
+        "Website management and email marketing platforms listed — technical pull-through is present",
+        "Independent contractor engagement structure — 1099-compatible"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:35:52.16+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:35:52.382714+00:00",
+    "updated_at": "2026-08-18T22:35:52.382714+00:00"
+  },
+  {
+    "id": "0a59cbc8-7a27-4265-b859-a8593a11e878",
+    "name": "Development Director",
+    "description": "Senior leadership position responsible for driving donor programs, fundraising campaigns, grant writing, and community engagement initiatives. Manages individual and corporate giving programs, government and foundation grants, and oversees fundraising events and donor relationships to increase organizational visibility and financial support.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/rocky-mountain-field-institute-development-director/",
+    "external_url": "https://coloradononprofits.org/careers/rocky-mountain-field-institute-development-director/",
+    "external_id": null,
+    "ai_match_score": 13,
+    "ai_match_rationale": "RMFI is a strong mission match — conservation, outdoor access, Colorado — and the role's fundraising scope (donor programs, grants, corporate giving, events) paired with the explicit database management requirement signals real pull-through for the technical half, particularly CRM remediation and digital fundraising infrastructure. The fatal problem is engagement shape: this is an explicitly full-time, exempt, salaried W-2 position with no signal the organization would consider a firm, making a fractional pitch a cold reframe against a live hiring process.",
+    "ai_score_detail": {
+      "total": 13,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 3
+      },
+      "rationale": "RMFI is a strong mission match — conservation, outdoor access, Colorado — and the role's fundraising scope (donor programs, grants, corporate giving, events) paired with the explicit database management requirement signals real pull-through for the technical half, particularly CRM remediation and digital fundraising infrastructure. The fatal problem is engagement shape: this is an explicitly full-time, exempt, salaried W-2 position with no signal the organization would consider a firm, making a fractional pitch a cold reframe against a live hiring process.",
+      "red_flags": [
+        "Full-time, exempt, salaried W-2 position — not a contract or 1099 engagement",
+        "No RFP, RFQ, or any language suggesting a firm could bid",
+        "Colorado Springs location with no existing Wright Adventures presence or relationship there",
+        "Role includes driving requirement and background check — employee-specific screening language"
+      ],
+      "uncertain": [
+        "warm_path",
+        "expansion"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($70,000–$80,000) confirms organizational budget seriousness",
+        "Explicit database management requirement signals CRM work is present and likely underserved",
+        "Remote/hybrid offered — not geographically locked to Colorado Springs"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:40:44.543+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:40:44.758044+00:00",
+    "updated_at": "2026-08-18T22:40:44.758044+00:00"
+  },
+  {
+    "id": "168ed58b-1c95-4553-83fc-8f9d7748a72a",
+    "name": "Director of Finance",
+    "description": "Serve as strategic thought partner for finance, business planning, budgeting, and administration. Provide financial reporting, audit coordination, budgeting, cash flow management, and human resources support.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://api.coloradononprofits.org/careers/anchor-center-for-blind-children-director-of-finance/",
+    "external_url": "https://api.coloradononprofits.org/careers/anchor-center-for-blind-children-director-of-finance/",
+    "external_id": null,
+    "ai_match_score": 9,
+    "ai_match_rationale": "At 12–16 hours/week and $40–50/hr, annualized value could reach $30–40k, and a fractional finance arrangement is plausible to fill via a firm — but the posting is written as a part-time employee role with CPA preferred and Blackbaud Financial/Raiser's Edge requirements, neither of which Wright Adventures holds as a credential. The engagement is single-discipline finance/accounting with no meaningful pull-through for technical or fundraising strategy, and the organization sits outside Wright Adventures' mission areas with no warm path.",
+    "ai_score_detail": {
+      "total": 9,
+      "action": "monitor",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 1,
+        "contract_value": 2,
+        "portfolio_proof": 1,
+        "engagement_shape": 1,
+        "mission_alignment": 1
+      },
+      "rationale": "At 12–16 hours/week and $40–50/hr, annualized value could reach $30–40k, and a fractional finance arrangement is plausible to fill via a firm — but the posting is written as a part-time employee role with CPA preferred and Blackbaud Financial/Raiser's Edge requirements, neither of which Wright Adventures holds as a credential. The engagement is single-discipline finance/accounting with no meaningful pull-through for technical or fundraising strategy, and the organization sits outside Wright Adventures' mission areas with no warm path.",
+      "red_flags": [
+        "Requires CPA certification (credential Wright Adventures does not hold)",
+        "Role written as part-time employee, not contract or 1099",
+        "Heavy finance/accounting/HR clerical component outside core WA capability",
+        "No mission alignment with Wright Adventures' listed mission areas (disability services, blind children)",
+        "Blackbaud Financial Edge requirement is a specific credential gap",
+        "No RFP, RFQ, or firm language — individual hire framing throughout"
+      ],
+      "uncertain": [
+        "engagement_shape",
+        "warm_path",
+        "expansion"
+      ],
+      "downgrades": [],
+      "green_flags": [
+        "Stated compensation range ($40–50/hr)",
+        "Part-time hours (12–16/week) suggest contractor-compatible structure",
+        "Blackbaud Raiser's Edge mention signals possible data/CRM adjacency"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T20:53:38.47+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T20:53:38.618892+00:00",
+    "updated_at": "2026-08-18T21:04:07.15+00:00"
+  },
+  {
+    "id": "e1ff7a6c-8446-4587-a01e-baabf67d9a6c",
+    "name": "Communications Associate",
+    "description": "Advance strategic priorities through executing communications strategies. Write, design, and edit content for external and internal distribution; create digital media assets; support video and audio production.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://api.coloradononprofits.org/careers/aclu-of-colorado-communications-associate/",
+    "external_url": "https://api.coloradononprofits.org/careers/aclu-of-colorado-communications-associate/",
+    "external_id": null,
+    "ai_match_score": 10,
+    "ai_match_rationale": "This is a part-time employee role at a civil rights organization — not a contract or RFP — and the work (writing, copy-editing, Adobe Creative Suite, WordPress) is single-discipline communications execution that a competent solo contractor could handle without Wright Adventures' dual fundraising-plus-engineering differentiator. The ACLU of Colorado is a high-profile mission-driven organization where a foothold could open doors to broader digital or development strategy work, but the posting itself offers no structural path for a firm to enter.",
+    "ai_score_detail": {
+      "total": 10,
+      "action": "monitor",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 1,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 1,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a part-time employee role at a civil rights organization — not a contract or RFP — and the work (writing, copy-editing, Adobe Creative Suite, WordPress) is single-discipline communications execution that a competent solo contractor could handle without Wright Adventures' dual fundraising-plus-engineering differentiator. The ACLU of Colorado is a high-profile mission-driven organization where a foothold could open doors to broader digital or development strategy work, but the posting itself offers no structural path for a firm to enter.",
+      "red_flags": [
+        "Part-time employee role, not a contract or firm engagement",
+        "Compensation blank with no range",
+        "Role requires individual contributor skills (Adobe Creative Suite, copy-editing) not a firm's services",
+        "No mention of RFP, RFQ, or firm"
+      ],
+      "uncertain": [
+        "contract_value",
+        "engagement_shape"
+      ],
+      "downgrades": [],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T20:54:00.681+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T20:54:00.911212+00:00",
+    "updated_at": "2026-08-18T21:04:21.74+00:00"
+  },
+  {
+    "id": "4dd11f99-3062-4165-9215-49712a2737c3",
+    "name": "Development and Fundraising Support Specialist",
+    "description": "Provide essential support to fundraising and development efforts including donor stewardship, donor records management, gift processing, social media, website updates, newsletter coordination, and development-related administrative needs.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://api.coloradononprofits.org/careers/colorado-therapeutic-riding-center-inc-development-and-fundraising-support-specialist/",
+    "external_url": "https://api.coloradononprofits.org/careers/colorado-therapeutic-riding-center-inc-development-and-fundraising-support-specialist/",
+    "external_id": null,
+    "ai_match_score": 9,
+    "ai_match_rationale": "This is a part-time employee role focused on administrative development support — donor records, gift processing, social media, newsletter coordination — work a competent solo contractor could handle without any technical depth, which undercuts Wright Adventures' core differentiator. The role is framed as a specialist hire, not a firm engagement, and the absence of stated compensation combined with a heavy clerical component makes the economics difficult to justify.",
+    "ai_score_detail": {
+      "total": 9,
+      "action": "monitor",
+      "scores": {
+        "expansion": 1,
+        "warm_path": 1,
+        "both_halves": 1,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 1,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a part-time employee role focused on administrative development support — donor records, gift processing, social media, newsletter coordination — work a competent solo contractor could handle without any technical depth, which undercuts Wright Adventures' core differentiator. The role is framed as a specialist hire, not a firm engagement, and the absence of stated compensation combined with a heavy clerical component makes the economics difficult to justify.",
+      "red_flags": [
+        "Compensation blank with no range",
+        "Heavy clerical component — scheduling, filing, gift processing, newsletter coordination, social media updates",
+        "Part-time employee role (15–20 hours/week) with no indication a firm would be considered",
+        "No budget signal, no 990 reference, no funded-window language"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T20:54:35.707+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T20:54:35.855055+00:00",
+    "updated_at": "2026-08-18T21:13:25.964+00:00"
+  },
+  {
+    "id": "3274c938-37a0-496f-bbde-7d9e23529cc7",
+    "name": "Director of Philanthropy",
+    "description": "Leads comprehensive fund development strategy including major giving, capital campaigns, annual giving, and planned giving initiatives. Supervises grants and donor engagement staff, manages donor relationships, oversees grant writing and compliance, and integrates development with communications and marketing.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/jefferson-center-for-mental-health-director-of-philanthropy/",
+    "external_url": "https://coloradononprofits.org/careers/jefferson-center-for-mental-health-director-of-philanthropy/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is a full-time W-2 Director of Philanthropy role — the engagement shape is the hardest possible barrier, and the compensation band ($94–116k) is structured as salary, not a contract budget Wright Adventures could capture. The both_halves score is held at 2 because a comprehensive fund development operation at a mid-size mental health nonprofit almost certainly involves a donor CRM, grant compliance tracking, and reporting infrastructure where the technical half would pull through, but the posting frames this entirely as a senior employee hire with supervisory authority, making a firm pitch structurally awkward.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 Director of Philanthropy role — the engagement shape is the hardest possible barrier, and the compensation band ($94–116k) is structured as salary, not a contract budget Wright Adventures could capture. The both_halves score is held at 2 because a comprehensive fund development operation at a mid-size mental health nonprofit almost certainly involves a donor CRM, grant compliance tracking, and reporting infrastructure where the technical half would pull through, but the posting frames this entirely as a senior employee hire with supervisory authority, making a firm pitch structurally awkward.",
+      "red_flags": [
+        "Full-time, benefits, W-2 hire — explicit employee role",
+        "Supervisory authority over staff is required — not compatible with fractional firm engagement",
+        "No mention of contract, RFP, or firm engagement",
+        "Mental health is outside Wright Adventures' listed mission areas and portfolio sectors"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range provided ($94,100–$116,700)",
+        "Supervisory scope and grant management complexity suggest ongoing systems and data needs that could generate follow-on work"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:42:34.317+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:42:34.539098+00:00",
+    "updated_at": "2026-08-19T14:54:47.096+00:00"
+  },
+  {
+    "id": "c505aad0-e815-43a9-ae99-f05b2e82ddf2",
+    "name": "Director of Development",
+    "description": "Design and build a fundraising program capable of generating an additional $500,000 annually within five years while refining systems, culture, and relationship stewardship for long-term philanthropic growth.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/job-category/nonprofit-charitable-organizations/",
+    "external_url": null,
+    "external_id": null,
+    "ai_match_score": 10,
+    "ai_match_rationale": "AMGA is a credible outdoor recreation organization where Shane's fundraising background and the firm's track record with outdoor/recreation-adjacent clients (betterbikeshare.org, Confluence, Adaptive Action Sports network) make a compelling case — and a $500K/year fundraising build almost certainly requires CRM infrastructure, donor data systems, and digital giving tools that pull in the technical half. The hard stop is engagement shape: this is an explicit full-time Director of Development hire, not a contract or fractional arrangement, and there is no signal the organization is open to a firm filling the role.",
+    "ai_score_detail": {
+      "total": 10,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "AMGA is a credible outdoor recreation organization where Shane's fundraising background and the firm's track record with outdoor/recreation-adjacent clients (betterbikeshare.org, Confluence, Adaptive Action Sports network) make a compelling case — and a $500K/year fundraising build almost certainly requires CRM infrastructure, donor data systems, and digital giving tools that pull in the technical half. The hard stop is engagement shape: this is an explicit full-time Director of Development hire, not a contract or fractional arrangement, and there is no signal the organization is open to a firm filling the role.",
+      "red_flags": [
+        "Full-time, benefits, W-2 role — explicitly a Director-level hire",
+        "Compensation not stated, no range provided",
+        "No mention of contract, fractional, or firm engagement"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:08:20.349+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:08:20.505671+00:00",
+    "updated_at": "2026-08-18T21:08:20.505671+00:00"
+  },
+  {
+    "id": "53ea65ed-a0c9-44a4-861a-3d5b47c93e2d",
+    "name": "Communications Director",
+    "description": "Communications director for nonprofit providing life-changing outdoor adventures for young adults impacted by cancer and other serious health conditions, focusing on the healing power of adventure.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/job-category/nonprofit-charitable-organizations/",
+    "external_url": null,
+    "external_id": null,
+    "ai_match_score": 10,
+    "ai_match_rationale": "First Descents is a well-established Denver outdoor-adventure nonprofit whose mission (healing through adventure for young adults with serious illness) sits adjacent to Wright Adventures' core areas of outdoor recreation, equity, and youth pathways, and a communications director engagement would almost certainly surface donor CRM, digital fundraising infrastructure, and impact reporting needs where both halves apply. The posting is an explicit full-time W-2 hire with no stated compensation, no contract framing, and no warm path beyond sector adjacency, making it a poor fit for a fractional firm bid without a significant reframe.",
+    "ai_score_detail": {
+      "total": 10,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "First Descents is a well-established Denver outdoor-adventure nonprofit whose mission (healing through adventure for young adults with serious illness) sits adjacent to Wright Adventures' core areas of outdoor recreation, equity, and youth pathways, and a communications director engagement would almost certainly surface donor CRM, digital fundraising infrastructure, and impact reporting needs where both halves apply. The posting is an explicit full-time W-2 hire with no stated compensation, no contract framing, and no warm path beyond sector adjacency, making it a poor fit for a fractional firm bid without a significant reframe.",
+      "red_flags": [
+        "Full-time, benefits, W-2 role — not framed as contract or open to a firm",
+        "Compensation not stated, no budget signal",
+        "No RFP, RFQ, or firm language in the posting"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:09:38.589+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:09:38.739325+00:00",
+    "updated_at": "2026-08-18T21:09:38.739325+00:00"
+  },
+  {
+    "id": "ac1803b7-2886-45d9-b8da-489d4120f8a5",
+    "name": "Regional Director of Communications",
+    "description": "Key leader and storyteller for the American Red Cross Colorado-Wyoming Region, shaping communications strategy, amplifying impact, and driving communications and marketing functions that advance regional business objectives and strengthen volunteer engagement and revenue generation.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/job-category/nonprofit-charitable-organizations/",
+    "external_url": null,
+    "external_id": null,
+    "ai_match_score": 9,
+    "ai_match_rationale": "This is an explicitly full-time W-2 hire at a large national organization, which is the single hardest structural barrier Wright Adventures faces — the engagement shape alone disqualifies it under normal thresholds. The strongest case for pursuit would be reframing the conversation entirely: Red Cross Colorado-Wyoming almost certainly has CRM debt, manual impact reporting, and digital fundraising infrastructure that underperforms, and Wright Adventures could propose fractional communications strategy plus technical remediation — but that pitch requires getting in front of someone who can authorize a contract, and there is no warm path to make that conversation easy.",
+    "ai_score_detail": {
+      "total": 9,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 1
+      },
+      "rationale": "This is an explicitly full-time W-2 hire at a large national organization, which is the single hardest structural barrier Wright Adventures faces — the engagement shape alone disqualifies it under normal thresholds. The strongest case for pursuit would be reframing the conversation entirely: Red Cross Colorado-Wyoming almost certainly has CRM debt, manual impact reporting, and digital fundraising infrastructure that underperforms, and Wright Adventures could propose fractional communications strategy plus technical remediation — but that pitch requires getting in front of someone who can authorize a contract, and there is no warm path to make that conversation easy.",
+      "red_flags": [
+        "Full-time, benefits, W-2 role explicitly",
+        "Compensation blank with no range",
+        "No stated deadline — no urgency signal",
+        "Large national organization with internal comms infrastructure — low likelihood of opening a fractional contract"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:09:29.815+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:09:29.943772+00:00",
+    "updated_at": "2026-08-18T21:13:21.53+00:00"
+  },
+  {
+    "id": "95d136f6-1abd-48a5-a400-72dd404b0ba5",
+    "name": "Institutional Relations Manager",
+    "description": "Identifies, cultivates, solicits, and stewards foundation and corporate funding to secure significant philanthropic support; manages a portfolio of institutional donors and prospects in collaboration with UCAR and NSF NCAR leaders.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/job-category/nonprofit-charitable-organizations/",
+    "external_url": null,
+    "external_id": null,
+    "ai_match_score": 10,
+    "ai_match_rationale": "This is an explicit full-time W-2 hire at a major research institution, which is the single hardest structural barrier — UCAR is not looking for a firm and there is no signal they would accept one. The strongest case for engagement is that UCAR's institutional fundraising almost certainly sits on top of systems (Raiser's Edge or Salesforce NPSP are standard at this scale) that could benefit from the technical half, and conservation/atmospheric science is adjacent to Wright Adventures' outdoor and watershed mission areas, but none of that overcomes a 0 on engagement shape.",
+    "ai_score_detail": {
+      "total": 10,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is an explicit full-time W-2 hire at a major research institution, which is the single hardest structural barrier — UCAR is not looking for a firm and there is no signal they would accept one. The strongest case for engagement is that UCAR's institutional fundraising almost certainly sits on top of systems (Raiser's Edge or Salesforce NPSP are standard at this scale) that could benefit from the technical half, and conservation/atmospheric science is adjacent to Wright Adventures' outdoor and watershed mission areas, but none of that overcomes a 0 on engagement shape.",
+      "red_flags": [
+        "Full-time, benefits, W-2 hire — explicit job posting, not a contract or RFP",
+        "Compensation not stated, no budget signal",
+        "No indication UCAR has ever engaged fractional or firm-based development leadership"
+      ],
+      "uncertain": [
+        "contract_value",
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": []
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:09:10.359+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:09:10.518339+00:00",
+    "updated_at": "2026-08-18T21:13:32.932+00:00"
+  },
+  {
+    "id": "8ad80c12-229c-4df2-8a18-b6456516ca75",
+    "name": "RFQ: National Western Center Triangle Sitewide Design Services On-Call",
+    "description": "On-call design services for National Western Center Triangle site plan refinement and horizontal infrastructure, including coordination for future facilities such as Arena, Parking Garage, Central Utility Plant, and renovations to 1909 Arena.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-08-12T00:00:00+00:00",
+    "source": "Denver Procurement",
+    "source_url": "https://www.denvergov.org/Business/Contract-Administration/Bids/202684681",
+    "external_url": "https://www.denvergov.org/Business/Contract-Administration/Bids/202684681",
+    "external_id": null,
+    "ai_match_score": 9,
+    "ai_match_rationale": "This is a civil/horizontal infrastructure design services contract for a major municipal campus — site plan refinement, arena, parking garage, utility plant — which is squarely in the domain of licensed civil engineers, architects, and urban planners, not a technology and development consultancy; Wright Adventures has no relevant portfolio, no warm path into DOTI, and neither half of their value proposition is implicated by the work. The engagement shape and likely contract scale are attractive on paper, but the work is categorically outside what the firm sells.",
+    "ai_score_detail": {
+      "total": 9,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 0,
+        "both_halves": 0,
+        "contract_value": 3,
+        "portfolio_proof": 0,
+        "engagement_shape": 3,
+        "mission_alignment": 1
+      },
+      "rationale": "This is a civil/horizontal infrastructure design services contract for a major municipal campus — site plan refinement, arena, parking garage, utility plant — which is squarely in the domain of licensed civil engineers, architects, and urban planners, not a technology and development consultancy; Wright Adventures has no relevant portfolio, no warm path into DOTI, and neither half of their value proposition is implicated by the work. The engagement shape and likely contract scale are attractive on paper, but the work is categorically outside what the firm sells.",
+      "red_flags": [
+        "Compensation not stated",
+        "Work requires licensed civil/architectural/engineering design credentials Wright Adventures does not hold",
+        "No mission alignment — municipal infrastructure, not a mission-driven organization",
+        "Entirely cold — no relationship with City and County of Denver DOTI",
+        "MWBE participation goal of 21% adds compliance overhead with no offsetting advantage",
+        "Neither fundraising nor technology leadership is implicated by the scope"
+      ],
+      "uncertain": [
+        "contract_value"
+      ],
+      "downgrades": [
+        "No warm path in — cold outreach rarely converts"
+      ],
+      "green_flags": [
+        "RFQ explicitly open to a firm",
+        "On-call contract structure suggests multi-year funded window",
+        "National Western Center is a large, multi-phase public project with obvious follow-on scope"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:54:24.65+00:00",
+    "discovery_source_id": "0c228ce8-6de3-4291-b0be-1303d2206427",
+    "created_at": "2026-08-18T21:54:24.796384+00:00",
+    "updated_at": "2026-08-18T21:55:40.319+00:00"
+  },
+  {
+    "id": "39a626c6-1078-477f-b069-5ac5e13ddf54",
+    "name": "Assistant Director of Marketing",
+    "description": "Strategic marketing leader developing integrated campaigns to increase awareness, enrollment, and earned revenue across programs, product sales, and fundraising. Manages brand identity, growth marketing initiatives, partnerships, and marketing operations using Salesforce, analytics, and digital platforms.",
+    "status": "new",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/intercambio-uniting-communities-assistant-director-of-marketing/",
+    "external_url": "https://coloradononprofits.org/careers/intercambio-uniting-communities-assistant-director-of-marketing/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "The role is explicitly a full-time W-2 hire at 36 hours per week, which is the single hardest structural barrier — Wright Adventures cannot bid this as a firm without the organization first reconceiving the engagement. The both_halves score is real: Intercambio names Salesforce, Campaign Monitor, WordPress, and Google Analytics alongside enrollment growth and fundraising, which is exactly the pattern where a donor CRM nobody fully trusts sits underneath a marketing function that is doing reporting by hand — but that upside is inaccessible until the engagement shape changes.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "The role is explicitly a full-time W-2 hire at 36 hours per week, which is the single hardest structural barrier — Wright Adventures cannot bid this as a firm without the organization first reconceiving the engagement. The both_halves score is real: Intercambio names Salesforce, Campaign Monitor, WordPress, and Google Analytics alongside enrollment growth and fundraising, which is exactly the pattern where a donor CRM nobody fully trusts sits underneath a marketing function that is doing reporting by hand — but that upside is inaccessible until the engagement shape changes.",
+      "red_flags": [
+        "Full-time, 36-hour-per-week W-2 employee role — not open to a firm as posted",
+        "Benefits-eligible position implied by full-time framing",
+        "Boulder and Longmont location requirement — outside Denver core, adds friction"
+      ],
+      "uncertain": [
+        "warm_path",
+        "expansion"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($75,000–$80,000) signals budget seriousness and annualizes above $20k threshold",
+        "Explicit CRM and analytics stack named (Salesforce, Campaign Monitor, Google Analytics) — systems work is present even if not foregrounded",
+        "Earned revenue, product sales, and fundraising all in scope — multi-channel complexity favors a firm over a single hire"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:51:41.636+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:51:41.834612+00:00",
+    "updated_at": "2026-08-18T22:51:41.834612+00:00"
+  },
+  {
+    "id": "e494b2f7-d0e9-4bee-8773-13a276a76dc8",
+    "name": "Development Director",
+    "description": "Lead fundraising strategy to grow annual budget from $1.2M to $1.5M by 2028, driving major gifts, grants, corporate sponsorships, and campaigns while managing development staff.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/",
+    "external_id": null,
+    "ai_match_score": 10,
+    "ai_match_rationale": "This is a full-time W-2 Development Director hire with no signal that a firm engagement would be considered, which is the single disqualifying structural fact regardless of other fit. The both_halves score is held at 2 because a $1.2M-to-$1.5M growth mandate almost certainly involves a donor CRM, gift processing, and reporting infrastructure that would pull in the technical half, and kadysheepcamp.org plus confluenceco.org offer credible analogues on fundraising systems — but none of that matters if the organization is only hiring an employee.",
+    "ai_score_detail": {
+      "total": 10,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 0,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 1
+      },
+      "rationale": "This is a full-time W-2 Development Director hire with no signal that a firm engagement would be considered, which is the single disqualifying structural fact regardless of other fit. The both_halves score is held at 2 because a $1.2M-to-$1.5M growth mandate almost certainly involves a donor CRM, gift processing, and reporting infrastructure that would pull in the technical half, and kadysheepcamp.org plus confluenceco.org offer credible analogues on fundraising systems — but none of that matters if the organization is only hiring an employee.",
+      "red_flags": [
+        "Full-time, W-2, benefits-eligible hire — explicitly not a contract or firm engagement",
+        "No mention of RFP, firm, contract, or 1099 anywhere in the posting",
+        "Human trafficking mission area is outside all listed Wright Adventures mission areas and carries reputational complexity requiring careful vetting"
+      ],
+      "uncertain": [
+        "both_halves"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm",
+        "No warm path in — cold outreach rarely converts"
+      ],
+      "green_flags": [
+        "Stated compensation range ($90,000–$108,000) signals budget transparency and organizational seriousness",
+        "Defined growth target ($1.2M to $1.5M by 2028) implies a funded window and measurable scope"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:57:40.233+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:57:40.397295+00:00",
+    "updated_at": "2026-08-18T22:02:03.367+00:00"
+  },
+  {
+    "id": "5629e23f-b176-4b76-9d48-71ac68507db3",
+    "name": "Senior Energy Policy Advisor – Climate Action, Sustainability and Resiliency",
+    "description": "Serve as key member of Energy Policy Team providing thought-leadership and technical expertise on energy-, building-, and transportation-system decarbonization; contribute to Denver's advocacy at the Colorado Public Utilities Commission and engagement on state and local legislative matters.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-08-23T00:00:00+00:00",
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/senior-energy-policy-advisor-climate-action-sustainability-and-resiliency-in-denver-colorado-us/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/senior-energy-policy-advisor-climate-action-sustainability-and-resiliency-in-denver-colorado-us/",
+    "external_id": null,
+    "ai_match_score": 9,
+    "ai_match_rationale": "This is a full-time W-2 employee role inside a city government department — the engagement shape is the hardest possible disqualifier, and nothing in the posting suggests the City would accept a firm in place of a hire. The mission adjacency (climate, transportation, outdoor access) and Denver civic network are real but insufficient to overcome a role that is structurally incompatible with how Wright Adventures sells.",
+    "ai_score_detail": {
+      "total": 9,
+      "action": "decline",
+      "scores": {
+        "expansion": 1,
+        "warm_path": 1,
+        "both_halves": 1,
+        "contract_value": 3,
+        "portfolio_proof": 1,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 employee role inside a city government department — the engagement shape is the hardest possible disqualifier, and nothing in the posting suggests the City would accept a firm in place of a hire. The mission adjacency (climate, transportation, outdoor access) and Denver civic network are real but insufficient to overcome a role that is structurally incompatible with how Wright Adventures sells.",
+      "red_flags": [
+        "Full-time, benefits, W-2 — explicitly a city employee position",
+        "Requires specialized energy policy expertise (PUC advocacy, building/transportation decarbonization) that neither principal holds as a primary credential",
+        "Government HR posting — no mechanism to substitute a firm for a headcount slot",
+        "Heavy policy and regulatory focus with no systems, data, or fundraising component visible"
+      ],
+      "uncertain": [],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($90,000–$115,000) confirms budget exists and is substantial"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:57:58.037+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:57:58.182641+00:00",
+    "updated_at": "2026-08-18T22:02:06.117+00:00"
+  },
+  {
+    "id": "764c0369-5d8c-4f25-ac8e-20232aa36192",
+    "name": "Director of Development",
+    "description": "Leads the development team to create and execute a comprehensive $1.7+ million fundraising and community engagement strategy, including unrestricted and restricted fundraising, communications and marketing, staff management, advocacy, volunteer engagement, and financial compliance.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/habitat-for-humanity-of-the-st-vrain-valley-director-of-development/",
+    "external_url": "https://coloradononprofits.org/careers/habitat-for-humanity-of-the-st-vrain-valley-director-of-development/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is an exempt, full-time W-2 hire with benefits — the engagement shape is the hardest possible barrier, and no language in the posting opens a path to a firm or contract arrangement. The both_halves score is real: a $1.7M fundraising operation almost certainly runs on a CRM with data integrity problems, manual reporting, and a website that feeds none of it, which is exactly where Wright Adventures displaces the status quo — but that argument cannot be made from outside a W-2 application.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is an exempt, full-time W-2 hire with benefits — the engagement shape is the hardest possible barrier, and no language in the posting opens a path to a firm or contract arrangement. The both_halves score is real: a $1.7M fundraising operation almost certainly runs on a CRM with data integrity problems, manual reporting, and a website that feeds none of it, which is exactly where Wright Adventures displaces the status quo — but that argument cannot be made from outside a W-2 application.",
+      "red_flags": [
+        "Full-time, exempt, W-2 with comprehensive benefits package — explicitly not a contract or firm engagement",
+        "Role requires staff management and budget oversight typical of an embedded employee, not a fractional arrangement",
+        "No mention of CRM, data systems, or technical infrastructure — both_halves case must be inferred, not invited",
+        "Longmont, CO location is workable but not Denver-core where warm network is strongest"
+      ],
+      "uncertain": [
+        "warm_path"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($75,000) signals organizational transparency and budget clarity",
+        "Scale of $1.7M+ fundraising portfolio suggests an organization with real infrastructure needs and follow-on potential"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:52:40.094+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:52:40.322378+00:00",
+    "updated_at": "2026-08-19T14:54:54.876+00:00"
+  },
+  {
+    "id": "3e25dbdc-5a3d-478a-bbc5-c14193ba2fa2",
+    "name": "Institutional Relations Manager",
+    "description": "Identify, cultivate, solicit, and steward foundation and corporate funding to secure significant philanthropic support; manage a portfolio of institutional donors and prospects in close collaboration with leaders across UCAR and NSF NCAR.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": "2026-09-12T00:00:00+00:00",
+    "source": "Andrew Hudson's Jobs List",
+    "source_url": "https://andrewhudsonsjobslist.com/jobs/institutional-relations-manager-in-boulder-colorado-us/",
+    "external_url": "https://andrewhudsonsjobslist.com/jobs/institutional-relations-manager-in-boulder-colorado-us/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "This is a full-time W-2 hire at a large federal research institution — the engagement shape is the hardest possible barrier, and UCAR's scale and NSF entanglement make a fractional firm substitution argument very difficult to land. The compensation range and two-year funded window are attractive, and Shane's fundraising profile maps cleanly to the role, but the posting is explicitly structured as an employee search with benefits, not a contract or services engagement.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "decline",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 3,
+        "portfolio_proof": 2,
+        "engagement_shape": 0,
+        "mission_alignment": 2
+      },
+      "rationale": "This is a full-time W-2 hire at a large federal research institution — the engagement shape is the hardest possible barrier, and UCAR's scale and NSF entanglement make a fractional firm substitution argument very difficult to land. The compensation range and two-year funded window are attractive, and Shane's fundraising profile maps cleanly to the role, but the posting is explicitly structured as an employee search with benefits, not a contract or services engagement.",
+      "red_flags": [
+        "Full-time, benefits, W-2 — explicitly a staff hire",
+        "No indication the organization is open to a firm or contract arrangement",
+        "Highly institutionalized environment (federal partnership, NSF oversight) likely requires individual employee accountability, not a consulting firm",
+        "Boulder location with hybrid requirement adds friction for a Denver-based firm"
+      ],
+      "uncertain": [
+        "warm_path — UCAR is in the conservation/science sector with Colorado roots; no direct relationship named in existing connections, scored on sector adjacency only",
+        "both_halves — posting does not name a CRM or data system; scored 2 assuming standard institutional fundraising infrastructure problems exist but not confirmed"
+      ],
+      "downgrades": [
+        "Full-time W-2 role — structural mismatch for a firm"
+      ],
+      "green_flags": [
+        "Stated compensation range ($83,299–$110,000)",
+        "Fixed-term funded window (2 years with potential extension) — suggests a grant or budget-period constraint rather than a permanent headcount decision",
+        "Complex matrixed environment (UCAR + NSF NCAR) suggests vendor and relationship coordination work that pulls through the technical half"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T21:59:02.629+00:00",
+    "discovery_source_id": "f8fe8500-182a-48b2-98fd-f97f8cc2036c",
+    "created_at": "2026-08-18T21:59:02.780139+00:00",
+    "updated_at": "2026-08-18T22:01:46.484+00:00"
+  },
+  {
+    "id": "1f1aedc5-8499-470f-a230-cbcee7da6cef",
+    "name": "Temporary Development Database Administrator",
+    "description": "Temporary database administrator managing gift entry, donor data, and database administration for fundraising operations. Responsibilities include data entry, gift acknowledgements, reconciliation, Raiser's Edge NXT management, and reporting for development and communications staff.",
+    "status": "declined",
+    "organization_id": null,
+    "opportunity_id": null,
+    "primary_deadline": null,
+    "source": "Colorado Nonprofit Association",
+    "source_url": "https://coloradononprofits.org/careers/emergency-family-assistance-association-inc-temporary-development-database-administrator/",
+    "external_url": "https://coloradononprofits.org/careers/emergency-family-assistance-association-inc-temporary-development-database-administrator/",
+    "external_id": null,
+    "ai_match_score": 12,
+    "ai_match_rationale": "The engagement is a temporary contract role with variable phases that a firm could reasonably fill, and the Raiser's Edge NXT environment plus gift reconciliation and reporting burden creates a real pull-through for Ben's data remediation and CRM work alongside Shane's development judgment — confluenceco.org is the closest portfolio anchor for a donor/grant system engagement. The strongest reason not to pursue is that this reads as a clerical data-entry backfill role with no stated compensation, no budget signal, and a heavy manual-entry component that undersells the firm's capability and may not clear the $5k floor.",
+    "ai_score_detail": {
+      "total": 12,
+      "action": "monitor",
+      "scores": {
+        "expansion": 2,
+        "warm_path": 1,
+        "both_halves": 2,
+        "contract_value": 1,
+        "portfolio_proof": 2,
+        "engagement_shape": 2,
+        "mission_alignment": 2
+      },
+      "rationale": "The engagement is a temporary contract role with variable phases that a firm could reasonably fill, and the Raiser's Edge NXT environment plus gift reconciliation and reporting burden creates a real pull-through for Ben's data remediation and CRM work alongside Shane's development judgment — confluenceco.org is the closest portfolio anchor for a donor/grant system engagement. The strongest reason not to pursue is that this reads as a clerical data-entry backfill role with no stated compensation, no budget signal, and a heavy manual-entry component that undersells the firm's capability and may not clear the $5k floor.",
+      "red_flags": [
+        "Compensation not stated — no budget signal",
+        "Heavy clerical component — gift entry, acknowledgements, and manual data entry are core described duties",
+        "Role framed as individual contributor with Bachelor's degree requirement, not a firm or vendor engagement",
+        "No 990 or public financials referenced; budget scale of organization unknown"
+      ],
+      "uncertain": [
+        "contract_value",
+        "mission_alignment"
+      ],
+      "downgrades": [],
+      "green_flags": [
+        "Fixed-term, temporary contract with defined phases — not an open-ended hire",
+        "Explicit mention of Raiser's Edge NXT — a named CRM signals a real system environment where data remediation and integration work is plausible",
+        "Variable hour structure across phases suggests a funded window with a defined end, not a permanent position"
+      ]
+    },
+    "auto_discovered": true,
+    "discovered_at": "2026-08-18T22:46:28.918+00:00",
+    "discovery_source_id": "e9a462f4-bb2f-4a80-aef3-53bba3922d0f",
+    "created_at": "2026-08-18T22:46:29.138376+00:00",
+    "updated_at": "2026-08-24T20:41:00.309+00:00"
+  }
+]

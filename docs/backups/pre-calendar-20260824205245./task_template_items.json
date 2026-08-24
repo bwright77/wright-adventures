@@ -1,0 +1,90 @@
+[
+  {
+    "id": "253ebdc7-856c-4172-8d3d-259b8521b473",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Research partner organization",
+    "days_offset": -60,
+    "assignee_role": "owner",
+    "sort_order": 1
+  },
+  {
+    "id": "487e3fca-bed9-49ea-8967-eced71b58589",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Initial outreach (email / call)",
+    "days_offset": -50,
+    "assignee_role": "owner",
+    "sort_order": 2
+  },
+  {
+    "id": "32bfee26-fcc3-46ab-a166-611b0b535e5f",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Discovery meeting",
+    "days_offset": -40,
+    "assignee_role": "owner",
+    "sort_order": 3
+  },
+  {
+    "id": "e368a1a7-127c-4471-94c1-8bf286580563",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Draft partnership scope and mutual commitments",
+    "days_offset": -30,
+    "assignee_role": "owner",
+    "sort_order": 4
+  },
+  {
+    "id": "f80e3107-2f38-49ef-b5ad-869f568d0f5a",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Internal review of proposed terms",
+    "days_offset": -21,
+    "assignee_role": "leadership",
+    "sort_order": 5
+  },
+  {
+    "id": "707fda17-443b-4d7d-898c-e16d0b392ef1",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Share draft MOU / agreement with partner",
+    "days_offset": -14,
+    "assignee_role": "owner",
+    "sort_order": 6
+  },
+  {
+    "id": "02d770b3-efd9-4c7f-8856-fdc16a75e0d7",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Address partner feedback and finalize terms",
+    "days_offset": -7,
+    "assignee_role": "owner",
+    "sort_order": 7
+  },
+  {
+    "id": "bceab714-e063-4c66-95b2-209e0519196a",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Final legal / leadership review",
+    "days_offset": -3,
+    "assignee_role": "leadership",
+    "sort_order": 8
+  },
+  {
+    "id": "76114a1a-e9ad-43ab-8960-21868656b614",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Execute agreement",
+    "days_offset": 0,
+    "assignee_role": "owner",
+    "sort_order": 9
+  },
+  {
+    "id": "307b0df0-461a-4132-a7bf-a10b55ffa277",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "Kickoff meeting with partner",
+    "days_offset": 7,
+    "assignee_role": "owner",
+    "sort_order": 10
+  },
+  {
+    "id": "ba628ce3-d036-4126-ac89-f75bd2c1677a",
+    "template_id": "00000000-0000-0000-0000-000000000002",
+    "title": "First quarterly check-in",
+    "days_offset": 90,
+    "assignee_role": "owner",
+    "sort_order": 11
+  }
+]

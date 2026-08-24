@@ -1,0 +1,18 @@
+[
+  {
+    "id": "bb200e78-cece-4d37-a957-595715f6dc91",
+    "full_name": "Shane Wright",
+    "role": "admin",
+    "avatar_url": null,
+    "created_at": "2026-02-26T14:57:11.250021+00:00",
+    "updated_at": "2026-02-26T15:08:23.247+00:00"
+  },
+  {
+    "id": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "full_name": "Benjamin Wright",
+    "role": "admin",
+    "avatar_url": null,
+    "created_at": "2026-02-25T06:18:52.730197+00:00",
+    "updated_at": "2026-02-26T15:21:38.321+00:00"
+  }
+]

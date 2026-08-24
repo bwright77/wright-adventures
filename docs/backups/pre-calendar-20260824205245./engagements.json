@@ -1,0 +1,126 @@
+[
+  {
+    "id": "d82b1122-1063-4f78-8d2f-6609165d285b",
+    "organization_id": "909e07bc-f191-405d-ac61-3ad0e6452840",
+    "opportunity_id": "30a970d0-7389-45df-90df-11d465342804",
+    "name": "PeopleForBikes — BBSP Legacy Page",
+    "nature": "reduced_rate",
+    "delivery_status": "supporting",
+    "contract_value": 6525,
+    "fmv": 10875,
+    "fmv_basis": null,
+    "service_lines": [
+      "impact_storytelling",
+      "custom_software",
+      "websites_fundraising"
+    ],
+    "started_on": "2026-06-26",
+    "ended_on": null,
+    "notes": null,
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  },
+  {
+    "id": "79eb3d67-7240-4d10-a9ae-0d8c5ee643c4",
+    "organization_id": "54ab1e08-7c06-451f-967f-512299ec9641",
+    "opportunity_id": "2261fc6e-79cf-4b24-9c67-6631b8b7a135",
+    "name": "Kady Youth Sheep Camp — Fiscal Sponsorship, Brand & Web",
+    "nature": "strategic",
+    "delivery_status": "supporting",
+    "contract_value": 0,
+    "fmv": 11000,
+    "fmv_basis": "FMV ~$11,000 — midpoint of a most-likely $10–12k, from roughly 85–150 hours at $75–150/hr. Right comparable is a skilled freelancer or small studio building custom ($8–14k), not a template site ($4–6k) and not a branding agency ($18–30k+). Scope: bespoke design system with shared component layer and brand-mark integration; 9 hand-coded pages (Home, Our Story, Gallery, Calendar, Partners, Support, Press, Contact, Thank-you); custom UX components — hero, creation chain, family timeline, apprentices grid, seasonal calendar, gallery lightbox, press editorial cards, partner directory, donation tiers; substantial original copywriting; wired contact form; responsive across desktop, tablet, portrait and landscape phone; FMV/quid-pro-quo donation structure through Confluence; Vercel deploy, clean URLs, redirects, OG tags, security headers; many revision rounds. Full range $8–18k.",
+    "service_lines": [
+      "websites_fundraising",
+      "development_strategy",
+      "compliance",
+      "brand_identity"
+    ],
+    "started_on": null,
+    "ended_on": null,
+    "notes": null,
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  },
+  {
+    "id": "158e5955-55dd-4627-9998-aeb18f55ccd9",
+    "organization_id": "368e0de8-76f1-4b57-b41a-538ef88c8642",
+    "opportunity_id": "7a3ba301-4f91-4e46-83c1-deac771fd9c4",
+    "name": "Mo'Betta Green MarketPlace — Website, Hosting & Digital Fundraising",
+    "nature": "strategic",
+    "delivery_status": "in_delivery",
+    "contract_value": 600,
+    "fmv": null,
+    "fmv_basis": null,
+    "service_lines": [
+      "websites_fundraising",
+      "custom_software"
+    ],
+    "started_on": null,
+    "ended_on": null,
+    "notes": null,
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  },
+  {
+    "id": "0941d175-9ef0-4a75-8ffb-66b6754c6e3e",
+    "organization_id": "91b9679e-3b1b-438c-8df9-1dcfff146e82",
+    "opportunity_id": "28d3c632-f80f-4540-89a0-f3921e19e5b1",
+    "name": "River Sisters · Hermanas del Río — Brand, Bilingual Web & Advocacy",
+    "nature": "strategic",
+    "delivery_status": "in_delivery",
+    "contract_value": 0,
+    "fmv": 25000,
+    "fmv_basis": "FMV ~$25,000 — roughly 180–220 hours at prevailing Denver small-studio rates (~$110–140/hr). Scope: 1,392 lines hand-written HTML/CSS plus ~850 lines custom JS, no framework or template; fully bilingual (142 translated string pairs, custom runtime toggle rather than a plugin); 7 content sections; 28 member cards with interactive detail panel; 9 partner logos; 8 custom SVG icons; 11 media queries; 129 aria attributes of real accessibility work; the Turquoise Necklace feature — bespoke SVG map of 23 parks plus a MapLibre GL scrollytelling sidecar with curated per-park content, commonly quoted $8–20k as a standalone deliverable. 66 commits over two months of stakeholder iteration. Comparable bands: nonprofit-discounted $12–18k; small studio $22–30k; agency $40–60k. REDUCING FACTORS, to be disclosed in any writeup: no CMS (content is hand-edited HTML, so staff cannot update it themselves), and the brand identity came from the Congreso rather than being designed here.",
+    "service_lines": [
+      "websites_fundraising",
+      "impact_storytelling",
+      "brand_identity"
+    ],
+    "started_on": null,
+    "ended_on": null,
+    "notes": null,
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  },
+  {
+    "id": "3684029f-6635-4a3a-91db-069030b6d419",
+    "organization_id": "0394c573-b440-4581-985d-dbeb31dfa1e2",
+    "opportunity_id": "05320f6f-52e9-46bf-985a-ea7d28bdd809",
+    "name": "Confluence Colorado — Brand, Web & Grant Platform",
+    "nature": "strategic",
+    "delivery_status": "supporting",
+    "contract_value": 3000,
+    "fmv": 45000,
+    "fmv_basis": "FMV ~$45,000, and plausibly higher. Brand identity built from nothing — logo, visual language, messaging — then website design and launch, then a custom grant management platform (split out of the WA OMP into its own repo and Supabase project per ADR-009), plus ongoing technology infrastructure management and grant management strategy. Comparables from the same book: River Sisters $25,000 for brand + bilingual site + interactive map; Kady $11,000 for a 9-page bespoke site. Confluence exceeds both and adds a custom platform and continuing management, which neither comparable includes. $3,000 was paid, against the website work only. NOT a charitable deduction for WA — donated services never are; the figure is for the recipient books and for rate-setting.",
+    "service_lines": [
+      "websites_fundraising",
+      "custom_software",
+      "development_strategy",
+      "fractional_tech_leadership",
+      "brand_identity"
+    ],
+    "started_on": null,
+    "ended_on": null,
+    "notes": null,
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  },
+  {
+    "id": "5f4d8c38-10b7-4399-9c00-3f78b4a39273",
+    "organization_id": "4664d42d-956a-42c2-a3bd-958ffb9d2e63",
+    "opportunity_id": null,
+    "name": "Hiring, operations and compliance support",
+    "nature": "paid",
+    "delivery_status": "in_delivery",
+    "contract_value": null,
+    "fmv": null,
+    "fmv_basis": null,
+    "service_lines": [],
+    "started_on": null,
+    "ended_on": null,
+    "notes": "Predates the OMP; no pursuit record exists. Contract value, FMV and start date not yet captured.",
+    "created_at": "2026-08-22T16:51:49.130958+00:00",
+    "updated_at": "2026-08-22T16:51:49.130958+00:00"
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "qualifying",
+    "label": "Qualifying",
+    "sort_order": 1,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "discovery",
+    "label": "Discovery",
+    "sort_order": 2,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "proposal",
+    "label": "Proposal",
+    "sort_order": 3,
+    "is_active": true,
+    "expected_days": 21,
+    "amber_days": 30,
+    "red_days": 60
+  },
+  {
+    "id": "evaluation",
+    "label": "Evaluation",
+    "sort_order": 4,
+    "is_active": true,
+    "expected_days": 21,
+    "amber_days": 30,
+    "red_days": 60
+  },
+  {
+    "id": "approval",
+    "label": "Approval",
+    "sort_order": 5,
+    "is_active": true,
+    "expected_days": 45,
+    "amber_days": 60,
+    "red_days": 90
+  },
+  {
+    "id": "negotiating",
+    "label": "Negotiation",
+    "sort_order": 6,
+    "is_active": true,
+    "expected_days": 14,
+    "amber_days": 21,
+    "red_days": 42
+  },
+  {
+    "id": "closed_won",
+    "label": "Closed Won",
+    "sort_order": 7,
+    "is_active": false,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  },
+  {
+    "id": "closed_lost",
+    "label": "Closed Lost",
+    "sort_order": 8,
+    "is_active": false,
+    "expected_days": null,
+    "amber_days": null,
+    "red_days": null
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "a9217eb1-ad7f-4e88-89a1-425546aa92e2",
+    "opportunity_id": "e190e074-2c76-4459-b27c-867e3e87cc2f",
+    "contact_id": null,
+    "interaction_type": "email",
+    "direction": "outbound",
+    "subject": "Check-in on proposal submission",
+    "notes": "Shane emailed to check-in on our proposal submission and suggested an informational interview",
+    "occurred_at": "2026-08-17T21:13:00+00:00",
+    "logged_by": "ebcd3201-37d8-461e-b7cc-3a78eaad8013",
+    "created_at": "2026-08-19T15:13:46.975957+00:00",
+    "updated_at": "2026-08-22T16:49:08.870797+00:00",
+    "organization_id": "73d454da-1cd9-44d1-83ad-fe90cab5af02"
+  }
+]

@@ -1,0 +1,282 @@
+[
+  {
+    "id": "c8ccffc7-90e2-4714-bec4-359f1e875c27",
+    "stage_id": "discovery",
+    "title": "Schedule discovery / scoping session",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "53204832-4b11-4b63-a5cd-8b2898701c7a",
+    "stage_id": "discovery",
+    "title": "Internal debrief and solution design",
+    "assignee_role": "owner",
+    "days_after_entry": 5,
+    "sort_order": 3,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "5b6f17ef-c5a5-49fc-97dd-952e9f074bc8",
+    "stage_id": "proposal",
+    "title": "Draft proposal with tailored recommendations",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "7e9adc8c-209f-4e2c-a1b8-ab50e0ec9383",
+    "stage_id": "proposal",
+    "title": "Internal review of proposal",
+    "assignee_role": "leadership",
+    "days_after_entry": 5,
+    "sort_order": 2,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "c2993098-94a0-4b8c-830a-0613aea2b718",
+    "stage_id": "proposal",
+    "title": "Deliver proposal to client",
+    "assignee_role": "owner",
+    "days_after_entry": 7,
+    "sort_order": 3,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "3589e2cd-d3da-4cb6-bccb-5aafe9022729",
+    "stage_id": "proposal",
+    "title": "Follow up post-proposal",
+    "assignee_role": "owner",
+    "days_after_entry": 14,
+    "sort_order": 4,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "607289c5-21d0-4c12-be86-2fe2f23d3716",
+    "stage_id": "negotiating",
+    "title": "Negotiation / scope refinement call",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "46f84e94-1f19-4317-9d63-3080c73b3d6f",
+    "stage_id": "negotiating",
+    "title": "Finalize contract or MOU",
+    "assignee_role": "owner",
+    "days_after_entry": 5,
+    "sort_order": 2,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "a5d9656f-7afa-4731-9678-d2a5602a460b",
+    "stage_id": "negotiating",
+    "title": "Final legal / leadership review",
+    "assignee_role": "leadership",
+    "days_after_entry": 7,
+    "sort_order": 3,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "e5bab0f7-e408-4fd2-ad78-ce72349dfc38",
+    "stage_id": "closed_won",
+    "title": "Execute agreement / contract",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "f674a7b6-e8a5-476d-8b0e-4ad59c682515",
+    "stage_id": "closed_won",
+    "title": "Send kickoff welcome email",
+    "assignee_role": "owner",
+    "days_after_entry": 1,
+    "sort_order": 2,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "17dc7244-e2a8-4fa1-85b2-c818ab7135c3",
+    "stage_id": "closed_won",
+    "title": "Kickoff meeting",
+    "assignee_role": "owner",
+    "days_after_entry": 7,
+    "sort_order": 3,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "4995b0ee-0896-4010-8be6-3e6b9eb48d71",
+    "stage_id": "closed_won",
+    "title": "First check-in / status call",
+    "assignee_role": "owner",
+    "days_after_entry": 30,
+    "sort_order": 4,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "d1ee611c-16be-4c21-9fb1-bdce6e75b412",
+    "stage_id": "discovery",
+    "title": "Discovery session — capture the fundraising and the systems picture",
+    "assignee_role": "owner",
+    "days_after_entry": 3,
+    "sort_order": 2,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "03d62bc7-f8e8-4f42-a121-3bdbf2fb50dd",
+    "stage_id": "closed_lost",
+    "title": "Debrief: what would have changed the outcome",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-03-06T16:58:20.805528+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "c2a26d75-8b25-4922-9efe-315d718953b6",
+    "stage_id": "approval",
+    "title": "Confirm the deciding body and the meeting date",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-08-22T15:40:54.024758+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "9e411658-d5c3-43c4-a318-bd273ac3fe21",
+    "stage_id": "approval",
+    "title": "Give the champion a one-pager they can take in",
+    "assignee_role": "owner",
+    "days_after_entry": 2,
+    "sort_order": 2,
+    "created_at": "2026-08-22T15:40:54.024758+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "9d1e32e3-ff61-4ff0-96de-2bd32aa49c6a",
+    "stage_id": "approval",
+    "title": "Check in with the champion before the meeting",
+    "assignee_role": "owner",
+    "days_after_entry": -7,
+    "sort_order": 3,
+    "created_at": "2026-08-22T15:40:54.024758+00:00",
+    "date_anchor": "decision_date"
+  },
+  {
+    "id": "34040bb8-1eb7-49aa-8536-78177e261691",
+    "stage_id": "approval",
+    "title": "Follow up on the decision",
+    "assignee_role": "owner",
+    "days_after_entry": 3,
+    "sort_order": 4,
+    "created_at": "2026-08-22T15:40:54.024758+00:00",
+    "date_anchor": "decision_date"
+  },
+  {
+    "id": "91607224-e6d1-46e8-b7fb-45f6731c914d",
+    "stage_id": "closed_lost",
+    "title": "Decide whether this moves to nurture",
+    "assignee_role": "owner",
+    "days_after_entry": 2,
+    "sort_order": 2,
+    "created_at": "2026-08-22T15:40:54.024758+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "7e0808e7-14b8-449f-aeb2-23577dba5123",
+    "stage_id": "evaluation",
+    "title": "Confirm what they still need from us",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-08-22T15:47:33.535166+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "18fc306c-b393-4205-a1a5-80473b5741d5",
+    "stage_id": "evaluation",
+    "title": "Line up references and warn them a call is coming",
+    "assignee_role": "owner",
+    "days_after_entry": 1,
+    "sort_order": 2,
+    "created_at": "2026-08-22T15:47:33.535166+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "06f9ee09-8bd9-436d-b17e-38e1a4f41a23",
+    "stage_id": "evaluation",
+    "title": "Prepare for interview or panel",
+    "assignee_role": "owner",
+    "days_after_entry": 3,
+    "sort_order": 3,
+    "created_at": "2026-08-22T15:47:33.535166+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "720e75ec-471f-4769-ad09-dab5f34169e6",
+    "stage_id": "evaluation",
+    "title": "Ask who else they are considering, and why",
+    "assignee_role": "owner",
+    "days_after_entry": 3,
+    "sort_order": 4,
+    "created_at": "2026-08-22T15:47:33.535166+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "29329216-5329-4aab-ab01-64dd2b90059d",
+    "stage_id": "qualifying",
+    "title": "Read the solicitation — confirm scope, deadline and eligibility",
+    "assignee_role": "owner",
+    "days_after_entry": 0,
+    "sort_order": 1,
+    "created_at": "2026-08-22T15:48:59.156293+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "3608f58b-35f4-4c59-a0fe-fdec984b7110",
+    "stage_id": "qualifying",
+    "title": "Score against the fit rubric",
+    "assignee_role": "owner",
+    "days_after_entry": 1,
+    "sort_order": 2,
+    "created_at": "2026-08-22T15:48:59.156293+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "e984ddcd-5325-4ca8-bbb4-987f03cf82f6",
+    "stage_id": "qualifying",
+    "title": "Check capacity — what else lands in the same month",
+    "assignee_role": "owner",
+    "days_after_entry": 1,
+    "sort_order": 3,
+    "created_at": "2026-08-22T15:48:59.156293+00:00",
+    "date_anchor": "stage_entry"
+  },
+  {
+    "id": "031dabd8-d6a3-4672-8fff-c8d3a72303d2",
+    "stage_id": "qualifying",
+    "title": "Go / no-go decision",
+    "assignee_role": "owner",
+    "days_after_entry": 3,
+    "sort_order": 4,
+    "created_at": "2026-08-22T15:48:59.156293+00:00",
+    "date_anchor": "stage_entry"
+  }
+]
