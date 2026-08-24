@@ -71,6 +71,11 @@ function LeadCard({ lead, onPursue, onDecline }: {
   const total = lead.ai_match_score ?? 0
   const action = fit?.action ?? 'monitor'
 
+  // The organisation is what is being pursued; the posting title is which role
+  // they advertised. Falls back to the title so a lead whose employer could not
+  // be resolved still has a headline rather than an empty one.
+  const org = d?.publisher?.trim() || null
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       <div className="p-5">
@@ -81,7 +86,7 @@ function LeadCard({ lead, onPursue, onDecline }: {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="text-base font-semibold text-navy">{lead.name}</h3>
+              <h3 className="text-base font-semibold text-navy">{org ?? lead.name}</h3>
               <span className={`text-[0.7rem] font-medium px-2 py-0.5 rounded border ${ACTION_STYLE[action].cls}`}>
                 {ACTION_STYLE[action].label}
               </span>
@@ -92,7 +97,9 @@ function LeadCard({ lead, onPursue, onDecline }: {
               )}
             </div>
 
-            <p className="text-sm text-gray-500 mb-2">{d?.publisher}</p>
+            <p className="text-sm text-gray-500 mb-2">
+              {org ? lead.name : <span className="text-gray-400 italic">Organisation not identified</span>}
+            </p>
 
             <div className="flex items-center gap-4 flex-wrap text-xs text-gray-400">
               {d?.location && (
