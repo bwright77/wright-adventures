@@ -65,7 +65,7 @@ async function main() {
     const { text } = await generateText({ model: anthropic('claude-sonnet-4-6'), maxOutputTokens: 900, prompt })
     const fit = JSON.parse(text.match(/\{[\s\S]*\}/)![0])
     const scores = fit.scores ?? {}
-    const total: number = Object.values(scores).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+    const total: number = Object.values(scores).reduce<number>((s, v: any) => s + (Number(v) || 0), 0)
     const band = classify(scores)
 
     // Match the pipeline: it stores candidates at or above the threshold and
