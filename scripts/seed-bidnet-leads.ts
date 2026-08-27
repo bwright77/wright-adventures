@@ -68,10 +68,15 @@ async function main() {
     const total = Object.values(scores).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
     const band = classify(scores)
 
+    // Match the pipeline: it stores candidates at or above the threshold and
+    // rejects the rest. Seeding everything as 'new' buries the real leads under
+    // solicitations already judged not worth pursuing.
+    const THRESHOLD = 12
+
     const { data: lead, error } = await db.from('leads').insert({
       name,
       description: `Public solicitation via BidNet Direct / Rocky Mountain E-Purchasing. Closing ${closes}.${gated ? ' Full detail requires a plan upgrade.' : ''}`,
-      status: 'new',
+      status: total >= THRESHOLD ? 'new' : 'declined',
       primary_deadline: toISO(closes),
       source: 'BidNet Direct (Rocky Mountain E-Purchasing)',
       source_url: SEARCH_URL,
@@ -89,7 +94,7 @@ async function main() {
       location: 'Colorado', remote: false,
       closes_date: toISO(closes), apply_url: SEARCH_URL,
     })
-    console.log(`  ok  ${String(total).padStart(2)}/21 ${String(band.action).padEnd(12)} ${name.slice(0, 46)}`)
+    console.log(`  ${total >= THRESHOLD ? 'ok ' : '-- '} ${String(total).padStart(2)}/21 ${String(band.action).padEnd(12)} ${name.slice(0, 46)}`)
   }
 }
 main()
