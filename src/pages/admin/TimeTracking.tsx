@@ -44,6 +44,7 @@ interface EntryRow {
   minutes: number
   description: string
   billable: boolean
+  is_estimate: boolean
   engagement_id: string
 }
 
@@ -160,23 +161,49 @@ export function TimeTracking() {
   })
 
   const inputCls = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20'
-  const todayMinutes = entries.filter(e => e.entry_date === today.toISOString().slice(0, 10))
+  const todayKey = today.toISOString().slice(0, 10)
+  const todayMinutes = entries.filter(e => e.entry_date === todayKey).reduce((s, e) => s + e.minutes, 0)
+  // Monday-anchored, matching how a week of work is actually talked about.
+  const monday = new Date(today)
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  const mondayKey = monday.toISOString().slice(0, 10)
+  const weekMinutes = entries.filter(e => e.entry_date >= mondayKey && e.entry_date <= todayKey)
     .reduce((s, e) => s + e.minutes, 0)
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-navy">Time</h1>
-        <p className="text-sm text-gray-600 mt-0.5">
-          {todayMinutes ? `${formatHours(todayMinutes)} hours logged today` : 'Nothing logged today'}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">Time</h1>
+          <p className="text-sm text-gray-600 mt-0.5">
+            {selected?.organizations?.name ?? 'No engagements yet'}
+          </p>
+        </div>
+        <div className="flex gap-8">
+          <div>
+            <p className="text-3xl font-bold text-navy tabular-nums leading-none">
+              {formatHours(todayMinutes)}
+            </p>
+            <p className="text-xs text-gray-600 mt-1">hours today</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-navy/40 tabular-nums leading-none">
+              {formatHours(weekMinutes)}
+            </p>
+            <p className="text-xs text-gray-600 mt-1">this week</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
         <div className="space-y-6">
-          <Stopwatch onApply={m => setDuration(formatHours(m))} />
+          <Stopwatch
+            context={selected ? `${selected.organizations?.name} · ${selected.name}` : undefined}
+            onApply={m => setDuration(formatHours(m))}
+          />
 
           <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-sm font-semibold text-navy mb-4">Log an entry</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Engagement</label>
@@ -262,8 +289,13 @@ export function TimeTracking() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4">
+            <div className="px-6 py-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-navy">Recent entries</h2>
+              {entries.length > 0 && (
+                <span className="text-xs text-gray-600 tabular-nums">
+                  {formatHours(entries.reduce((s, e) => s + e.minutes, 0))} h total
+                </span>
+              )}
             </div>
             {entries.length === 0 ? (
               <p className="px-6 pb-6 text-sm text-gray-500">Nothing logged against this engagement yet.</p>
@@ -280,8 +312,11 @@ export function TimeTracking() {
                     <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">
                       {e.description || <span className="text-gray-400">—</span>}
                     </span>
+                    {e.is_estimate && (
+                      <span className="text-[0.7rem] uppercase tracking-wide text-earth shrink-0">estimated</span>
+                    )}
                     {!e.billable && (
-                      <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0">contributed</span>
+                      <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0">non-billable</span>
                     )}
                     <button
                       onClick={() => remove.mutate(e.id)}

@@ -1,26 +1,24 @@
 import { useEffect, useState } from 'react'
-import { Play, Pause, RotateCcw } from 'lucide-react'
+import { Play, Pause, RotateCcw, Check } from 'lucide-react'
 import { toBillingMinutes, formatHours } from '../../lib/retainer'
 
 /**
- * A running timer for work happening now.
+ * The timer, and the centre of the page.
  *
  * State lives in localStorage, not React alone, so navigating away or reloading
- * does not silently lose a running timer — which is the one failure that would
- * make people stop trusting it. Elapsed time is derived from a start TIMESTAMP
- * rather than accumulated by the interval, so a backgrounded tab (where timers
- * are throttled) still reports the truth.
+ * does not silently lose a running timer — the one failure that would make
+ * anyone stop trusting it. Elapsed is derived from a start TIMESTAMP rather than
+ * accumulated by the interval, so a backgrounded tab, where browsers throttle
+ * timers, still reports the truth.
  *
- * It shows what the elapsed time will BILL as while it runs, because that is
- * the number being committed to: 7 minutes on the clock is 0.2 on the invoice.
+ * It shows what the clock will BILL as while it runs, because that is the number
+ * being committed to: seven minutes reads 0.2 before you stop, not after.
  */
 
 const KEY = 'wa.stopwatch'
 
 interface Persisted {
-  /** Epoch ms when the current run began, or null when paused. */
   startedAt: number | null
-  /** Milliseconds banked from previous runs. */
   accumulatedMs: number
 }
 
@@ -36,21 +34,19 @@ function save(s: Persisted) {
   try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* nothing to do */ }
 }
 
-function clock(ms: number): string {
+function clock(ms: number): { hh: string; mm: string; ss: string } {
   const total = Math.floor(ms / 1000)
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`
+  return {
+    hh: String(Math.floor(total / 3600)).padStart(2, '0'),
+    mm: String(Math.floor((total % 3600) / 60)).padStart(2, '0'),
+    ss: String(total % 60).padStart(2, '0'),
+  }
 }
 
-export function Stopwatch({ onApply }: { onApply: (minutes: number) => void }) {
+export function Stopwatch({ context, onApply }: { context?: string; onApply: (minutes: number) => void }) {
   const [state, setState] = useState<Persisted>(load)
   const [, tick] = useState(0)
 
-  // Re-render each second while running. Elapsed is recomputed from the
-  // timestamp, so a missed tick costs nothing.
   useEffect(() => {
     if (state.startedAt == null) return
     const id = setInterval(() => tick(n => n + 1), 1000)
@@ -62,6 +58,8 @@ export function Stopwatch({ onApply }: { onApply: (minutes: number) => void }) {
   const elapsedMs = state.accumulatedMs + (state.startedAt ? Date.now() - state.startedAt : 0)
   const running = state.startedAt != null
   const billable = toBillingMinutes(elapsedMs / 60000)
+  const { hh, mm, ss } = clock(elapsedMs)
+  const idle = elapsedMs === 0 && !running
 
   const start = () => setState(s => ({ ...s, startedAt: Date.now() }))
   const pause = () => setState(s => ({
@@ -69,52 +67,70 @@ export function Stopwatch({ onApply }: { onApply: (minutes: number) => void }) {
     accumulatedMs: s.accumulatedMs + (s.startedAt ? Date.now() - s.startedAt : 0),
   }))
   const reset = () => setState({ startedAt: null, accumulatedMs: 0 })
-
-  const apply = () => {
-    if (billable > 0) onApply(billable)
-    reset()
-  }
+  const apply = () => { if (billable > 0) onApply(billable); reset() }
 
   return (
-    <div className={`rounded-xl border p-4 transition-colors ${
-      running ? 'border-river bg-river-50' : 'border-gray-200 bg-white'
-    }`}>
-      <div className="flex items-center gap-4">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy via-navy-800 to-navy-900 text-white p-7 sm:p-8">
+      {/* A slow pulse only while running — the page should look different from
+          across the room when the clock is going. */}
+      {running && (
+        <span className="absolute top-5 right-5 flex items-center gap-2 text-xs font-medium text-white">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-river opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-river" />
+          </span>
+          Running
+        </span>
+      )}
+
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/70">
+        {context ?? 'Timer'}
+      </p>
+
+      <div className="mt-4 flex items-end gap-1 font-bold tabular-nums leading-none">
+        <span className="text-6xl sm:text-7xl">{hh}</span>
+        <span className="text-4xl sm:text-5xl text-white/50 pb-0.5">:</span>
+        <span className="text-6xl sm:text-7xl">{mm}</span>
+        <span className="text-4xl sm:text-5xl text-white/50 pb-0.5">:</span>
+        <span className="text-4xl sm:text-5xl text-white/70 pb-0.5">{ss}</span>
+      </div>
+
+      <p className="mt-3 text-sm text-white/70 h-5">
+        {idle
+          ? 'Press start, or enter a duration below'
+          : <>bills as <span className="font-semibold text-white">{formatHours(billable)} hours</span></>}
+      </p>
+
+      <div className="mt-6 flex items-center gap-3">
         <button
           onClick={running ? pause : start}
-          className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-            running ? 'bg-river text-white hover:bg-river-700' : 'bg-navy text-white hover:bg-navy/90'
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-colors ${
+            running
+              ? 'bg-white/15 hover:bg-white/25 text-white'
+              : 'bg-river-700 hover:bg-river text-white'
           }`}
-          aria-label={running ? 'Pause timer' : 'Start timer'}
         >
-          {running ? <Pause size={17} /> : <Play size={17} className="ml-0.5" />}
+          {running ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+          {running ? 'Pause' : elapsedMs > 0 ? 'Resume' : 'Start'}
         </button>
 
-        <div className="min-w-0 flex-1">
-          <p className="text-2xl font-bold text-navy tabular-nums leading-none">{clock(elapsedMs)}</p>
-          <p className="text-xs text-gray-600 mt-1">
-            {elapsedMs > 0
-              ? <>bills as <span className="font-medium text-navy">{formatHours(billable)} h</span></>
-              : running ? 'running' : 'Start the timer, or type a duration below'}
-          </p>
-        </div>
-
         {elapsedMs > 0 && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={reset}
-              className="text-gray-400 hover:text-navy transition-colors p-2"
-              aria-label="Reset timer"
-            >
-              <RotateCcw size={15} />
-            </button>
+          <>
             <button
               onClick={apply}
-              className="text-sm font-medium bg-navy hover:bg-navy/90 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-navy font-medium text-sm hover:bg-white/90 transition-colors"
             >
+              <Check size={16} />
               Use {formatHours(billable)} h
             </button>
-          </div>
+            <button
+              onClick={reset}
+              className="ml-auto text-white/60 hover:text-white transition-colors p-2"
+              aria-label="Reset timer"
+            >
+              <RotateCcw size={16} />
+            </button>
+          </>
         )}
       </div>
     </div>
