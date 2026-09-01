@@ -28,6 +28,7 @@ interface EngagementRow {
   nature: string
   billing_model: string
   contract_rate: number | string | null
+  contract_value: number | string | null
   standard_rate: number | string | null
   committed_hours: number | string | null
   hours_per_period: number | string | null
@@ -68,7 +69,7 @@ export function TimeTracking() {
     queryFn: async () => {
       const { data, error: e } = await supabase
         .from('engagements')
-        .select('id, name, nature, billing_model, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name)')
+        .select('id, name, nature, billing_model, contract_value, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name)')
         .neq('delivery_status', 'complete')
         .order('created_at', { ascending: false })
       if (e) throw e
@@ -182,7 +183,7 @@ export function TimeTracking() {
                 <select className={inputCls} value={activeId} onChange={e => setEngagementId(e.target.value)}>
                   {engagements.map(e => (
                     <option key={e.id} value={e.id}>
-                      {e.organizations?.name ?? '—'} · {e.name} ({billingLabel(e.nature, e.billing_model)})
+                      {e.organizations?.name ?? '—'} · {e.name} ({billingLabel(e.nature, e.billing_model, e.contract_rate, e.contract_value)})
                     </option>
                   ))}
                 </select>
@@ -359,10 +360,22 @@ export function TimeTracking() {
 
         {selected && !isRetainer && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-navy mb-1">Contributed work</h2>
+            <h2 className="text-sm font-semibold text-navy mb-1">
+              {selected.billing_model === 'non_billable' ? 'Contributed work' : 'Billed in arrears'}
+            </h2>
             <p className="text-xs text-gray-600 leading-relaxed">
-              This engagement is {billingLabel(selected.nature, selected.billing_model)}. Hours are
-              logged so the value is measured rather than estimated — they are never invoiced.
+              {selected.billing_model === 'non_billable'
+                ? 'Hours are logged so the value is measured rather than estimated — they are never invoiced.'
+                : 'Hours accrue and are invoiced after the work, not against a prepaid balance.'}
+            </p>
+            {billingLabel(selected.nature, selected.billing_model, selected.contract_rate, selected.contract_value).includes('not set') && (
+              <p className="mt-3 text-xs text-earth leading-relaxed">
+                No rate recorded yet. Hours will log fine, but they cannot be turned into an invoice
+                until one is set.
+              </p>
+            )}
+            <p className="mt-4 text-sm text-navy font-semibold tabular-nums">
+              {formatHours(entries.reduce((s, e) => s + e.minutes, 0))} h logged
             </p>
           </div>
         )}

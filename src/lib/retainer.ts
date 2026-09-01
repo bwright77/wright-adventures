@@ -186,13 +186,36 @@ export function formatHours(minutes: number): string {
 /**
  * What to call an engagement's billing on screen.
  *
- * A paid engagement left at the non_billable default is not contributed work —
- * it is a gap. Saying "contributed" would quietly misreport revenue as donated
- * value, so it is named as unset instead and prompts someone to fix it.
+ * Two gaps get named rather than papered over, because both would otherwise
+ * misreport quietly:
+ *
+ *   A paid engagement left at the non_billable default is not contributed work.
+ *   Calling it "contributed" reports revenue as donated value.
+ *
+ *   An engagement with no PRICE recorded cannot be invoiced. Hours accrue
+ *   against it perfectly happily and then cannot be turned into money, which is
+ *   only discovered when someone tries to bill them.
+ *
+ * What counts as a price depends on the model, which is the part worth getting
+ * right: hourly and retainer work are priced by an hourly rate, a fixed fee is
+ * priced by the agreed sum. Asking a fixed-fee engagement for an hourly rate
+ * would flag a gap that does not exist.
  */
-export function billingLabel(nature: string, billingModel: string): string {
-  if (billingModel === 'non_billable' && (nature === 'paid' || nature === 'reduced_rate')) {
-    return 'billing not set'
+export function billingLabel(
+  nature: string,
+  billingModel: string,
+  contractRate?: number | string | null,
+  contractValue?: number | string | null,
+): string {
+  if (billingModel === 'non_billable') {
+    return nature === 'paid' || nature === 'reduced_rate' ? 'billing not set' : 'contributed'
   }
-  return billingModel === 'non_billable' ? 'contributed' : billingModel.replace('_', ' ')
+
+  const label = billingModel.replace('_', ' ')
+  const priced =
+    billingModel === 'fixed_fee' ? Number(contractValue ?? 0) > 0
+    : billingModel === 'hourly' || billingModel === 'retainer' ? Number(contractRate ?? 0) > 0
+    : true
+
+  return priced ? label : `${label} · rate not set`
 }

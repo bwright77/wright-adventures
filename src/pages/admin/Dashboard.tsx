@@ -93,7 +93,7 @@ export function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('engagements')
-        .select('id, name, nature, billing_model, delivery_status, committed_hours, hours_per_period, max_hours_per_period, contract_rate, started_on, ended_on, organizations(name, logo_url)')
+        .select('id, name, nature, billing_model, contract_value, delivery_status, committed_hours, hours_per_period, max_hours_per_period, contract_rate, started_on, ended_on, organizations(name, logo_url)')
         .neq('delivery_status', 'complete')
         .order('billing_model')
       if (error) throw error
@@ -273,10 +273,10 @@ export function Dashboard() {
                           {logged ? `${formatHours(logged)}h` : '—'}
                         </span>
                         <p className={`text-[0.7rem] mt-0.5 ${
-                          billingLabel(e.nature, e.billing_model) === 'billing not set'
+                          billingLabel(e.nature, e.billing_model, e.contract_rate, e.contract_value).includes('not set')
                             ? 'text-earth' : 'text-gray-600'
                         }`}>
-                          {billingLabel(e.nature, e.billing_model)}
+                          {billingLabel(e.nature, e.billing_model, e.contract_rate, e.contract_value)}
                         </p>
                       </div>
                     )}
