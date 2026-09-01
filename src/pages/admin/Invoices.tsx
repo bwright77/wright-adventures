@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Send, Ban, CheckCircle2, Plus } from 'lucide-react'
+import { Send, Ban, CheckCircle2, Plus, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { parseLocalDate } from '../../lib/dates'
@@ -37,6 +37,7 @@ interface InvoiceRow {
   due_date: string
   period_start: string | null
   period_end: string | null
+  subtotal: number | string
   total: number | string
   amount_paid: number | string
   status: string
@@ -119,6 +120,31 @@ export function Invoices() {
   })
 
   const selected = invoices.find(i => i.id === selectedId) ?? invoices[0] ?? null
+
+  const [pdfBusy, setPdfBusy] = useState(false)
+
+  /**
+   * Loaded on demand. @react-pdf/renderer carries a font engine and a PDF
+   * writer; there is no reason for that to sit in the bundle every admin page
+   * pays for when it is wanted a few times a month.
+   */
+  const downloadPdf = async () => {
+    if (!selected) return
+    setPdfBusy(true)
+    try {
+      const { downloadInvoicePdf } = await import('../../lib/invoicePdf')
+      await downloadInvoicePdf({
+        ...selected,
+        engagementName: selected.engagements?.name ?? '',
+        organizationName: selected.engagements?.organizations?.name ?? '',
+        lines,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not build the PDF')
+    } finally {
+      setPdfBusy(false)
+    }
+  }
 
   const raise = useMutation({
     mutationFn: async (b: any) => {
@@ -280,33 +306,45 @@ export function Invoices() {
 
             {selected.notes && <p className="mt-4 text-xs text-gray-600 whitespace-pre-line">{selected.notes}</p>}
 
-            {selected.status !== 'void' && selected.status !== 'paid' && (
-              <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-gray-100">
-                {selected.status === 'draft' && (
+            <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-gray-100">
+              {/* Available in every state — a paid or voided invoice still has to be
+                  retrievable as the document that was actually sent. */}
+              <button
+                onClick={() => downloadPdf()}
+                disabled={pdfBusy}
+                className="flex items-center gap-2 text-sm font-medium border border-gray-300 text-navy hover:border-navy px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Download size={14} /> {pdfBusy ? 'Preparing…' : 'Download PDF'}
+              </button>
+
+              {selected.status !== 'void' && selected.status !== 'paid' && (
+                <>
+                  {selected.status === 'draft' && (
+                    <button
+                      onClick={() => setStatus.mutate({ id: selected.id, status: 'sent' })}
+                      className="flex items-center gap-2 text-sm font-medium bg-navy hover:bg-navy/90 text-white px-4 py-2.5 rounded-lg transition-colors"
+                    >
+                      <Send size={14} /> Mark as sent
+                    </button>
+                  )}
+                  {selected.status !== 'draft' && (
+                    <button
+                      onClick={() => setStatus.mutate({ id: selected.id, status: 'paid' })}
+                      className="flex items-center gap-2 text-sm font-medium bg-trail hover:bg-trail-700 text-white px-4 py-2.5 rounded-lg transition-colors"
+                    >
+                      <CheckCircle2 size={14} /> Mark paid
+                    </button>
+                  )}
                   <button
-                    onClick={() => setStatus.mutate({ id: selected.id, status: 'sent' })}
-                    className="flex items-center gap-2 text-sm font-medium bg-navy hover:bg-navy/90 text-white px-4 py-2.5 rounded-lg transition-colors"
+                    onClick={() => voidIt.mutate(selected.id)}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 px-3 py-2.5 transition-colors ml-auto"
+                    title="Releases whatever this invoice billed so it can be raised again"
                   >
-                    <Send size={14} /> Mark as sent
+                    <Ban size={14} /> Void
                   </button>
-                )}
-                {selected.status !== 'draft' && (
-                  <button
-                    onClick={() => setStatus.mutate({ id: selected.id, status: 'paid' })}
-                    className="flex items-center gap-2 text-sm font-medium bg-trail hover:bg-trail-700 text-white px-4 py-2.5 rounded-lg transition-colors"
-                  >
-                    <CheckCircle2 size={14} /> Mark paid
-                  </button>
-                )}
-                <button
-                  onClick={() => voidIt.mutate(selected.id)}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 px-3 py-2.5 transition-colors ml-auto"
-                  title="Releases whatever this invoice billed so it can be raised again"
-                >
-                  <Ban size={14} /> Void
-                </button>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
