@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, AlertTriangle } from 'lucide-react'
@@ -35,7 +35,7 @@ interface EngagementRow {
   max_hours_per_period: number | string | null
   started_on: string | null
   ended_on: string | null
-  organizations: { name: string } | null
+  organizations: { name: string; logo_url: string | null } | null
 }
 
 interface EntryRow {
@@ -64,13 +64,14 @@ export function TimeTracking() {
   const [description, setDescription] = useState('')
   const [billable, setBillable] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const describeRef = useRef<HTMLInputElement>(null)
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
     queryKey: ['engagements', 'loggable'],
     queryFn: async () => {
       const { data, error: e } = await supabase
         .from('engagements')
-        .select('id, name, nature, billing_model, contract_value, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name)')
+        .select('id, name, nature, billing_model, contract_value, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name, logo_url)')
         .neq('delivery_status', 'complete')
         .order('created_at', { ascending: false })
       if (e) throw e
@@ -197,25 +198,19 @@ export function TimeTracking() {
 
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
         <div className="space-y-6">
-          <Stopwatch
-            context={selected ? `${selected.organizations?.name} · ${selected.name}` : undefined}
-            onApply={m => setDuration(formatHours(m))}
-          />
+          {/* Timer and form are one surface: the timer has a square bottom and
+              the form a square top, so applying the elapsed time reads as
+              continuing down the card rather than jumping to another. */}
+          <div>
+            <Stopwatch
+              engagements={engagements}
+              selectedId={activeId}
+              onSelect={setEngagementId}
+              onApply={m => { setDuration(formatHours(m)); describeRef.current?.focus() }}
+            />
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-navy mb-4">Log an entry</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Engagement</label>
-                <select className={inputCls} value={activeId} onChange={e => setEngagementId(e.target.value)}>
-                  {engagements.map(e => (
-                    <option key={e.id} value={e.id}>
-                      {e.organizations?.name ?? '—'} · {e.name} ({billingLabel(e.nature, e.billing_model, e.contract_rate, e.contract_value)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+            <div className="bg-white rounded-b-2xl border border-t-0 border-gray-200 p-6 sm:p-7">
+              <div className="space-y-4">
               <div className="grid sm:grid-cols-[140px_1fr] gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Date</label>
@@ -262,6 +257,7 @@ export function TimeTracking() {
                   What did you do? <span className="font-normal text-gray-500 normal-case">— optional</span>
                 </label>
                 <input
+                  ref={describeRef}
                   className={inputCls}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
@@ -285,6 +281,7 @@ export function TimeTracking() {
                 </button>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
+              </div>
             </div>
           </div>
 
