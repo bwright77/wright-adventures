@@ -9,7 +9,7 @@ import { formatHours } from '../../lib/retainer'
 /**
  * Invoices (ADR-010 Phase 1).
  *
- * Raising one calls a database function rather than writing rows from here: an
+ * Creating one calls a database function rather than writing rows from here: an
  * invoice is assembled from a header, its lines, and the linking of whatever it
  * bills, and a half-written invoice holding a consumed number is worse than
  * none. The two generators mirror the two billing models — a retainer bills the
@@ -146,7 +146,7 @@ export function Invoices() {
     }
   }
 
-  const raise = useMutation({
+  const createInvoice = useMutation({
     mutationFn: async (b: any) => {
       const fn = b.kind === 'retainer' ? 'generate_retainer_invoice' : 'generate_time_invoice'
       const { data, error: e } = await supabase.rpc(fn, { p_engagement_id: b.id })
@@ -188,7 +188,7 @@ export function Invoices() {
         <div>
           <h1 className="text-2xl font-bold text-navy">Invoices</h1>
           <p className="text-sm text-gray-600 mt-0.5">
-            {invoices.filter(i => i.status !== 'void').length} raised
+            {invoices.filter(i => i.status !== 'void').length} issued
           </p>
         </div>
         <div>
@@ -199,7 +199,7 @@ export function Invoices() {
 
       {billable.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Ready to raise</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-4">Ready to bill</h2>
           <ul className="divide-y divide-gray-100">
             {billable.map(b => (
               <li key={b.id} className="flex items-center gap-4 py-3">
@@ -214,12 +214,12 @@ export function Invoices() {
                   {b.amount == null ? '—' : money(b.amount)}
                 </span>
                 <button
-                  onClick={() => raise.mutate(b)}
-                  disabled={!!b.blocked || raise.isPending}
+                  onClick={() => createInvoice.mutate(b)}
+                  disabled={!!b.blocked || createInvoice.isPending}
                   className="flex items-center gap-1.5 text-sm font-medium bg-navy hover:bg-navy/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors shrink-0"
                 >
                   <Plus size={14} />
-                  Raise
+                  Create invoice
                 </button>
               </li>
             ))}
@@ -338,7 +338,7 @@ export function Invoices() {
                   <button
                     onClick={() => voidIt.mutate(selected.id)}
                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 px-3 py-2.5 transition-colors ml-auto"
-                    title="Releases whatever this invoice billed so it can be raised again"
+                    title="Releases whatever this invoice billed so it can be billed again"
                   >
                     <Ban size={14} /> Void
                   </button>

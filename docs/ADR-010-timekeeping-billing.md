@@ -172,7 +172,7 @@ time_entries
   invoice_id, locked boolean
 
 invoices
-  id, engagement_id, invoice_number unique,  -- WA-2026-0001, gap-free via sequence
+  id, engagement_id, invoice_number unique,  -- WA-2026-09-01, from the issue date
   issue_date, due_date, period_start, period_end,
   subtotal, discount, tax, total, amount_paid,
   status,                                    -- draft|sent|partial|paid|overdue|void
@@ -196,8 +196,12 @@ failure mode on a billable hour. And **Supabase JS returns NUMERIC as a string**
 `EngagementForMetrics` types `contract_value` and `fmv` as `number | string`. One `toMoney()`
 helper, not scattered `Number()` calls.
 
-**Invoice numbers come from a Postgres sequence**, not `MAX(...) + 1`, which races and silently
-duplicates.
+**Invoice numbers are the issue date** — `WA-2026-09-01`, with a `-2` suffix if that date is
+already taken. A counter was tried first and removed: `nextval` does not roll back, so a failed
+generation burns a number, and defending a counter against that means holding a row of state that
+can drift from the invoices themselves. All of that machinery answers "which number is next",
+which the date answers for free — and the number then says when it was issued without a lookup.
+`MAX(...) + 1` is still wrong: it races and silently duplicates.
 
 ---
 
@@ -267,7 +271,7 @@ three. A system that only reported "hours logged" would show month one as health
 **Phase 1 — Run CMC.** Schema ✅ landed 2026-09-01 — `engagements` extended, plus
 `retainer_periods`, `retainer_ledger`, `time_entries`, `invoices`, `invoice_line_items`,
 `next_invoice_number()`. The CMC engagement carries the SOW terms, four monthly periods are
-scheduled, 160 hours are credited, and **WA-2026-0001 is raised for $6,000 due on signature**.
+scheduled, 160 hours are credited, and **WA-2026-09-01 is issued for $6,000 due on signature**.
 Logging time draws the retainer automatically, verified end to end.
 
 Still to build: the time-entry UI, the retainer status panel, invoice generation from the
@@ -315,7 +319,7 @@ live and the first checkpoint falls at the end of September.
 | Draw-ahead exceeds the 60-hour ceiling unnoticed | Enforced at entry, surfaced on the engagement view, not discovered at the checkpoint |
 | Retainer over-delivered (Phase 1 estimates 55 hours against 40 committed) | Effective-rate figure is a Phase 1 requirement, not a Phase 4 nicety |
 | NUMERIC-as-string bugs | Single `toMoney()` helper; this has now bitten twice |
-| Invoice number collision | Postgres sequence, never `MAX + 1` |
+| Invoice number collision | Issue date plus a same-day suffix, checked in-transaction under a `UNIQUE` constraint; never `MAX + 1` |
 | A second CMC engagement is modelled as a second client | `organization_id` makes one org with two engagements the natural shape |
 
 ---

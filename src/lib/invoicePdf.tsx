@@ -20,6 +20,9 @@ import jostMedium from '../assets/fonts/Jost-500.ttf'
  * weights, with Medium carrying content and Light-uppercase carrying labels.
  * The static TTFs are committed under src/assets/fonts because the site's
  * Google Fonts stylesheet serves a variable woff2, which fontkit will not read.
+ *
+ * Wording comes from siteData, not from the guidelines document: the site is
+ * what clients have actually seen, and the tagline differs between the two.
  */
 
 // §4 Colour Palette
@@ -46,9 +49,6 @@ Font.register({
 
 // Descriptions are free text; hyphenating "Stewardship" mid-word looks like a defect.
 Font.registerHyphenationCallback(word => [word])
-
-const BRAND_ADDRESS = '3000 Lawrence Street, Denver, CO 80205'
-const BRAND_TAGLINE = 'Connecting People & Places'
 
 const s = StyleSheet.create({
   page: {
@@ -177,7 +177,7 @@ export function InvoiceDocument({ inv }: { inv: InvoicePdfData }) {
           <View style={s.panel}>
             <Text style={s.label}>From</Text>
             <Text style={s.strong}>{BRAND.name}</Text>
-            <Text>{BRAND_ADDRESS}</Text>
+            <Text>{BRAND.address}</Text>
             <Text>{BRAND.email}</Text>
             <Text>{BRAND.phone}</Text>
           </View>
@@ -247,7 +247,7 @@ export function InvoiceDocument({ inv }: { inv: InvoicePdfData }) {
 
         <View style={s.footer} fixed>
           <Text>{BRAND.name}</Text>
-          <Text>{BRAND_TAGLINE}</Text>
+          <Text>{BRAND.tagline}</Text>
           <Text>{inv.invoice_number}</Text>
         </View>
       </Page>

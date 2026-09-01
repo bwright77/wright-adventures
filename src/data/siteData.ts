@@ -10,6 +10,7 @@ export const BRAND = {
   phoneHref: 'tel:+13038157613',
   linkedin: 'https://www.linkedin.com/in/benjamin-robert-wright/',
   location: 'Denver, Colorado',
+  address: '3000 Lawrence Street, Denver, CO 80205',
 } as const
 
 export const NAV_LINKS = [

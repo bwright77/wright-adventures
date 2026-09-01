@@ -140,7 +140,7 @@ and the `?tab=partnership` crash came from.
 **Status:** Accepted — Phase 1 schema landed 2026-09-01 when the CMC SOW was signed.
 `retainer_periods`, `retainer_ledger`, `time_entries`, `invoices`, `invoice_line_items`.
 Time logged against a retainer engagement draws the ledger via trigger. Invoice numbers come
-from `next_invoice_number()`, never MAX+1. UI still to build.
+from `next_invoice_number()` and are the issue date (`WA-2026-09-01`), never MAX+1.
 
 ### ADR-011: Opportunity Discovery
 **Status:** In progress
