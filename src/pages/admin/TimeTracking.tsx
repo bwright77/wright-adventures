@@ -222,7 +222,7 @@ export function TimeTracking() {
                     value={activeId}
                     onChange={e => setEngagementId(e.target.value)}
                     disabled={timerRunning}
-                    className="w-full bg-transparent text-white font-semibold text-[0.95rem] -ml-1 px-1 py-0.5 rounded outline-none focus:bg-white/10 disabled:cursor-not-allowed cursor-pointer"
+                    className="max-w-full bg-transparent text-white font-semibold text-[0.95rem] -ml-1 px-1 py-0.5 rounded outline-none focus:bg-white/10 hover:bg-white/10 disabled:cursor-not-allowed cursor-pointer truncate"
                   >
                     {engagements.map(e => (
                       <option key={e.id} value={e.id} className="text-navy">
@@ -245,7 +245,7 @@ export function TimeTracking() {
                 )}
               </div>
 
-              <div className="mt-5 inline-flex rounded-xl bg-white/10 p-1">
+              <div className="mt-6 inline-flex rounded-xl bg-white/10 p-1">
                 {(['timer', 'manual'] as const).map(m => (
                   <button
                     key={m}
@@ -262,7 +262,7 @@ export function TimeTracking() {
                 ))}
               </div>
 
-              <div className="mt-6">
+              <div className="mt-5">
                 {mode === 'timer' ? (
                   <Stopwatch
                     onApply={m => { setDuration(formatHours(m)); describeRef.current?.focus() }}
