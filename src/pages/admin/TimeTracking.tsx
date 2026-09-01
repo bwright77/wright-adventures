@@ -48,6 +48,12 @@ interface EntryRow {
   engagement_id: string
 }
 
+/** Initials, for an organisation with no logo on file. */
+function initials(name: string): string {
+  return name.split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w[0] ?? '')).slice(0, 2)
+    .map(w => w[0]!.toUpperCase()).join('') || '—'
+}
+
 /** Tenths of an hour, the unit that is billed. */
 const QUICK = [6, 30, 60, 90, 120]
 
@@ -65,7 +71,8 @@ export function TimeTracking() {
   const [billable, setBillable] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const describeRef = useRef<HTMLInputElement>(null)
-  const [fromTimer, setFromTimer] = useState(false)
+  const [mode, setMode] = useState<'timer' | 'manual'>('timer')
+  const [timerRunning, setTimerRunning] = useState(false)
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
     queryKey: ['engagements', 'loggable'],
@@ -144,7 +151,7 @@ export function TimeTracking() {
       if (e) throw e
     },
     onSuccess: () => {
-      setDuration(''); setDescription(''); setError(null); setFromTimer(false)
+      setDuration(''); setDescription(''); setError(null)
       queryClient.invalidateQueries({ queryKey: ['time_entries', activeId] })
       queryClient.invalidateQueries({ queryKey: ['retainer_ledger', activeId] })
     },
@@ -199,68 +206,118 @@ export function TimeTracking() {
 
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
         <div className="space-y-6">
-          {/* Timer and form are one surface: the timer has a square bottom and
-              the form a square top, so applying the elapsed time reads as
-              continuing down the card rather than jumping to another. */}
+          {/* Two ways in, chosen explicitly. The engagement and the
+              description are shared — only how the duration arrives differs, so
+              the toggle swaps the middle of one card rather than two forms. */}
           <div>
-            <Stopwatch
-              engagements={engagements}
-              selectedId={activeId}
-              onSelect={setEngagementId}
-              onApply={m => { setDuration(formatHours(m)); setFromTimer(true); describeRef.current?.focus() }}
-            />
-
-            <div className="bg-white rounded-b-2xl border border-t-0 border-gray-200 p-6 sm:p-7">
-              {/* The two routes in: the timer hands a duration down, or you type
-                  one for work that was never timed. Same entry either way — only
-                  the wording changes, so it is clear which one you are in. */}
-              <h2 className="text-sm font-semibold text-navy mb-4">
-                {fromTimer
-                  ? <>From the timer — <span className="text-river-700">{duration} h</span>. What did you do?</>
-                  : 'Or log time you did not run the timer for'}
-              </h2>
-              <div className="space-y-4">
-              <div className="grid sm:grid-cols-[140px_1fr] gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Date</label>
-                  <input type="date" className={inputCls} value={entryDate} onChange={e => setEntryDate(e.target.value)} />
+            <div className="rounded-t-2xl bg-gradient-to-br from-navy via-navy-800 to-navy-900 text-white p-6 sm:p-7">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                  {selected?.organizations?.logo_url
+                    ? <img src={selected.organizations.logo_url} alt="" className="w-full h-full object-contain p-1.5" />
+                    : <span className="text-sm font-bold text-white/80">{initials(selected?.organizations?.name ?? '')}</span>}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-                    How long? <span className="font-normal text-gray-500 normal-case">— 2.5, 90m, or 1:30</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      className={inputCls}
-                      value={duration}
-                      onChange={e => { setDuration(e.target.value); setFromTimer(false) }}
-                      placeholder="2.5"
-                    />
-                    <div className="flex gap-1 shrink-0">
-                      {QUICK.map(m => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => { setDuration(formatHours(m)); setFromTimer(false) }}
-                          className="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-river hover:text-river-700 transition-colors"
-                        >
-                          {formatHours(m)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {duration && minutes == null && (
-                    <p className="text-xs text-red-600 mt-1">Not a duration I can read.</p>
-                  )}
-                  {roundedUp && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      {rawMinutes} min bills as <span className="font-medium text-navy">{formatHours(minutes!)} h</span>
-                      {' '}— rounded up to the next tenth.
-                    </p>
-                  )}
+                <div className="min-w-0 flex-1">
+                  <select
+                    value={activeId}
+                    onChange={e => setEngagementId(e.target.value)}
+                    disabled={timerRunning}
+                    className="w-full bg-transparent text-white font-semibold text-[0.95rem] -ml-1 px-1 py-0.5 rounded outline-none focus:bg-white/10 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {engagements.map(e => (
+                      <option key={e.id} value={e.id} className="text-navy">
+                        {e.organizations?.name} · {e.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-white/70 mt-0.5 px-0.5">
+                    {timerRunning ? 'Locked while the timer runs' : 'What are you working on?'}
+                  </p>
                 </div>
+                {timerRunning && (
+                  <span className="flex items-center gap-2 text-xs font-medium text-white shrink-0">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-river opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-river" />
+                    </span>
+                    Running
+                  </span>
+                )}
               </div>
 
+              <div className="mt-5 inline-flex rounded-xl bg-white/10 p-1">
+                {(['timer', 'manual'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setMode(m)}
+                    // Switching away mid-run would hide a clock that is still
+                    // counting, which is how time gets lost.
+                    disabled={timerRunning && m === 'manual'}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                      mode === m ? 'bg-white text-navy' : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    {m === 'timer' ? 'Stopwatch' : 'Enter manually'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6">
+                {mode === 'timer' ? (
+                  <Stopwatch
+                    onApply={m => { setDuration(formatHours(m)); describeRef.current?.focus() }}
+                    onRunningChange={setTimerRunning}
+                  />
+                ) : (
+                  <div className="grid sm:grid-cols-[150px_1fr] gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-white/70 mb-1.5">Date</label>
+                      <input
+                        type="date"
+                        value={entryDate}
+                        onChange={e => setEntryDate(e.target.value)}
+                        className="w-full text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white outline-none focus:border-white/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-white/70 mb-1.5">
+                        How long? <span className="font-normal normal-case">— 2.5, 90m, or 1:30</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          value={duration}
+                          onChange={e => setDuration(e.target.value)}
+                          placeholder="2.5"
+                          className="w-full text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/65 outline-none focus:border-white/50"
+                        />
+                        <div className="flex gap-1 shrink-0">
+                          {QUICK.map(m => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setDuration(formatHours(m))}
+                              className="text-xs px-2 py-1 rounded border border-white/20 text-white/80 hover:border-white/50 hover:text-white transition-colors"
+                            >
+                              {formatHours(m)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {duration && minutes == null && (
+                        <p className="text-xs text-red-300 mt-1">Not a duration I can read.</p>
+                      )}
+                      {roundedUp && (
+                        <p className="text-xs text-white/70 mt-1">
+                          {rawMinutes} min bills as <span className="font-medium text-white">{formatHours(minutes!)} h</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-b-2xl border border-t-0 border-gray-200 p-6 sm:p-7 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
                   What did you do? <span className="font-normal text-gray-500 normal-case">— optional</span>
@@ -274,12 +331,10 @@ export function TimeTracking() {
                   onKeyDown={e => { if (e.key === 'Enter' && minutes) log.mutate() }}
                 />
               </div>
-
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-gray-600">
                   <input type="checkbox" checked={billable} onChange={e => setBillable(e.target.checked)} className="rounded" />
                   Billable
-                  {!billable && <span className="text-xs text-gray-500">— logged, but does not draw the retainer</span>}
                 </label>
                 <button
                   onClick={() => { setError(null); log.mutate() }}
@@ -290,7 +345,6 @@ export function TimeTracking() {
                 </button>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
-              </div>
             </div>
           </div>
 
