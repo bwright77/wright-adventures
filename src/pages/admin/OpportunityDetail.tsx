@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { TaskPanel } from '../../components/admin/TaskPanel'
 import { ContactsPanel } from '../../components/admin/ContactsPanel'
+import { CloseLostDialog } from '../../components/admin/CloseLostDialog'
 import { InteractionsLog } from '../../components/admin/InteractionsLog'
 import { PartnershipAdvisorPanel } from '../../components/admin/PartnershipAdvisorPanel'
 import type {
@@ -378,6 +379,7 @@ export function OpportunityDetail() {
   type TabId = 'details' | 'contacts' | 'interactions' | 'advisor' | 'ai'
   const [activeTab, setActiveTab]       = useState<TabId>('details')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [closingLost, setClosingLost] = useState(false)
 
   const { data: opportunity, isLoading } = useQuery<Opportunity>({
     queryKey: ['opportunity', id],
@@ -705,6 +707,16 @@ export function OpportunityDetail() {
         </div>
       </div>
 
+      {closingLost && (
+        <CloseLostDialog
+          opportunityId={id!}
+          organizationId={opportunity.organization_id}
+          organizationName={opportunity.partner_org ?? opportunity.name}
+          onClose={() => setClosingLost(false)}
+          onDone={() => setClosingLost(false)}
+        />
+      )}
+
       {/* Pipeline stepper */}
       <div className="bg-white rounded-xl border border-gray-200 px-6 py-4 mb-6">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em] mb-3">Pipeline stage</p>
@@ -713,7 +725,10 @@ export function OpportunityDetail() {
           terminal={stages.filter(st => PARTNERSHIP_TERMINAL_IDS.includes(st.id))}
           currentStatus={opportunity.status}
           color="trail"
-          onSelect={changeStatus}
+          // Closing lost needs a reason before the guard trigger will allow
+          // it, and asks a second question the pipeline cannot answer: does the
+          // relationship continue? Both are collected by the dialog.
+          onSelect={next => next === 'closed_lost' ? setClosingLost(true) : changeStatus(next)}
           isPending={statusPending}
         />
       </div>
