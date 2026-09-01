@@ -5,6 +5,7 @@ import { Trash2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { Stopwatch } from '../../components/admin/Stopwatch'
 import { parseBillable, parseDuration, formatHours, retainerStatus, billingLabel } from '../../lib/retainer'
 import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 
@@ -172,6 +173,8 @@ export function TimeTracking() {
 
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
         <div className="space-y-6">
+          <Stopwatch onApply={m => setDuration(formatHours(m))} />
+
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="space-y-4">
               <div>

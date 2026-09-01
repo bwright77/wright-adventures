@@ -79,5 +79,10 @@ check('"1.33" rounds up', parseBillable('1.33'), 84, '79.8 raw → 1.4 h')
 check('format 6',   formatHours(6),   '0.1', 'tenths, which is how it bills')
 check('format 150', formatHours(150), '2.5', '')
 
+// The stopwatch commits whatever the clock shows, rounded up — the numbers
+// people will actually see between pressing stop and pressing log.
+for (const [minutesOnClock, want] of [[0.5, 6], [5, 6], [6, 6], [7, 12], [61, 66], [90, 90]] as const)
+  check(`stopwatch ${minutesOnClock} min`, toBillingMinutes(minutesOnClock), want, `bills ${formatHours(want)} h`)
+
 console.log(`\n${pass}/${total}`)
 process.exit(pass === total ? 0 : 1)
