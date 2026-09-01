@@ -72,6 +72,17 @@ export function Stopwatch({
     accumulatedMs: s.accumulatedMs + (s.startedAt ? Date.now() - s.startedAt : 0),
   }))
   const reset = () => setState({ startedAt: null, accumulatedMs: 0 })
+
+  /**
+   * Credit time already worked before the timer was started.
+   *
+   * Adding to the banked total rather than moving startedAt backwards means it
+   * behaves the same whether the clock is idle or already running — you can
+   * realise you forgot at the start, or ten minutes in, and it lands the same
+   * way. Repeatable, and reset clears it.
+   */
+  const addMinutes = (m: number) =>
+    setState(s => ({ ...s, accumulatedMs: s.accumulatedMs + m * 60_000 }))
   const apply = () => { if (billable > 0) onApply(billable); reset() }
 
   return (
@@ -92,6 +103,21 @@ export function Stopwatch({
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 mr-1">
+          <span className="text-xs text-white/70 hidden sm:inline">
+            {started ? 'Add' : 'Started late?'}
+          </span>
+          {[5, 10, 15, 30].map(m => (
+            <button
+              key={m}
+              onClick={() => addMinutes(m)}
+              className="text-xs px-2 py-1 rounded border border-white/25 text-white/80 hover:border-white/60 hover:text-white transition-colors"
+              title={`Credit ${m} minutes already worked`}
+            >
+              +{m}
+            </button>
+          ))}
+        </div>
         {started && (
           <button
             onClick={reset}

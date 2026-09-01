@@ -84,5 +84,14 @@ check('format 150', formatHours(150), '2.5', '')
 for (const [minutesOnClock, want] of [[0.5, 6], [5, 6], [6, 6], [7, 12], [61, 66], [90, 90]] as const)
   check(`stopwatch ${minutesOnClock} min`, toBillingMinutes(minutesOnClock), want, `bills ${formatHours(want)} h`)
 
+// Starting the timer late: banked minutes plus whatever the clock has run,
+// rounded once at the end rather than per-part.
+const late = (creditedMin: number, ranMin: number) => toBillingMinutes(creditedMin + ranMin)
+check('credited 10, ran 0',   late(10, 0),  12,  '10 min → 0.2 h')
+check('credited 10, ran 5',   late(10, 5),  18,  '15 min → 0.3 h')
+check('credited 10, ran 2',   late(10, 2),  12,  '12 min is exact → 0.2 h')
+check('credited 5, ran 1',    late(5, 1),   6,   'rounds once at the end, not per part')
+check('credited 30, ran 31',  late(30, 31), 66,  '61 min → 1.1 h')
+
 console.log(`\n${pass}/${total}`)
 process.exit(pass === total ? 0 : 1)
