@@ -65,6 +65,7 @@ export function TimeTracking() {
   const [billable, setBillable] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const describeRef = useRef<HTMLInputElement>(null)
+  const [fromTimer, setFromTimer] = useState(false)
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
     queryKey: ['engagements', 'loggable'],
@@ -143,7 +144,7 @@ export function TimeTracking() {
       if (e) throw e
     },
     onSuccess: () => {
-      setDuration(''); setDescription(''); setError(null)
+      setDuration(''); setDescription(''); setError(null); setFromTimer(false)
       queryClient.invalidateQueries({ queryKey: ['time_entries', activeId] })
       queryClient.invalidateQueries({ queryKey: ['retainer_ledger', activeId] })
     },
@@ -206,10 +207,18 @@ export function TimeTracking() {
               engagements={engagements}
               selectedId={activeId}
               onSelect={setEngagementId}
-              onApply={m => { setDuration(formatHours(m)); describeRef.current?.focus() }}
+              onApply={m => { setDuration(formatHours(m)); setFromTimer(true); describeRef.current?.focus() }}
             />
 
             <div className="bg-white rounded-b-2xl border border-t-0 border-gray-200 p-6 sm:p-7">
+              {/* The two routes in: the timer hands a duration down, or you type
+                  one for work that was never timed. Same entry either way — only
+                  the wording changes, so it is clear which one you are in. */}
+              <h2 className="text-sm font-semibold text-navy mb-4">
+                {fromTimer
+                  ? <>From the timer — <span className="text-river-700">{duration} h</span>. What did you do?</>
+                  : 'Or log time you did not run the timer for'}
+              </h2>
               <div className="space-y-4">
               <div className="grid sm:grid-cols-[140px_1fr] gap-4">
                 <div>
@@ -224,7 +233,7 @@ export function TimeTracking() {
                     <input
                       className={inputCls}
                       value={duration}
-                      onChange={e => setDuration(e.target.value)}
+                      onChange={e => { setDuration(e.target.value); setFromTimer(false) }}
                       placeholder="2.5"
                     />
                     <div className="flex gap-1 shrink-0">
@@ -232,7 +241,7 @@ export function TimeTracking() {
                         <button
                           key={m}
                           type="button"
-                          onClick={() => setDuration(formatHours(m))}
+                          onClick={() => { setDuration(formatHours(m)); setFromTimer(false) }}
                           className="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-river hover:text-river-700 transition-colors"
                         >
                           {formatHours(m)}
