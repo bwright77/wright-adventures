@@ -3,7 +3,7 @@
 **Project:** Wright Adventures — Opportunity Management Platform (OMP)
 **Author:** Benjamin Wright, Director of Technology & Innovation
 **Date:** 2026-08-22 (rewritten against the ADR-012 schema; supersedes the 2026-08-18 draft)
-**Status:** Proposed
+**Status:** Accepted — Phase 1 schema landed 2026-09-01, the day the CMC SOW was signed
 **Depends on:** ADR-012 (Lead → Opportunity → Client) — specifically the `engagements` table
 **Driving requirement:** the Colorado Mountain Club SOW, if signed
 
@@ -47,10 +47,9 @@ That becomes urgent rather than theoretical if CMC signs. Its SOW starts **Augus
 days from this rewrite — is **invoiced in advance**, and the first invoice is **due on
 signature**. The very first obligation of the engagement is one this system cannot meet.
 
-**Current state of that deal:** CMC sits at **Approval**, `decision_body = board`, with no
-decision date recorded. So the trigger for this work is a board meeting whose date we do not
-yet know — which is precisely why the ageing indicator treats a missing decision date
-differently from a late one.
+**Current state of that deal:** signed. CMC is **closed-won**, and this is the firm's second
+engagement with them — the pre-OMP hiring and operations contract continues alongside it. Two
+engagements, one client, which is the shape `organization_id` was chosen for.
 
 ### The CMC terms are the specification
 
@@ -263,12 +262,16 @@ three. A system that only reported "hours logged" would show month one as health
 
 ## Implementation Sequence
 
-**Phase 0 — Nothing.** Blocked on the CMC board decision. The engagement row exists and can
-hold the SOW terms the day it is signed; building the ledger before then is speculative.
+**Phase 0 — Nothing.** ✅ Ended 2026-09-01: the board approved and work started the same day.
 
-**Phase 1 — Run CMC.** Extend `engagements`; add `retainer_periods`, `retainer_ledger`,
-`time_entries`, `invoices`, `invoice_line_items`. Time entry, retainer status, invoice
-generation from schedule, PDF. This is the whole blocking scope.
+**Phase 1 — Run CMC.** Schema ✅ landed 2026-09-01 — `engagements` extended, plus
+`retainer_periods`, `retainer_ledger`, `time_entries`, `invoices`, `invoice_line_items`,
+`next_invoice_number()`. The CMC engagement carries the SOW terms, four monthly periods are
+scheduled, 160 hours are credited, and **WA-2026-0001 is raised for $6,000 due on signature**.
+Logging time draws the retainer automatically, verified end to end.
+
+Still to build: the time-entry UI, the retainer status panel, invoice generation from the
+schedule, and the PDF.
 
 **Phase 2 — Get paid.** `payments`, invoice status lifecycle, overdue flagging, A/R.
 
@@ -277,7 +280,8 @@ strategic engagements feeding contributed value from actuals, expenses.
 
 **Phase 4 — Analysis.** Utilization, realization, effective-rate trends, margin by engagement.
 
-Phases 1 and 2 are the ones with a date attached, and that date is not ours to set.
+Phases 1 and 2 are the ones with a date attached, and that date has now passed: the SOW is
+live and the first checkpoint falls at the end of September.
 
 ---
 
