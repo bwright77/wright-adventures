@@ -182,3 +182,17 @@ export function parseBillable(input: string): number | null {
 export function formatHours(minutes: number): string {
   return (minutes / 60).toFixed(1)
 }
+
+/**
+ * What to call an engagement's billing on screen.
+ *
+ * A paid engagement left at the non_billable default is not contributed work —
+ * it is a gap. Saying "contributed" would quietly misreport revenue as donated
+ * value, so it is named as unset instead and prompts someone to fix it.
+ */
+export function billingLabel(nature: string, billingModel: string): string {
+  if (billingModel === 'non_billable' && (nature === 'paid' || nature === 'reduced_rate')) {
+    return 'billing not set'
+  }
+  return billingModel === 'non_billable' ? 'contributed' : billingModel.replace('_', ' ')
+}

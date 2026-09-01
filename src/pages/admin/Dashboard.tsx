@@ -5,6 +5,8 @@ import { format, isAfter, addDays } from 'date-fns'
 import { parseLocalDate } from '../../lib/dates'
 import type { LucideIcon } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { retainerStatus, formatHours, billingLabel } from '../../lib/retainer'
+import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Opportunity, Task } from '../../lib/types'
 
@@ -84,6 +86,49 @@ export function Dashboard() {
 
   // Leads are their own table now (ADR-012) rather than opportunities wearing a
   // type_id, so this is a count query instead of a filter over the wrong list.
+  // Work in flight — engagements still being delivered, with the retainer
+  // figures alongside so the dashboard says what is left, not just what exists.
+  const { data: engagements = [] } = useQuery<any[]>({
+    queryKey: ['engagements', 'in-flight'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('engagements')
+        .select('id, name, nature, billing_model, delivery_status, committed_hours, hours_per_period, max_hours_per_period, contract_rate, started_on, ended_on, organizations(name, logo_url)')
+        .neq('delivery_status', 'complete')
+        .order('billing_model')
+      if (error) throw error
+      return data ?? []
+    },
+  })
+
+  const { data: ledger = [] } = useQuery<(LedgerRow & { engagement_id: string })[]>({
+    queryKey: ['retainer_ledger', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('retainer_ledger').select('engagement_id, entry_type, hours, created_at')
+      if (error) throw error
+      return (data ?? []) as any
+    },
+  })
+
+  const { data: periods = [] } = useQuery<(PeriodRow & { engagement_id: string })[]>({
+    queryKey: ['retainer_periods', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('retainer_periods')
+        .select('engagement_id, period_number, period_start, period_end, hours_granted, fee, status')
+      if (error) throw error
+      return (data ?? []) as any
+    },
+  })
+
+  const { data: timeEntries = [] } = useQuery<any[]>({
+    queryKey: ['time_entries', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('time_entries').select('engagement_id, entry_date, minutes, billable')
+      if (error) throw error
+      return data ?? []
+    },
+  })
+
   const { data: leadsToReview = 0 } = useQuery<number>({
     queryKey: ['leads', 'to-review'],
     queryFn: async () => {
@@ -165,6 +210,83 @@ export function Dashboard() {
           to="/admin/tasks"
         />
       </div>
+
+      {engagements.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.08em]">
+              Work in Flight
+            </h2>
+            <Link to="/admin/time" className="text-xs text-river-700 hover:underline">Log time →</Link>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {engagements.map(e => {
+              const isRetainer = e.billing_model === 'retainer'
+              const status = isRetainer
+                ? retainerStatus(
+                    e,
+                    ledger.filter(l => l.engagement_id === e.id),
+                    periods.filter(p => p.engagement_id === e.id),
+                    timeEntries.filter(t => t.engagement_id === e.id),
+                    now,
+                  )
+                : null
+              const logged = timeEntries
+                .filter(t => t.engagement_id === e.id)
+                .reduce((s: number, t: any) => s + t.minutes, 0)
+
+              return (
+                <li key={e.id}>
+                  <Link
+                    to={`/admin/time?engagement=${e.id}`}
+                    className="flex items-center gap-4 py-3 group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-navy group-hover:text-river transition-colors truncate">
+                        {e.organizations?.name}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate">{e.name}</p>
+                    </div>
+
+                    {status ? (
+                      <div className="shrink-0 w-40">
+                        <div className="flex items-baseline justify-between mb-1">
+                          <span className="text-sm font-semibold text-navy tabular-nums">
+                            {status.balance.toFixed(1)}h
+                          </span>
+                          <span className="text-[0.7rem] text-gray-600">of {status.committed} left</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${status.overCeiling ? 'bg-red-500' : 'bg-river'}`}
+                            style={{ width: `${Math.min(100, (status.hoursUsed / (status.committed || 1)) * 100)}%` }}
+                          />
+                        </div>
+                        <p className={`text-[0.7rem] mt-1 ${status.overCeiling ? 'text-red-600' : 'text-gray-600'}`}>
+                          {status.drawnThisMonth.toFixed(1)}h this month
+                          {status.monthlyCeiling ? ` / ${status.monthlyCeiling} max` : ''}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="shrink-0 w-40 text-right">
+                        <span className="text-sm font-semibold text-navy tabular-nums">
+                          {logged ? `${formatHours(logged)}h` : '—'}
+                        </span>
+                        <p className={`text-[0.7rem] mt-0.5 ${
+                          billingLabel(e.nature, e.billing_model) === 'billing not set'
+                            ? 'text-earth' : 'text-gray-600'
+                        }`}>
+                          {billingLabel(e.nature, e.billing_model)}
+                        </p>
+                      </div>
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Deadlines */}

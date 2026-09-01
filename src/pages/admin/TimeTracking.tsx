@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { parseBillable, parseDuration, formatHours, retainerStatus } from '../../lib/retainer'
+import { parseBillable, parseDuration, formatHours, retainerStatus, billingLabel } from '../../lib/retainer'
 import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 
 /**
@@ -23,6 +24,7 @@ import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 interface EngagementRow {
   id: string
   name: string
+  nature: string
   billing_model: string
   contract_rate: number | string | null
   standard_rate: number | string | null
@@ -51,7 +53,9 @@ export function TimeTracking() {
   const { profile } = useAuth()
   const today = new Date()
 
-  const [engagementId, setEngagementId] = useState<string>('')
+  // Arriving from the dashboard's Work in Flight list preselects the engagement.
+  const [searchParams] = useSearchParams()
+  const [engagementId, setEngagementId] = useState<string>(() => searchParams.get('engagement') ?? '')
   const [entryDate, setEntryDate] = useState(() => today.toISOString().slice(0, 10))
   const [duration, setDuration] = useState('')
   const [description, setDescription] = useState('')
@@ -63,7 +67,7 @@ export function TimeTracking() {
     queryFn: async () => {
       const { data, error: e } = await supabase
         .from('engagements')
-        .select('id, name, billing_model, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name)')
+        .select('id, name, nature, billing_model, contract_rate, standard_rate, committed_hours, hours_per_period, max_hours_per_period, started_on, ended_on, organizations(name)')
         .neq('delivery_status', 'complete')
         .order('created_at', { ascending: false })
       if (e) throw e
@@ -175,8 +179,7 @@ export function TimeTracking() {
                 <select className={inputCls} value={activeId} onChange={e => setEngagementId(e.target.value)}>
                   {engagements.map(e => (
                     <option key={e.id} value={e.id}>
-                      {e.organizations?.name ?? '—'} · {e.name}
-                      {e.billing_model === 'non_billable' ? ' (contributed)' : ''}
+                      {e.organizations?.name ?? '—'} · {e.name} ({billingLabel(e.nature, e.billing_model)})
                     </option>
                   ))}
                 </select>
@@ -224,13 +227,15 @@ export function TimeTracking() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">What did you do?</label>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                  What did you do? <span className="font-normal text-gray-500 normal-case">— optional</span>
+                </label>
                 <input
                   className={inputCls}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Extract and assess the current marketing cloud data"
-                  onKeyDown={e => { if (e.key === 'Enter' && minutes && description.trim()) log.mutate() }}
+                  onKeyDown={e => { if (e.key === 'Enter' && minutes) log.mutate() }}
                 />
               </div>
 
@@ -242,7 +247,7 @@ export function TimeTracking() {
                 </label>
                 <button
                   onClick={() => { setError(null); log.mutate() }}
-                  disabled={!minutes || !description.trim() || log.isPending}
+                  disabled={!minutes || log.isPending}
                   className="text-sm font-medium bg-navy hover:bg-navy/90 disabled:opacity-40 text-white px-5 py-2.5 rounded-lg transition-colors"
                 >
                   {log.isPending ? 'Logging…' : minutes ? `Log ${formatHours(minutes)} h` : 'Log time'}
@@ -268,7 +273,9 @@ export function TimeTracking() {
                     <span className="text-sm font-semibold text-navy tabular-nums w-14 shrink-0 text-right">
                       {formatHours(e.minutes)} h
                     </span>
-                    <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">{e.description}</span>
+                    <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">
+                      {e.description || <span className="text-gray-400">—</span>}
+                    </span>
                     {!e.billable && (
                       <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0">contributed</span>
                     )}
@@ -351,8 +358,8 @@ export function TimeTracking() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="text-sm font-semibold text-navy mb-1">Contributed work</h2>
             <p className="text-xs text-gray-600 leading-relaxed">
-              This engagement is {selected.billing_model.replace('_', '-')}. Hours are logged so the
-              value is measured rather than estimated — they are never invoiced.
+              This engagement is {billingLabel(selected.nature, selected.billing_model)}. Hours are
+              logged so the value is measured rather than estimated — they are never invoiced.
             </p>
           </div>
         )}
