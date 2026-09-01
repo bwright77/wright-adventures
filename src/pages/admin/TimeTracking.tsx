@@ -4,7 +4,7 @@ import { Trash2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { parseDuration, formatDuration, retainerStatus } from '../../lib/retainer'
+import { parseBillable, parseDuration, formatHours, retainerStatus } from '../../lib/retainer'
 import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 
 /**
@@ -14,8 +14,10 @@ import type { LedgerRow, PeriodRow } from '../../lib/retainer'
  * the number that matters — how much of the commitment is gone — is the one you
  * want in front of you while deciding whether to log the hour honestly.
  *
- * Time is stored as integer minutes. The input accepts what people actually
- * type: "2.5", "90m", "1:30". A bare number means hours.
+ * Time bills in six-minute increments — tenths of an hour — always rounded UP:
+ * five minutes on the timer is 0.1, seven is 0.2. The input accepts what people
+ * actually type ("2.5", "90m", "1:30", a bare number meaning hours) and shows
+ * the rounding as you type, so it is never a surprise on the invoice.
  */
 
 interface EngagementRow {
@@ -41,7 +43,8 @@ interface EntryRow {
   engagement_id: string
 }
 
-const QUICK = [15, 30, 60, 90, 120]
+/** Tenths of an hour, the unit that is billed. */
+const QUICK = [6, 30, 60, 90, 120]
 
 export function TimeTracking() {
   const queryClient = useQueryClient()
@@ -108,7 +111,11 @@ export function TimeTracking() {
     enabled: !!activeId,
   })
 
-  const minutes = parseDuration(duration)
+  // What was typed, and what it bills at. Showing both makes the round-up
+  // visible at the moment of entry rather than a surprise on the invoice.
+  const rawMinutes = parseDuration(duration)
+  const minutes = parseBillable(duration)
+  const roundedUp = rawMinutes != null && minutes != null && minutes !== rawMinutes
   const isRetainer = selected?.billing_model === 'retainer'
   const status = selected && isRetainer
     ? retainerStatus(selected, ledger, periods, entries, today)
@@ -155,7 +162,7 @@ export function TimeTracking() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-navy">Time</h1>
         <p className="text-sm text-gray-600 mt-0.5">
-          {todayMinutes ? `${formatDuration(todayMinutes)} logged today` : 'Nothing logged today'}
+          {todayMinutes ? `${formatHours(todayMinutes)} hours logged today` : 'Nothing logged today'}
         </p>
       </div>
 
@@ -196,16 +203,22 @@ export function TimeTracking() {
                         <button
                           key={m}
                           type="button"
-                          onClick={() => setDuration(formatDuration(m))}
+                          onClick={() => setDuration(formatHours(m))}
                           className="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:border-river hover:text-river-700 transition-colors"
                         >
-                          {formatDuration(m)}
+                          {formatHours(m)}
                         </button>
                       ))}
                     </div>
                   </div>
                   {duration && minutes == null && (
                     <p className="text-xs text-red-600 mt-1">Not a duration I can read.</p>
+                  )}
+                  {roundedUp && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {rawMinutes} min bills as <span className="font-medium text-navy">{formatHours(minutes!)} h</span>
+                      {' '}— rounded up to the next tenth.
+                    </p>
                   )}
                 </div>
               </div>
@@ -232,7 +245,7 @@ export function TimeTracking() {
                   disabled={!minutes || !description.trim() || log.isPending}
                   className="text-sm font-medium bg-navy hover:bg-navy/90 disabled:opacity-40 text-white px-5 py-2.5 rounded-lg transition-colors"
                 >
-                  {log.isPending ? 'Logging…' : minutes ? `Log ${formatDuration(minutes)}` : 'Log time'}
+                  {log.isPending ? 'Logging…' : minutes ? `Log ${formatHours(minutes)} h` : 'Log time'}
                 </button>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
@@ -252,8 +265,8 @@ export function TimeTracking() {
                     <span className="text-xs text-gray-600 tabular-nums w-20 shrink-0">
                       {format(new Date(e.entry_date + 'T00:00:00'), 'MMM d')}
                     </span>
-                    <span className="text-sm font-semibold text-navy tabular-nums w-16 shrink-0">
-                      {formatDuration(e.minutes)}
+                    <span className="text-sm font-semibold text-navy tabular-nums w-14 shrink-0 text-right">
+                      {formatHours(e.minutes)} h
                     </span>
                     <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">{e.description}</span>
                     {!e.billable && (

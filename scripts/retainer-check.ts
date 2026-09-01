@@ -1,6 +1,6 @@
 // Asserts the retainer figures, above all the ones the CMC checkpoint reviews
 // are contractually required to report.
-import { retainerStatus, parseDuration, formatDuration } from '../src/lib/retainer'
+import { retainerStatus, parseDuration, parseBillable, toBillingMinutes, formatHours } from '../src/lib/retainer'
 
 const TODAY = new Date(2026, 8, 15)          // Sep 15: 14 of 122 term days, ~11.5%
 const TERMS = {
@@ -58,9 +58,26 @@ const nonBillable = retainerStatus(TERMS, ledger, periods,
   [{ entry_date: day(10), minutes: 55 * 60, billable: true }, { entry_date: day(11), minutes: 300, billable: false }], TODAY)
 check('non-billable is excluded', nonBillable.drawnThisMonth, 55, 'logged for the record, not drawn')
 
+// Raw parsing — before rounding.
 for (const [input, want] of [['2.5', 150], ['2.5h', 150], ['90m', 90], ['1:30', 90], ['', null], ['soon', null]] as const)
   check(`parse "${input}"`, parseDuration(input), want, 'a bare number means hours')
-check('format 150', formatDuration(150), '2h 30m', '')
+
+// The billing increment: six minutes, always UP. Never round down — that gives
+// away time already worked.
+check('5 min bills',  toBillingMinutes(5),  6,   '0.1 h')
+check('6 min bills',  toBillingMinutes(6),  6,   'exact, unchanged')
+check('7 min bills',  toBillingMinutes(7),  12,  '0.2 h — the case Ben named')
+check('1 min bills',  toBillingMinutes(1),  6,   'a minute still bills a tenth')
+check('60 min bills', toBillingMinutes(60), 60,  'a whole hour is untouched')
+check('61 min bills', toBillingMinutes(61), 66,  '1.1 h')
+check('0 min bills',  toBillingMinutes(0),  0,   'nothing bills nothing')
+
+check('"5m" end to end',  parseBillable('5m'),  6,   'typed as minutes, billed as a tenth')
+check('"0.1" end to end', parseBillable('0.1'), 6,   'a tenth is exactly six minutes')
+check('"1.33" rounds up', parseBillable('1.33'), 84, '79.8 raw → 1.4 h')
+
+check('format 6',   formatHours(6),   '0.1', 'tenths, which is how it bills')
+check('format 150', formatHours(150), '2.5', '')
 
 console.log(`\n${pass}/${total}`)
 process.exit(pass === total ? 0 : 1)

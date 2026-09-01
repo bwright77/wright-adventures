@@ -128,7 +128,31 @@ export function retainerStatus(
   }
 }
 
-/** "2.5", "2.5h", "150m", "1:30" → minutes. Null when it cannot be read. */
+/**
+ * Six minutes — one tenth of an hour. The billing increment.
+ *
+ * Minutes stay the unit because a tenth is exactly six of them, so integers
+ * keep it exact; a float 0.1 would reintroduce the rounding error the integer
+ * was chosen to avoid.
+ */
+export const INCREMENT_MINUTES = 6
+
+/**
+ * Round UP to the next billing increment. Five minutes on the timer bills 0.1,
+ * seven bills 0.2. Never rounds down — that would give away time already worked.
+ */
+export function toBillingMinutes(rawMinutes: number): number {
+  if (rawMinutes <= 0) return 0
+  return Math.ceil(rawMinutes / INCREMENT_MINUTES) * INCREMENT_MINUTES
+}
+
+/**
+ * Read what someone types into RAW minutes — the caller rounds.
+ *
+ * A bare number means hours, which is how time is discussed and billed here:
+ * "0.1" is six minutes, "2.5" is two and a half hours. Explicit units win over
+ * that default.
+ */
 export function parseDuration(input: string): number | null {
   const s = input.trim().toLowerCase()
   if (!s) return null
@@ -137,21 +161,24 @@ export function parseDuration(input: string): number | null {
   if (hm) return Number(hm[1]) * 60 + Number(hm[2])
 
   const mins = /^(\d+(?:\.\d+)?)\s*m(?:in(?:ute)?s?)?$/.exec(s)
-  if (mins) return Math.round(Number(mins[1]))
+  if (mins) return Number(mins[1])
 
   const hrs = /^(\d+(?:\.\d+)?)\s*h(?:ou)?r?s?$/.exec(s)
-  if (hrs) return Math.round(Number(hrs[1]) * 60)
+  if (hrs) return Number(hrs[1]) * 60
 
   const bare = /^(\d+(?:\.\d+)?)$/.exec(s)
-  if (bare) return Math.round(Number(bare[1]) * 60)   // a bare number means hours
+  if (bare) return Number(bare[1]) * 60
 
   return null
 }
 
-/** 150 → "2h 30m". */
-export function formatDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60)
-  const m = Math.round(minutes % 60)
-  if (!h) return `${m}m`
-  return m ? `${h}h ${m}m` : `${h}h`
+/** Parse and round in one step. Null when the input cannot be read. */
+export function parseBillable(input: string): number | null {
+  const raw = parseDuration(input)
+  return raw == null ? null : toBillingMinutes(raw)
+}
+
+/** 150 → "2.5", 6 → "0.1". Tenths of an hour, which is how it bills. */
+export function formatHours(minutes: number): string {
+  return (minutes / 60).toFixed(1)
 }
