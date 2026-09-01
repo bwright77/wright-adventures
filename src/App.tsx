@@ -10,6 +10,7 @@ import { Opportunities } from './pages/admin/Opportunities'
 import { NewOpportunity } from './pages/admin/NewOpportunity'
 import { EditOpportunity } from './pages/admin/EditOpportunity'
 import { OpportunityDetail } from './pages/admin/OpportunityDetail'
+import { TimeTracking } from './pages/admin/TimeTracking'
 import { MyTasks } from './pages/admin/MyTasks'
 import { UserManagement } from './pages/admin/UserManagement'
 import { Settings } from './pages/admin/Settings'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="opportunities/:id/edit" element={<EditOpportunity />} />
         <Route path="leads" element={<Leads />} />
         <Route path="tasks" element={<MyTasks />} />
+        <Route path="time" element={<TimeTracking />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="team" element={<UserManagement />} />
         <Route path="settings" element={<Settings />} />

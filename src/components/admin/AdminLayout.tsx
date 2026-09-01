@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, Radar, CheckSquare, Users, LogOut, Settings, Menu, X, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Radar, CheckSquare, Users, LogOut, Settings, Menu, X, BarChart2, Clock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/admin/opportunities',  label: 'Opportunities', icon: Briefcase,       end: false, adminOnly: false },
   { to: '/admin/leads',          label: 'Leads',         icon: Radar,           end: false, adminOnly: false },
   { to: '/admin/tasks',          label: 'My Tasks',      icon: CheckSquare,     end: false, adminOnly: false },
+  { to: '/admin/time',           label: 'Time',          icon: Clock,           end: false, adminOnly: false },
   { to: '/admin/analytics',      label: 'Analytics',     icon: BarChart2,       end: false, adminOnly: false },
   { to: '/admin/team',           label: 'Team',          icon: Users,           end: false, adminOnly: false },
   { to: '/admin/settings',       label: 'Settings',      icon: Settings,        end: false, adminOnly: true  },
