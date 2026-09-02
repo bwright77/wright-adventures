@@ -52,7 +52,9 @@ export function Contact() {
         <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
           {/* Left — copy */}
           <div>
-            <span className="section-label !text-white/35">Partner With Us</span>
+            {/* 12px semibold is normal text to WCAG, so it needs 4.5:1.
+                white/35 gave 2.59:1 on this navy; white/70 gives 5.84:1. */}
+            <span className="section-label !text-white/70">Partner With Us</span>
             <h2 className="section-title !text-white text-balance">
               Let's talk about what your organization needs
             </h2>
@@ -85,9 +87,15 @@ export function Contact() {
               </a>
             </div>
 
-            <p className="text-xs text-white/25 mt-8">
-              {BRAND.location} — Serving organizations nationwide —{' '}
-              <a href={BRAND.linkedin} className="text-river/60 hover:text-river no-underline">
+            {/* white/25 was 2.23:1 and river/60 was 2.77:1 on this navy — both
+                well under AA. At full strength River clears it at 5.17:1, and
+                white/70 matches the email and phone lines above. */}
+            <p className="text-sm text-white/70 mt-8">
+              {BRAND.location} · Serving organizations nationwide ·{' '}
+              <a
+                href={BRAND.linkedin}
+                className="text-river hover:text-white transition-colors no-underline"
+              >
                 LinkedIn
               </a>
             </p>
