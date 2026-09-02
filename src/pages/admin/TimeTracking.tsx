@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, AlertTriangle } from 'lucide-react'
+import { Trash2, Pencil, AlertTriangle, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { todayLocal, monthStartLocal, monthEndLocal } from '../../lib/dates'
 import { Stopwatch, useStopwatch } from '../../components/admin/Stopwatch'
+import { EntryEditDialog } from '../../components/admin/EntryEditDialog'
 import { parseBillable, parseDuration, formatHours, retainerStatus, billingLabel } from '../../lib/retainer'
 import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 
@@ -46,6 +48,18 @@ interface EntryRow {
   billable: boolean
   is_estimate: boolean
   engagement_id: string
+  user_id: string | null
+  locked: boolean
+}
+
+interface ProfileRow {
+  id: string
+  full_name: string
+}
+
+/** First name, for a compact byline on an entry. */
+function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] ?? name
 }
 
 /** Initials, for an organisation with no logo on file. */
@@ -65,7 +79,7 @@ export function TimeTracking() {
   // Arriving from the dashboard's Work in Flight list preselects the engagement.
   const [searchParams] = useSearchParams()
   const [engagementId, setEngagementId] = useState<string>(() => searchParams.get('engagement') ?? '')
-  const [entryDate, setEntryDate] = useState(() => today.toISOString().slice(0, 10))
+  const [entryDate, setEntryDate] = useState(todayLocal)
   const [duration, setDuration] = useState('')
   const [description, setDescription] = useState('')
   const [billable, setBillable] = useState(true)
@@ -73,6 +87,23 @@ export function TimeTracking() {
   const [mode, setMode] = useState<'timer' | 'manual'>('timer')
   const sw = useStopwatch()
   const timerRunning = sw.running
+
+  /**
+   * Who the time is FOR, which is not always who is typing. Two people in the
+   * same meeting is two entries, so the retainer draws for both.
+   *
+   * Null means "nobody has chosen", which resolves to the signed-in user — that
+   * way the default arrives with the profile instead of needing an effect to
+   * catch up with it.
+   */
+  const [who, setWho] = useState<string[] | null>(null)
+  const [editing, setEditing] = useState<EntryRow | null>(null)
+
+  // The report defaults to the month in progress — the shape the CMC checkpoint
+  // review asks for, and what anybody means by "this month".
+  const [from, setFrom] = useState(monthStartLocal)
+  const [to, setTo] = useState(todayLocal)
+  const [reportBusy, setReportBusy] = useState(false)
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
     queryKey: ['engagements', 'loggable'],
@@ -86,6 +117,26 @@ export function TimeTracking() {
       return (data ?? []) as unknown as EngagementRow[]
     },
   })
+
+  const { data: team = [] } = useQuery<ProfileRow[]>({
+    queryKey: ['profiles', 'team'],
+    queryFn: async () => {
+      const { data, error: e } = await supabase
+        .from('profiles').select('id, full_name')
+        .in('role', ['admin', 'manager', 'member']).order('full_name')
+      if (e) throw e
+      return (data ?? []) as ProfileRow[]
+    },
+  })
+  const nameById = new Map(team.map(m => [m.id, m.full_name]))
+
+  const whoIds = who ?? (profile ? [profile.id] : [])
+  const toggleWho = (id: string) => {
+    const next = whoIds.includes(id) ? whoIds.filter(x => x !== id) : [...whoIds, id]
+    // An entry belongs to somebody. Refusing the last removal beats logging
+    // hours attributed to no one.
+    if (next.length) setWho(next)
+  }
 
   // Default to the first engagement once they load.
   const selected = engagements.find(x => x.id === engagementId) ?? engagements[0]
@@ -137,6 +188,7 @@ export function TimeTracking() {
   // mode that is the live clock, so Log is ready the moment it is, and reads
   // the same figure the clock is displaying.
   const minutes = mode === 'timer' ? (sw.billableMinutes || null) : typedMinutes
+  const described = description.trim().length > 0
   const isRetainer = selected?.billing_model === 'retainer'
   const status = selected && isRetainer
     ? retainerStatus(selected, ledger, periods, entries, today)
@@ -144,15 +196,17 @@ export function TimeTracking() {
 
   const log = useMutation({
     mutationFn: async ({ minutes: m }: { minutes: number; fromTimer: boolean }) => {
-      if (!m || !activeId) return
-      const { error: e } = await supabase.from('time_entries').insert({
-        engagement_id: activeId,
-        user_id: profile?.id ?? null,
-        entry_date: entryDate,
-        minutes: m,
-        description: description.trim(),
-        billable,
-      })
+      if (!m || !activeId || !described || !whoIds.length) return
+      const { error: e } = await supabase.from('time_entries').insert(
+        whoIds.map(id => ({
+          engagement_id: activeId,
+          user_id: id,
+          entry_date: entryDate,
+          minutes: m,
+          description: description.trim(),
+          billable,
+        })),
+      )
       if (e) throw e
     },
     // The clock is only cleared once the row is in. A failed insert leaves it
@@ -160,6 +214,9 @@ export function TimeTracking() {
     // an afternoon reconstructed from memory.
     onSuccess: (_, vars) => {
       if (vars.fromTimer) sw.reset()
+      // Back to just you. A stale second name would quietly bill somebody
+      // else's hours to the next thing logged.
+      setWho(null)
       setDuration(''); setDescription(''); setError(null)
       queryClient.invalidateQueries({ queryKey: ['time_entries', activeId] })
       queryClient.invalidateQueries({ queryKey: ['retainer_ledger', activeId] })
@@ -176,7 +233,7 @@ export function TimeTracking() {
     setError(null)
     const fromTimer = mode === 'timer'
     const m = fromTimer ? sw.billableMinutes : typedMinutes
-    if (!m) return
+    if (!m || !described) return
     if (fromTimer) sw.pause()
     log.mutate({ minutes: m, fromTimer })
   }
@@ -187,18 +244,54 @@ export function TimeTracking() {
       if (e) throw e
     },
     onSuccess: () => {
+      setError(null)
       queryClient.invalidateQueries({ queryKey: ['time_entries', activeId] })
       queryClient.invalidateQueries({ queryKey: ['retainer_ledger', activeId] })
     },
+    onError: (e: Error) => setError(e.message),
   })
 
+  // Both bounds are optional: blank means open-ended, and the document is
+  // stamped with the range the entries actually cover rather than a blank.
+  const inRange = entries.filter(e => (!from || e.entry_date >= from) && (!to || e.entry_date <= to))
+  const rangeMinutes = inRange.filter(e => !e.is_estimate).reduce((s, e) => s + e.minutes, 0)
+
+  const downloadReport = async () => {
+    if (!selected) return
+    setReportBusy(true)
+    try {
+      const { downloadTimeReportPdf } = await import('../../lib/timeReportPdf')
+      const dates = inRange.map(e => e.entry_date).sort()
+      await downloadTimeReportPdf({
+        organizationName: selected.organizations?.name ?? '',
+        engagementName: selected.name,
+        from: from || dates[0] || todayLocal(),
+        to: to || dates[dates.length - 1] || todayLocal(),
+        entries: inRange.map(e => ({
+          entry_date: e.entry_date,
+          minutes: e.minutes,
+          description: e.description,
+          billable: e.billable,
+          is_estimate: e.is_estimate,
+          who: e.user_id ? firstName(nameById.get(e.user_id) ?? 'Unattributed') : 'Unattributed',
+        })),
+        retainerBalance: status?.balance ?? null,
+        committedHours: status?.committed ?? null,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not build the report')
+    } finally {
+      setReportBusy(false)
+    }
+  }
+
   const inputCls = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20'
-  const todayKey = today.toISOString().slice(0, 10)
+  const todayKey = todayLocal()
   const todayMinutes = entries.filter(e => e.entry_date === todayKey).reduce((s, e) => s + e.minutes, 0)
   // Monday-anchored, matching how a week of work is actually talked about.
   const monday = new Date(today)
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
-  const mondayKey = monday.toISOString().slice(0, 10)
+  const mondayKey = todayLocal(monday)
   const weekMinutes = entries.filter(e => e.entry_date >= mondayKey && e.entry_date <= todayKey)
     .reduce((s, e) => s + e.minutes, 0)
 
@@ -340,7 +433,7 @@ export function TimeTracking() {
             <div className="bg-white rounded-b-2xl border border-t-0 border-gray-200 p-6 sm:p-7 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-                  What did you do? <span className="font-normal text-gray-500 normal-case">— optional</span>
+                  What did you do?
                 </label>
                 <input
                   className={inputCls}
@@ -350,6 +443,37 @@ export function TimeTracking() {
                   onKeyDown={e => { if (e.key === 'Enter') logNow() }}
                 />
               </div>
+              {/* Who the hours belong to. Both chips lit means both of you were
+                  there, and logs the duration once for each. */}
+              {team.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide mr-1">Who</span>
+                  {team.map(m => {
+                    const on = whoIds.includes(m.id)
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => toggleWho(m.id)}
+                        aria-pressed={on}
+                        className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                          on
+                            ? 'bg-navy border-navy text-white'
+                            : 'bg-white border-gray-300 text-gray-600 hover:border-navy hover:text-navy'
+                        }`}
+                      >
+                        {firstName(m.full_name)}
+                      </button>
+                    )
+                  })}
+                  {whoIds.length > 1 && (
+                    <span className="text-xs text-gray-500">
+                      logs {formatHours(minutes ?? 0)} h each
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-gray-600">
                   <input type="checkbox" checked={billable} onChange={e => setBillable(e.target.checked)} className="rounded" />
@@ -357,16 +481,20 @@ export function TimeTracking() {
                 </label>
                 <button
                   onClick={logNow}
-                  disabled={!minutes || log.isPending}
+                  disabled={!minutes || !described || log.isPending}
                   className="text-sm font-medium bg-navy hover:bg-navy/90 disabled:opacity-40 text-white px-5 py-2.5 rounded-lg transition-colors"
                 >
                   {log.isPending
                     ? 'Logging…'
                     : minutes
-                      ? `${timerRunning ? 'Stop and log' : 'Log'} ${formatHours(minutes)} h`
+                      ? `${timerRunning ? 'Stop and log' : 'Log'} ${formatHours(minutes)} h${whoIds.length > 1 ? ` × ${whoIds.length}` : ''}`
                       : 'Log time'}
                 </button>
               </div>
+              {/* The button is disabled, so say why rather than leaving it dead. */}
+              {!!minutes && !described && (
+                <p className="text-xs text-gray-500">Say what you did to log it.</p>
+              )}
               {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
           </div>
@@ -395,23 +523,82 @@ export function TimeTracking() {
                     <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">
                       {e.description || <span className="text-gray-400">—</span>}
                     </span>
+                    {e.user_id && nameById.has(e.user_id) && (
+                      <span className="text-xs text-gray-500 shrink-0">
+                        {firstName(nameById.get(e.user_id)!)}
+                      </span>
+                    )}
                     {e.is_estimate && (
                       <span className="text-[0.7rem] uppercase tracking-wide text-earth shrink-0">estimated</span>
                     )}
                     {!e.billable && (
                       <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0">non-billable</span>
                     )}
-                    <button
-                      onClick={() => remove.mutate(e.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all shrink-0"
-                      aria-label="Delete entry"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setEditing(e)}
+                        className="text-gray-400 hover:text-navy transition-colors p-0.5"
+                        aria-label="Edit entry"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => remove.mutate(e.id)}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                        aria-label="Delete entry"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h2 className="text-sm font-semibold text-navy">Time report</h2>
+              <div className="flex gap-1">
+                {([
+                  ['This month', () => { setFrom(monthStartLocal()); setTo(todayLocal()) }],
+                  ['Last month', () => { setFrom(monthStartLocal(-1)); setTo(monthEndLocal(-1)) }],
+                  ['All time', () => { setFrom(''); setTo('') }],
+                ] as const).map(([label, apply]) => (
+                  <button
+                    key={label}
+                    onClick={apply}
+                    className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-600 hover:border-navy hover:text-navy transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">From</label>
+                <input type="date" value={from} onChange={e => setFrom(e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">To</label>
+                <input type="date" value={to} onChange={e => setTo(e.target.value)} className={inputCls} />
+              </div>
+              <button
+                onClick={downloadReport}
+                disabled={reportBusy}
+                className="flex items-center gap-2 text-sm font-medium border border-gray-300 text-navy hover:border-navy px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50 ml-auto"
+              >
+                <FileDown size={14} /> {reportBusy ? 'Preparing…' : 'Download PDF'}
+              </button>
+            </div>
+
+            <p className="mt-3 text-xs text-gray-600">
+              {inRange.length === 0
+                ? 'Nothing logged in this range.'
+                : `${formatHours(rangeMinutes)} h across ${inRange.length} ${inRange.length === 1 ? 'entry' : 'entries'}`}
+            </p>
           </div>
         </div>
 
@@ -498,6 +685,10 @@ export function TimeTracking() {
           </div>
         )}
       </div>
+
+      {editing && (
+        <EntryEditDialog entry={editing} team={team} onClose={() => setEditing(null)} />
+      )}
     </div>
   )
 }
