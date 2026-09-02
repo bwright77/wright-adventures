@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Play, Pause, RotateCcw, Check } from 'lucide-react'
+import { Play, Pause, RotateCcw } from 'lucide-react'
 import { toBillingMinutes, formatHours } from '../../lib/retainer'
 
 /**
@@ -11,6 +11,10 @@ import { toBillingMinutes, formatHours } from '../../lib/retainer'
  * anyone stop trusting it. Elapsed is derived from a start TIMESTAMP rather than
  * accumulated by the interval, so a backgrounded tab, where browsers throttle
  * timers, still reports the truth.
+ *
+ * The state is a hook rather than component-private because Log reads the clock
+ * and stops it. Handing the time over used to be its own step — pause, accept,
+ * then log — which is three deliberate acts for one intention.
  */
 
 const KEY = 'wa.stopwatch'
@@ -41,13 +45,20 @@ function clock(ms: number) {
   }
 }
 
-export function Stopwatch({
-  onApply, onRunningChange,
-}: {
-  onApply: (minutes: number) => void
-  /** So the page can lock the engagement picker while the clock runs. */
-  onRunningChange?: (running: boolean) => void
-}) {
+export interface StopwatchControl {
+  elapsedMs: number
+  running: boolean
+  /** Any time on the clock, running or paused. */
+  started: boolean
+  /** What the elapsed time bills as, rounded up to the six-minute increment. */
+  billableMinutes: number
+  start: () => void
+  pause: () => void
+  reset: () => void
+  addMinutes: (m: number) => void
+}
+
+export function useStopwatch(): StopwatchControl {
   const [state, setState] = useState<Persisted>(load)
   const [, tick] = useState(0)
 
@@ -58,32 +69,34 @@ export function Stopwatch({
   }, [state.startedAt])
 
   useEffect(() => { save(state) }, [state])
-  useEffect(() => { onRunningChange?.(state.startedAt != null) }, [state.startedAt, onRunningChange])
 
   const elapsedMs = state.accumulatedMs + (state.startedAt ? Date.now() - state.startedAt : 0)
-  const running = state.startedAt != null
-  const billable = toBillingMinutes(elapsedMs / 60000)
-  const { hh, mm, ss } = clock(elapsedMs)
-  const started = elapsedMs > 0
 
-  const start = () => setState(s => ({ ...s, startedAt: Date.now() }))
-  const pause = () => setState(s => ({
-    startedAt: null,
-    accumulatedMs: s.accumulatedMs + (s.startedAt ? Date.now() - s.startedAt : 0),
-  }))
-  const reset = () => setState({ startedAt: null, accumulatedMs: 0 })
+  return {
+    elapsedMs,
+    running: state.startedAt != null,
+    started: elapsedMs > 0,
+    billableMinutes: toBillingMinutes(elapsedMs / 60000),
+    start: () => setState(s => ({ ...s, startedAt: Date.now() })),
+    pause: () => setState(s => ({
+      startedAt: null,
+      accumulatedMs: s.accumulatedMs + (s.startedAt ? Date.now() - s.startedAt : 0),
+    })),
+    reset: () => setState({ startedAt: null, accumulatedMs: 0 }),
+    /**
+     * Credit time already worked before the timer was started.
+     *
+     * Adding to the banked total rather than moving startedAt backwards means it
+     * behaves the same whether the clock is idle or already running — you can
+     * realise you forgot at the start, or ten minutes in, and it lands the same
+     * way. Repeatable, and reset clears it.
+     */
+    addMinutes: m => setState(s => ({ ...s, accumulatedMs: s.accumulatedMs + m * 60_000 })),
+  }
+}
 
-  /**
-   * Credit time already worked before the timer was started.
-   *
-   * Adding to the banked total rather than moving startedAt backwards means it
-   * behaves the same whether the clock is idle or already running — you can
-   * realise you forgot at the start, or ten minutes in, and it lands the same
-   * way. Repeatable, and reset clears it.
-   */
-  const addMinutes = (m: number) =>
-    setState(s => ({ ...s, accumulatedMs: s.accumulatedMs + m * 60_000 }))
-  const apply = () => { if (billable > 0) onApply(billable); reset() }
+export function Stopwatch({ sw }: { sw: StopwatchControl }) {
+  const { hh, mm, ss } = clock(sw.elapsedMs)
 
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -96,8 +109,8 @@ export function Stopwatch({
           <span className="text-3xl sm:text-4xl text-white/70 pb-0.5">{ss}</span>
         </div>
         <p className="mt-2 text-sm text-white/70 h-5">
-          {started
-            ? <>bills as <span className="font-semibold text-white">{formatHours(billable)} hours</span></>
+          {sw.started
+            ? <>bills as <span className="font-semibold text-white">{formatHours(sw.billableMinutes)} hours</span></>
             : 'Press start when you begin'}
         </p>
       </div>
@@ -105,12 +118,12 @@ export function Stopwatch({
       <div className="flex items-center gap-2 ml-auto">
         <div className="flex items-center gap-1.5 mr-1">
           <span className="text-xs text-white/70 hidden sm:inline">
-            {started ? 'Add' : 'Started late?'}
+            {sw.started ? 'Add' : 'Started late?'}
           </span>
           {[5, 10, 15, 30].map(m => (
             <button
               key={m}
-              onClick={() => addMinutes(m)}
+              onClick={() => sw.addMinutes(m)}
               className="text-xs px-2 py-1 rounded border border-white/25 text-white/80 hover:border-white/60 hover:text-white transition-colors"
               title={`Credit ${m} minutes already worked`}
             >
@@ -118,9 +131,9 @@ export function Stopwatch({
             </button>
           ))}
         </div>
-        {started && (
+        {sw.started && (
           <button
-            onClick={reset}
+            onClick={sw.reset}
             className="text-white/60 hover:text-white transition-colors p-2.5"
             aria-label="Reset timer"
           >
@@ -128,23 +141,14 @@ export function Stopwatch({
           </button>
         )}
         <button
-          onClick={running ? pause : start}
+          onClick={sw.running ? sw.pause : sw.start}
           className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-colors ${
-            running ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-river-700 hover:bg-river text-white'
+            sw.running ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-river-700 hover:bg-river text-white'
           }`}
         >
-          {running ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
-          {running ? 'Pause' : started ? 'Resume' : 'Start timer'}
+          {sw.running ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+          {sw.running ? 'Pause' : sw.started ? 'Resume' : 'Start timer'}
         </button>
-        {started && !running && (
-          <button
-            onClick={apply}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-navy font-medium text-sm hover:bg-white/90 transition-colors"
-          >
-            <Check size={16} />
-            Use {formatHours(billable)} h
-          </button>
-        )}
       </div>
     </div>
   )

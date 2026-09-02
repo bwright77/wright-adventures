@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { Stopwatch } from '../../components/admin/Stopwatch'
+import { Stopwatch, useStopwatch } from '../../components/admin/Stopwatch'
 import { parseBillable, parseDuration, formatHours, retainerStatus, billingLabel } from '../../lib/retainer'
 import type { LedgerRow, PeriodRow } from '../../lib/retainer'
 
@@ -70,9 +70,9 @@ export function TimeTracking() {
   const [description, setDescription] = useState('')
   const [billable, setBillable] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const describeRef = useRef<HTMLInputElement>(null)
   const [mode, setMode] = useState<'timer' | 'manual'>('timer')
-  const [timerRunning, setTimerRunning] = useState(false)
+  const sw = useStopwatch()
+  const timerRunning = sw.running
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
     queryKey: ['engagements', 'loggable'],
@@ -130,33 +130,56 @@ export function TimeTracking() {
   // What was typed, and what it bills at. Showing both makes the round-up
   // visible at the moment of entry rather than a surprise on the invoice.
   const rawMinutes = parseDuration(duration)
-  const minutes = parseBillable(duration)
-  const roundedUp = rawMinutes != null && minutes != null && minutes !== rawMinutes
+  const typedMinutes = parseBillable(duration)
+  const roundedUp = rawMinutes != null && typedMinutes != null && typedMinutes !== rawMinutes
+
+  // The duration comes from whichever half of the card is showing. In timer
+  // mode that is the live clock, so Log is ready the moment it is, and reads
+  // the same figure the clock is displaying.
+  const minutes = mode === 'timer' ? (sw.billableMinutes || null) : typedMinutes
   const isRetainer = selected?.billing_model === 'retainer'
   const status = selected && isRetainer
     ? retainerStatus(selected, ledger, periods, entries, today)
     : null
 
   const log = useMutation({
-    mutationFn: async () => {
-      if (!minutes || !activeId) return
+    mutationFn: async ({ minutes: m }: { minutes: number; fromTimer: boolean }) => {
+      if (!m || !activeId) return
       const { error: e } = await supabase.from('time_entries').insert({
         engagement_id: activeId,
         user_id: profile?.id ?? null,
         entry_date: entryDate,
-        minutes,
+        minutes: m,
         description: description.trim(),
         billable,
       })
       if (e) throw e
     },
-    onSuccess: () => {
+    // The clock is only cleared once the row is in. A failed insert leaves it
+    // paused with the time intact, which is the difference between a retry and
+    // an afternoon reconstructed from memory.
+    onSuccess: (_, vars) => {
+      if (vars.fromTimer) sw.reset()
       setDuration(''); setDescription(''); setError(null)
       queryClient.invalidateQueries({ queryKey: ['time_entries', activeId] })
       queryClient.invalidateQueries({ queryKey: ['retainer_ledger', activeId] })
     },
     onError: (e: Error) => setError(e.message),
   })
+
+  /**
+   * Stop the clock and log in one act. Pausing first freezes the figure at what
+   * the button said, rather than billing whatever the seconds reached while the
+   * insert was in flight.
+   */
+  const logNow = () => {
+    setError(null)
+    const fromTimer = mode === 'timer'
+    const m = fromTimer ? sw.billableMinutes : typedMinutes
+    if (!m) return
+    if (fromTimer) sw.pause()
+    log.mutate({ minutes: m, fromTimer })
+  }
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -264,10 +287,7 @@ export function TimeTracking() {
 
               <div className="mt-5">
                 {mode === 'timer' ? (
-                  <Stopwatch
-                    onApply={m => { setDuration(formatHours(m)); describeRef.current?.focus() }}
-                    onRunningChange={setTimerRunning}
-                  />
+                  <Stopwatch sw={sw} />
                 ) : (
                   <div className="grid sm:grid-cols-[150px_1fr] gap-4">
                     <div>
@@ -303,12 +323,12 @@ export function TimeTracking() {
                           ))}
                         </div>
                       </div>
-                      {duration && minutes == null && (
+                      {duration && typedMinutes == null && (
                         <p className="text-xs text-red-300 mt-1">Not a duration I can read.</p>
                       )}
                       {roundedUp && (
                         <p className="text-xs text-white/70 mt-1">
-                          {rawMinutes} min bills as <span className="font-medium text-white">{formatHours(minutes!)} h</span>
+                          {rawMinutes} min bills as <span className="font-medium text-white">{formatHours(typedMinutes!)} h</span>
                         </p>
                       )}
                     </div>
@@ -323,12 +343,11 @@ export function TimeTracking() {
                   What did you do? <span className="font-normal text-gray-500 normal-case">— optional</span>
                 </label>
                 <input
-                  ref={describeRef}
                   className={inputCls}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Extract and assess the current marketing cloud data"
-                  onKeyDown={e => { if (e.key === 'Enter' && minutes) log.mutate() }}
+                  onKeyDown={e => { if (e.key === 'Enter') logNow() }}
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -337,11 +356,15 @@ export function TimeTracking() {
                   Billable
                 </label>
                 <button
-                  onClick={() => { setError(null); log.mutate() }}
+                  onClick={logNow}
                   disabled={!minutes || log.isPending}
                   className="text-sm font-medium bg-navy hover:bg-navy/90 disabled:opacity-40 text-white px-5 py-2.5 rounded-lg transition-colors"
                 >
-                  {log.isPending ? 'Logging…' : minutes ? `Log ${formatHours(minutes)} h` : 'Log time'}
+                  {log.isPending
+                    ? 'Logging…'
+                    : minutes
+                      ? `${timerRunning ? 'Stop and log' : 'Log'} ${formatHours(minutes)} h`
+                      : 'Log time'}
                 </button>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
