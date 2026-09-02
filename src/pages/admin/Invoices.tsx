@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, Ban, CheckCircle2, Plus, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
+import { NewInvoiceDialog } from '../../components/admin/NewInvoiceDialog'
 import { parseLocalDate } from '../../lib/dates'
 import { formatHours } from '../../lib/retainer'
 
@@ -122,6 +123,7 @@ export function Invoices() {
   const selected = invoices.find(i => i.id === selectedId) ?? invoices[0] ?? null
 
   const [pdfBusy, setPdfBusy] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   /**
    * Loaded on demand. @react-pdf/renderer carries a font engine and a PDF
@@ -191,9 +193,17 @@ export function Invoices() {
             {invoices.filter(i => i.status !== 'void').length} issued
           </p>
         </div>
-        <div>
-          <p className="text-3xl font-bold text-navy tabular-nums leading-none">{money(outstanding)}</p>
-          <p className="text-xs text-gray-600 mt-1">outstanding</p>
+        <div className="flex items-end gap-6">
+          <div>
+            <p className="text-3xl font-bold text-navy tabular-nums leading-none">{money(outstanding)}</p>
+            <p className="text-xs text-gray-600 mt-1">outstanding</p>
+          </div>
+          <button
+            onClick={() => setCreating(true)}
+            className="flex items-center gap-2 text-sm font-medium bg-navy hover:bg-navy/90 text-white px-4 py-2.5 rounded-lg transition-colors"
+          >
+            <Plus size={14} /> New invoice
+          </button>
         </div>
       </div>
 
@@ -348,6 +358,10 @@ export function Invoices() {
           </div>
         )}
       </div>
+
+      {creating && (
+        <NewInvoiceDialog onClose={() => setCreating(false)} onCreated={setSelectedId} />
+      )}
     </div>
   )
 }
