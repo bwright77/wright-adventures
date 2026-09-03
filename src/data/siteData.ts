@@ -77,6 +77,16 @@ export const APPROACH_STEPS = [
 
 export const CASE_STUDIES = [
   {
+    tag: 'Operations & Data',
+    tagColor: 'river' as const,
+    title: 'Colorado Mountain Club',
+    description: 'Two engagements with one of the nation\'s leading mountain recreation organizations. The first supports hiring, program direction, and program operations — building staff capacity, sharpening program delivery, and navigating compliance and licensing requirements. The second migrates their Salesforce Marketing Cloud instance, remediates the member and donor data underneath it, and rebuilds email marketing so campaigns reach the right people with the right message.',
+    metrics: [
+      { value: 'Active', label: 'Current engagement' },
+      { value: 'Two tracks', label: 'Operations & Salesforce data' },
+    ],
+  },
+  {
     tag: 'Digital Legacy & Archive',
     tagColor: 'river' as const,
     title: 'PeopleForBikes — Better Bike Share Partnership',
@@ -96,16 +106,6 @@ export const CASE_STUDIES = [
     metrics: [
       { value: 'Full build', label: 'Brand, web & tech' },
       { value: 'Ongoing', label: 'Strategy & tech partner' },
-    ],
-  },
-  {
-    tag: 'Hiring & Operations',
-    tagColor: 'river' as const,
-    title: 'Colorado Mountain Club',
-    description: 'Supporting the Colorado Mountain Club across hiring, program direction, and program operations — helping one of the nation\'s leading mountain recreation organizations build staff capacity, sharpen program delivery, and navigate compliance and licensing requirements.',
-    metrics: [
-      { value: 'Active', label: 'Current engagement' },
-      { value: 'Hiring, ops & compliance', label: 'Full scope support' },
     ],
   },
   {
