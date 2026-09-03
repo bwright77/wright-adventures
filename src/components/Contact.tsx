@@ -49,7 +49,11 @@ export function Contact() {
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
+        {/* 2:3. The left column is a heading, a short intro and four contact
+            rows — none of which need the width — while the form carries eight
+            fields. Near-equal columns left the copy stranded across a long
+            measure and made the form look cramped beside it. */}
+        <div className="grid lg:grid-cols-[2fr_3fr] gap-16 items-start">
           {/* Left — copy */}
           <div>
             {/* 12px semibold is normal text to WCAG, so it needs 4.5:1.
