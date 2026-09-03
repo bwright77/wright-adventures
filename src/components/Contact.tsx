@@ -49,11 +49,7 @@ export function Contact() {
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* 2:3. The left column is a heading, a short intro and four contact
-            rows — none of which need the width — while the form carries eight
-            fields. Near-equal columns left the copy stranded across a long
-            measure and made the form look cramped beside it. */}
-        <div className="grid lg:grid-cols-[2fr_3fr] gap-16 items-start">
+        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
           {/* Left — copy */}
           <div>
             {/* 12px semibold is normal text to WCAG, so it needs 4.5:1.
@@ -62,13 +58,13 @@ export function Contact() {
             <h2 className="section-title !text-white text-balance">
               Let's talk about what your organization needs
             </h2>
-            <p className="section-desc !text-white/70 mb-10">
+            <p className="section-desc !text-white/70 mb-8">
               Whether you're a small conservation nonprofit looking for grant support, a youth
               program ready to scale, or a community group that needs technology — we'd like to hear
               from you.
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <a
                 href={`mailto:${BRAND.email}`}
                 className="flex items-center gap-3 text-white/70 hover:text-river-300 transition-colors group no-underline"
