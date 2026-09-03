@@ -118,11 +118,27 @@ ${candidate.description}
 ────────────────────────────────────────────────────────────────
 SCORE EACH DIMENSION 0–3
 
-1. engagement_shape — ${DIMENSION_LABELS.engagement_shape}. The single best predictor.
-   3 = RFP, RFQ, or contract explicitly open to a firm
-   2 = contract or 1099 role a firm could reasonably fill
-   1 = part-time employee role where a firm case can be argued
-   0 = full-time W-2 hire
+1. convertibility — ${DIMENSION_LABELS.convertibility}. The single best predictor.
+
+   Not "is this already shaped like a contract" but "can we credibly propose
+   something better for the same money". GOBRP was a posted role that converted
+   into a firm proposal and reached interview. CMC was two described hires that
+   became one engagement.
+
+   3 = RFP, RFQ, or contract explicitly open to a firm; or a 1099 contract role
+   2 = part-time, fixed-term, or a full-time role at an organization small enough
+       that the hiring committee can decide for itself — convertible with a
+       joint-services pitch
+   1 = full-time W-2 with benefits and a formal HR process, but a small enough
+       organization that a well-argued alternative gets read
+   0 = large organization, competitive hiring process, civil service or union
+       rules, or a role requiring credentials we do not hold
+
+   THE CONVERSION TEST: for the budget already allocated, can two people deliver
+   more than one hire? If the posted role is a generalist expected to do
+   fundraising AND systems AND communications — which most nonprofit development
+   roles are — the answer is usually yes, and that is the pitch. If the role is
+   genuinely single-discipline and specialist, it is not.
 
 2. warm_path — ${DIMENSION_LABELS.warm_path}. Use the RELATIONSHIPS list above.
    3 = the organization IS an existing client, or a principal has direct history with it
@@ -209,7 +225,7 @@ Return ONLY this JSON object, no prose, no markdown fence:
 
 {
   "scores": {
-    "engagement_shape": 0-3,
+    "convertibility": 0-3,
     "warm_path": 0-3,
     "both_halves": 0-3,
     "contract_value": 0-3,

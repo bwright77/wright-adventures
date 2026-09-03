@@ -16,7 +16,7 @@ export interface ExtractedOpportunity {
   name:                string
   publisher:           string
   description:         string
-  /** 'rfp' | 'contract' | 'job' — drives the engagement_shape dimension. */
+  /** 'rfp' | 'contract' | 'job' — drives the convertibility dimension. */
   source_kind:         string
   /** Verbatim engagement wording, e.g. "RFP", "Independent Contractor", "Full-time". */
   engagement_raw:      string | null
