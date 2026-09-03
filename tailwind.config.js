@@ -20,11 +20,15 @@ export default {
           DEFAULT: '#009DD6',
           light: '#F0F9FF',
           50: '#F0F9FF',
-          // Text-safe cyan. The brand #009DD6 measures 2.8–3.1:1 as small text
-          // on our light backgrounds, well under the 4.5:1 AA needs. This is the
-          // same hue darkened until it clears 4.5:1 on white, river-50, navy-50,
-          // gray-50 and the cream (worst case 4.68:1). Use it for small text on
-          // light; keep DEFAULT for text on navy and for fills.
+          // Text-safe cyan, in both directions. The brand #009DD6 does not carry
+          // small text on ANY of our grounds: 2.8–3.1:1 on the light ones, and
+          // 3.28:1 on the navy gradient — the earlier note here claimed DEFAULT
+          // was fine on navy, and it is not. Same hue, moved until it clears
+          // 4.5:1: 300 lightened for navy and the dark gradients (5.28:1 against
+          // the gradient's lightest stop), 700 darkened for white, river-50,
+          // navy-50, gray-50 and the cream (worst case 4.68:1).
+          // DEFAULT is for fills, rules and large display text only.
+          300: '#33C9FF',
           700: '#00749E',
         },
         earth: {

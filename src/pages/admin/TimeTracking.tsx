@@ -512,27 +512,34 @@ export function TimeTracking() {
               <p className="px-6 pb-6 text-sm text-gray-500">Nothing logged against this engagement yet.</p>
             ) : (
               <ul>
+                {/* items-start, not items-center: a description that runs to
+                    several lines should keep its date and hours on the first
+                    one rather than floating to the middle of the block. */}
                 {entries.slice(0, 20).map(e => (
-                  <li key={e.id} className="flex items-center gap-4 px-6 py-3 border-t border-gray-100 group">
-                    <span className="text-xs text-gray-600 tabular-nums w-20 shrink-0">
+                  <li key={e.id} className="flex items-start gap-4 px-6 py-3 border-t border-gray-100 group">
+                    <span className="text-xs text-gray-600 tabular-nums w-20 shrink-0 mt-0.5">
                       {format(new Date(e.entry_date + 'T00:00:00'), 'MMM d')}
                     </span>
                     <span className="text-sm font-semibold text-navy tabular-nums w-14 shrink-0 text-right">
                       {formatHours(e.minutes)} h
                     </span>
-                    <span className="text-sm text-gray-600 flex-1 min-w-0 truncate">
+                    {/* Wraps rather than truncating — the description is the
+                        whole record of what the hour was, and half of it with an
+                        ellipsis is not a record. break-words catches a long URL
+                        or unbroken token that would otherwise overflow. */}
+                    <span className="text-sm text-gray-600 flex-1 min-w-0 break-words">
                       {e.description || <span className="text-gray-400">—</span>}
                     </span>
                     {e.user_id && nameById.has(e.user_id) && (
-                      <span className="text-xs text-gray-500 shrink-0">
+                      <span className="text-xs text-gray-500 shrink-0 mt-0.5">
                         {firstName(nameById.get(e.user_id)!)}
                       </span>
                     )}
                     {e.is_estimate && (
-                      <span className="text-[0.7rem] uppercase tracking-wide text-earth shrink-0">estimated</span>
+                      <span className="text-[0.7rem] uppercase tracking-wide text-earth shrink-0 mt-1">estimated</span>
                     )}
                     {!e.billable && (
-                      <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0">non-billable</span>
+                      <span className="text-[0.7rem] uppercase tracking-wide text-gray-500 shrink-0 mt-1">non-billable</span>
                     )}
                     <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                       <button

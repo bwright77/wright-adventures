@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Send } from 'lucide-react'
+import { ArrowRight, Send, MapPin, Linkedin } from 'lucide-react'
 import { BRAND } from '../data/siteData'
 
 export function Contact() {
@@ -58,7 +58,7 @@ export function Contact() {
             <h2 className="section-title !text-white text-balance">
               Let's talk about what your organization needs
             </h2>
-            <p className="section-desc !text-white/55 mb-10">
+            <p className="section-desc !text-white/70 mb-10">
               Whether you're a small conservation nonprofit looking for grant support, a youth
               program ready to scale, or a community group that needs technology — we'd like to hear
               from you.
@@ -67,7 +67,7 @@ export function Contact() {
             <div className="space-y-4">
               <a
                 href={`mailto:${BRAND.email}`}
-                className="flex items-center gap-3 text-white/70 hover:text-river transition-colors group no-underline"
+                className="flex items-center gap-3 text-white/70 hover:text-river-300 transition-colors group no-underline"
               >
                 <span className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center group-hover:bg-river/20 transition-colors">
                   <Send size={16} className="text-river" />
@@ -76,7 +76,7 @@ export function Contact() {
               </a>
               <a
                 href={BRAND.phoneHref}
-                className="flex items-center gap-3 text-white/70 hover:text-river transition-colors group no-underline"
+                className="flex items-center gap-3 text-white/70 hover:text-river-300 transition-colors group no-underline"
               >
                 <span className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center group-hover:bg-river/20 transition-colors">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-river">
@@ -85,20 +85,31 @@ export function Contact() {
                 </span>
                 <span className="text-sm">{BRAND.phone}</span>
               </a>
-            </div>
 
-            {/* white/25 was 2.23:1 and river/60 was 2.77:1 on this navy — both
-                well under AA. At full strength River clears it at 5.17:1, and
-                white/70 matches the email and phone lines above. */}
-            <p className="text-sm text-white/70 mt-8">
-              {BRAND.location} · Serving organizations nationwide ·{' '}
+              {/* Where we are. Not a link, so a div rather than an anchor —
+                  the row reads the same, but nothing invites a click that
+                  goes nowhere. */}
+              <div className="flex items-center gap-3 text-white/70">
+                <span className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+                  <MapPin size={16} className="text-river" />
+                </span>
+                <span className="text-sm">
+                  {BRAND.location} · Serving organizations nationwide
+                </span>
+              </div>
+
               <a
                 href={BRAND.linkedin}
-                className="text-river hover:text-white transition-colors no-underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-white/70 hover:text-river-300 transition-colors group no-underline"
               >
-                LinkedIn
+                <span className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center group-hover:bg-river/20 transition-colors shrink-0">
+                  <Linkedin size={16} className="text-river" />
+                </span>
+                <span className="text-sm">LinkedIn</span>
               </a>
-            </p>
+            </div>
           </div>
 
           {/* Right — form */}
@@ -111,7 +122,7 @@ export function Contact() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">Thanks for reaching out</h3>
-                <p className="text-sm text-white/50">Your message has been sent. We'll be in touch soon.</p>
+                <p className="text-sm text-white/70">Your message has been sent. We'll be in touch soon.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

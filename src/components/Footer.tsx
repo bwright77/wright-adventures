@@ -37,8 +37,8 @@ export function Footer() {
         </ul>
 
         <div className="flex items-center gap-4">
-          <div className="text-white/70 text-xs">{BRAND.location}</div>
-          <Link to="/login" className="text-white/60 text-xs hover:text-white transition-colors">
+          <div className="text-white/70 text-sm">{BRAND.location}</div>
+          <Link to="/login" className="text-white/70 text-sm hover:text-white transition-colors">
             Login
           </Link>
         </div>

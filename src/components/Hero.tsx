@@ -17,7 +17,7 @@ export function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-32 pb-20 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center w-full">
         {/* Left — copy */}
         <div className="animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-river/[0.12] border border-river/25 rounded-full text-river text-xs font-medium uppercase tracking-[0.06em] mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-river/[0.12] border border-river/25 rounded-full text-river-300 text-xs font-medium uppercase tracking-[0.06em] mb-6">
             <span className="w-1.5 h-1.5 bg-river rounded-full animate-pulse-dot" />
             Empowering Organizations to Do More
           </div>
@@ -63,9 +63,9 @@ export function Hero() {
               >
                 <span className="text-4xl lg:text-[2.4rem] font-bold text-white leading-none min-w-[120px]">
                   {stat.value}
-                  <span className="text-xl font-normal text-river">{stat.unit}</span>
+                  <span className="text-xl font-normal text-river-300">{stat.unit}</span>
                 </span>
-                <span className="text-sm text-white/50 font-light leading-snug">
+                <span className="text-sm text-white/70 font-light leading-snug">
                   {stat.label}
                 </span>
               </div>

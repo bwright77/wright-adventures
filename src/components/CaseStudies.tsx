@@ -117,7 +117,7 @@ export function CaseStudies() {
                       </div>
                     )}
                     <span
-                      className={`inline-block text-[0.72rem] font-semibold uppercase tracking-[0.1em] px-2.5 py-1 rounded mb-4 ${TAG_COLORS[study.tagColor]}`}
+                      className={`inline-block text-xs font-semibold uppercase tracking-[0.1em] px-2.5 py-1 rounded mb-4 ${TAG_COLORS[study.tagColor]}`}
                     >
                       {study.tag}
                     </span>
@@ -154,7 +154,7 @@ export function CaseStudies() {
                         <strong className="block text-2xl font-bold text-navy leading-tight">
                           {metric.value}
                         </strong>
-                        <span className="text-xs text-gray-600">{metric.label}</span>
+                        <span className="text-sm text-gray-600">{metric.label}</span>
                       </div>
                     ))}
                   </div>

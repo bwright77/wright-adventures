@@ -41,7 +41,7 @@ function Quote({ q, index }: { q: typeof RADIO.quotes[number]; index: number }) 
         aria-hidden
       />
       <p className="text-[0.95rem] text-gray-600 leading-relaxed font-light">“{q.text}”</p>
-      <cite className={`block mt-3 text-xs font-semibold not-italic tracking-wide ${c.name}`}>
+      <cite className={`block mt-3 text-sm font-semibold not-italic tracking-wide ${c.name}`}>
         {q.speaker}
       </cite>
     </blockquote>
