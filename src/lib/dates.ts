@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 /**
  * Parse a date-only DB value (stored as UTC midnight timestamptz, e.g. "2026-03-15 00:00:00+00")
  * as the correct local calendar date. Using `new Date(s)` directly shifts to local time
@@ -41,4 +43,38 @@ export function monthStartLocal(offset = 0, d: Date = new Date()): string {
 /** Last day of a month, as YYYY-MM-DD. Day 0 of the next month is this month's last. */
 export function monthEndLocal(offset = 0, d: Date = new Date()): string {
   return todayLocal(new Date(d.getFullYear(), d.getMonth() + offset + 1, 0))
+}
+
+/**
+ * Today's local date, kept current in a tab that stays open.
+ *
+ * `useState(todayLocal)` freezes the date at mount. A browser left open
+ * overnight then offers yesterday as the default for everything logged the
+ * next morning — which is exactly how several entries ended up on the wrong
+ * day and had to be corrected by hand.
+ *
+ * Re-checks when the tab regains focus or becomes visible, and once a minute
+ * regardless, so a tab that was never blurred still rolls over.
+ */
+export function useToday(): string {
+  const [today, setToday] = useState(todayLocal)
+
+  useEffect(() => {
+    const sync = () => setToday(prev => {
+      const now = todayLocal()
+      return now === prev ? prev : now   // same string keeps the reference, no re-render
+    })
+    const onVisible = () => { if (!document.hidden) sync() }
+
+    window.addEventListener('focus', sync)
+    document.addEventListener('visibilitychange', onVisible)
+    const id = setInterval(sync, 60_000)
+    return () => {
+      window.removeEventListener('focus', sync)
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(id)
+    }
+  }, [])
+
+  return today
 }

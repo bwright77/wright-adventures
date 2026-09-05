@@ -5,7 +5,7 @@ import { Trash2, Pencil, AlertTriangle, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { todayLocal, monthStartLocal, monthEndLocal } from '../../lib/dates'
+import { todayLocal, monthStartLocal, monthEndLocal, useToday } from '../../lib/dates'
 import { Stopwatch, useStopwatch } from '../../components/admin/Stopwatch'
 import { EntryEditDialog } from '../../components/admin/EntryEditDialog'
 import { parseBillable, parseDuration, formatHours, retainerStatus, billingLabel } from '../../lib/retainer'
@@ -74,12 +74,24 @@ const QUICK = [6, 30, 60, 90, 120]
 export function TimeTracking() {
   const queryClient = useQueryClient()
   const { profile } = useAuth()
+  // Re-resolved as the day turns, not frozen at mount. Everything below that
+  // reads "today" reads it from here.
+  const todayKey = useToday()
   const today = new Date()
 
   // Arriving from the dashboard's Work in Flight list preselects the engagement.
   const [searchParams] = useSearchParams()
   const [engagementId, setEngagementId] = useState<string>(() => searchParams.get('engagement') ?? '')
-  const [entryDate, setEntryDate] = useState(todayLocal)
+  /**
+   * The date to log against. Null means "today", resolved when you press Log
+   * rather than when the page loaded — a tab left open overnight was still
+   * offering yesterday, and several entries went in on the wrong day.
+   *
+   * A date picked by hand is kept until the entry is logged, then released
+   * back to today so the next one cannot inherit it silently.
+   */
+  const [entryDateOverride, setEntryDateOverride] = useState<string | null>(null)
+  const entryDate = entryDateOverride ?? todayKey
   const [duration, setDuration] = useState('')
   const [description, setDescription] = useState('')
   const [billable, setBillable] = useState(true)
@@ -100,9 +112,13 @@ export function TimeTracking() {
   const [editing, setEditing] = useState<EntryRow | null>(null)
 
   // The report defaults to the month in progress — the shape the CMC checkpoint
-  // review asks for, and what anybody means by "this month".
-  const [from, setFrom] = useState(monthStartLocal)
-  const [to, setTo] = useState(todayLocal)
+  // review asks for, and what anybody means by "this month". Null means live,
+  // for the same reason the entry date does: a tab open across midnight or a
+  // month boundary would otherwise quietly report a range ending yesterday.
+  const [fromOverride, setFrom] = useState<string | null>(null)
+  const [toOverride, setTo] = useState<string | null>(null)
+  const from = fromOverride ?? monthStartLocal()
+  const to = toOverride ?? todayKey
   const [reportBusy, setReportBusy] = useState(false)
 
   const { data: engagements = [] } = useQuery<EngagementRow[]>({
@@ -201,7 +217,7 @@ export function TimeTracking() {
         whoIds.map(id => ({
           engagement_id: activeId,
           user_id: id,
-          entry_date: entryDate,
+          entry_date: entryDateOverride ?? todayLocal(),
           minutes: m,
           description: description.trim(),
           billable,
@@ -214,6 +230,7 @@ export function TimeTracking() {
     // an afternoon reconstructed from memory.
     onSuccess: (_, vars) => {
       if (vars.fromTimer) sw.reset()
+      setEntryDateOverride(null)
       // Back to just you. A stale second name would quietly bill somebody
       // else's hours to the next thing logged.
       setWho(null)
@@ -286,7 +303,6 @@ export function TimeTracking() {
   }
 
   const inputCls = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-river focus:ring-1 focus:ring-river/20'
-  const todayKey = todayLocal()
   const todayMinutes = entries.filter(e => e.entry_date === todayKey).reduce((s, e) => s + e.minutes, 0)
   // Monday-anchored, matching how a week of work is actually talked about.
   const monday = new Date(today)
@@ -388,7 +404,7 @@ export function TimeTracking() {
                       <input
                         type="date"
                         value={entryDate}
-                        onChange={e => setEntryDate(e.target.value)}
+                        onChange={e => setEntryDateOverride(e.target.value || null)}
                         className="w-full text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white outline-none focus:border-white/50"
                       />
                     </div>
@@ -568,7 +584,8 @@ export function TimeTracking() {
               <h2 className="text-sm font-semibold text-navy">Time report</h2>
               <div className="flex gap-1">
                 {([
-                  ['This month', () => { setFrom(monthStartLocal()); setTo(todayLocal()) }],
+                  // Back to live rather than to a frozen pair of dates.
+                  ['This month', () => { setFrom(null); setTo(null) }],
                   ['Last month', () => { setFrom(monthStartLocal(-1)); setTo(monthEndLocal(-1)) }],
                   ['All time', () => { setFrom(''); setTo('') }],
                 ] as const).map(([label, apply]) => (
