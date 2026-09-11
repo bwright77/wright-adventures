@@ -29,7 +29,7 @@ const AUTO_DISABLE_AFTER  = 3
 const FETCH_TIMEOUT_MS    = 15_000
 const SOFT_DEADLINE_MS    = 250_000
 
-// Insert threshold — two points below the pursue_lean band (14).
+// Insert threshold — three points below the pursue_lean band (15).
 //
 // Briefly 9, and that was a mistake. It was lowered to compensate for a scorer
 // reading about four points low — GOBRP came back 15 against a recorded 19. But
@@ -46,7 +46,10 @@ const SOFT_DEADLINE_MS    = 250_000
 // a human glance even when the arithmetic says decline.
 //
 // This is the STORAGE bar only. The action bands in fitRubric.ts are separate,
-// unchanged at 18/14, and validated by scripts/rubric-check.ts.
+// now 19/15 since dimension one became convertibility, and validated by
+// scripts/rubric-check.ts. The storage bar was left at 12 through that change
+// deliberately: convertibility lifted scores by roughly a point, so holding 12
+// widens the review queue slightly rather than narrowing it.
 // See ADR-011 §Threshold.
 const SCORE_THRESHOLD = 12
 
