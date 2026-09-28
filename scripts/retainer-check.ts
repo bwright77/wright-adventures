@@ -62,6 +62,18 @@ check('non-billable is excluded', nonBillable.drawnThisMonth, 55, 'logged for th
 for (const [input, want] of [['2.5', 150], ['2.5h', 150], ['90m', 90], ['1:30', 90], ['', null], ['soon', null]] as const)
   check(`parse "${input}"`, parseDuration(input), want, 'a bare number means hours')
 
+// No leading zero. ".5" is the most natural way to write half an hour, and it
+// was being rejected as unreadable because every pattern demanded a digit
+// before the point.
+for (const [input, want] of [
+  ['.5', 30], ['.25', 15], ['.1', 6], ['.5h', 30], ['.5 hours', 30], ['.5m', 0.5],
+  ['5.', 300],                                   // mid-keystroke, before the decimals
+  ['.', null], ['..5', null], ['-.5', null], ['.5.5', null],
+] as const)
+  check(`parse "${input}"`, parseDuration(input), want, 'leading or trailing point')
+
+check('".5" end to end', parseBillable('.5'), 30, 'half an hour, no leading zero')
+
 // The billing increment: six minutes, always UP. Never round down — that gives
 // away time already worked.
 check('5 min bills',  toBillingMinutes(5),  6,   '0.1 h')

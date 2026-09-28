@@ -160,17 +160,26 @@ export function parseDuration(input: string): number | null {
   const hm = /^(\d+):([0-5]\d)$/.exec(s)
   if (hm) return Number(hm[1]) * 60 + Number(hm[2])
 
-  const mins = /^(\d+(?:\.\d+)?)\s*m(?:in(?:ute)?s?)?$/.exec(s)
+  const mins = new RegExp(`^(${NUM})\\s*m(?:in(?:ute)?s?)?$`).exec(s)
   if (mins) return Number(mins[1])
 
-  const hrs = /^(\d+(?:\.\d+)?)\s*h(?:ou)?r?s?$/.exec(s)
+  const hrs = new RegExp(`^(${NUM})\\s*h(?:ou)?r?s?$`).exec(s)
   if (hrs) return Number(hrs[1]) * 60
 
-  const bare = /^(\d+(?:\.\d+)?)$/.exec(s)
+  const bare = new RegExp(`^(${NUM})$`).exec(s)
   if (bare) return Number(bare[1]) * 60
 
   return null
 }
+
+/**
+ * A number as people actually type one: "5", "2.5", ".5", and "5." mid-keystroke.
+ *
+ * Every pattern used to demand a digit before the point, so ".5" — the most
+ * natural way to write half an hour — was rejected as unreadable. A lone "."
+ * still is, since there is no number in it.
+ */
+const NUM = String.raw`\d+(?:\.\d*)?|\.\d+`
 
 /** Parse and round in one step. Null when the input cannot be read. */
 export function parseBillable(input: string): number | null {
