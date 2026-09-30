@@ -2,6 +2,10 @@ import { Document, Page, Text, View, Image, StyleSheet, pdf } from '@react-pdf/r
 import { BRAND } from '../data/siteData'
 import logo from '../assets/images/wa_logo_horizontal_light.png'
 import { NAVY, RIVER, CLOUD, RULE, LABEL_GRAY, base, longDate, dateRange, shortDate } from './pdfBrand'
+import { combineByDay, reportTotals, hoursLabel as hrs, type TimeReportEntry } from './timeReport'
+import { todayLocal } from './dates'
+
+export type { TimeReportEntry } from './timeReport'
 
 /**
  * Hours worked over a period — what the CMC contract calls the checkpoint
@@ -43,6 +47,12 @@ const s = StyleSheet.create({
   cDesc: { width: '58%', paddingRight: 10 },
   cHours: { width: '14%', textAlign: 'right' },
 
+  // A hanging indent, so a wrapped line sits under its own text, not the bullet.
+  item: { flexDirection: 'row' },
+  itemGap: { marginTop: 3 },
+  bullet: { width: 10 },
+  itemText: { flex: 1 },
+
   flag: { fontFamily: 'Jost', fontWeight: 300, fontSize: 8.5, color: LABEL_GRAY },
 
   totalRow: {
@@ -59,14 +69,6 @@ const s = StyleSheet.create({
   empty: { marginTop: 30, fontSize: 11, color: LABEL_GRAY },
 })
 
-export interface TimeReportEntry {
-  entry_date: string
-  minutes: number
-  description: string
-  billable: boolean
-  is_estimate: boolean
-  who: string
-}
 
 export interface TimeReportData {
   organizationName: string
@@ -79,16 +81,13 @@ export interface TimeReportData {
   committedHours?: number | null
 }
 
-const hrs = (minutes: number) => (minutes / 60).toFixed(1)
-
 export function TimeReportDocument({ report: r }: { report: TimeReportData }) {
-  const rows = [...r.entries].sort(
-    (a, b) => a.entry_date.localeCompare(b.entry_date) || a.who.localeCompare(b.who),
-  )
+  // The raw entries still drive every figure in the summary — per-person hours
+  // in particular only exist before a day's work is combined.
+  const rows = r.entries
+  const days = combineByDay(r.entries)
+  const { trackedMin: totalMin, billableMin, estimateMin } = reportTotals(rows)
   const tracked = rows.filter(e => !e.is_estimate)
-  const totalMin = tracked.reduce((s, e) => s + e.minutes, 0)
-  const billableMin = tracked.filter(e => e.billable).reduce((s, e) => s + e.minutes, 0)
-  const estimateMin = rows.filter(e => e.is_estimate).reduce((s, e) => s + e.minutes, 0)
 
   // Who did what, only worth showing when it was not one person.
   const byPerson = new Map<string, number>()
@@ -164,20 +163,30 @@ export function TimeReportDocument({ report: r }: { report: TimeReportData }) {
               <Text style={[s.cHours, base.label, { marginBottom: 0 }]}>Hours</Text>
             </View>
 
-            {rows.map((e, i) => (
+            {days.map((d, i) => (
               <View key={i} style={s.row} wrap={false}>
-                <Text style={s.cDate}>{shortDate(e.entry_date)}</Text>
-                <Text style={s.cWho}>{e.who}</Text>
+                <Text style={s.cDate}>{shortDate(d.entry_date)}</Text>
+                <Text style={s.cWho}>{d.who.join(', ')}</Text>
                 <View style={s.cDesc}>
-                  <Text>{e.description}</Text>
-                  {(e.is_estimate || !e.billable) && (
+                  {/* Bulleted only when there is more than one item. Without a
+                      marker, a description that wraps onto a second line looks
+                      exactly like a second description. */}
+                  {d.descriptions.length > 1
+                    ? d.descriptions.map((text, j) => (
+                        <View key={j} style={[s.item, j > 0 ? s.itemGap : {}]}>
+                          <Text style={s.bullet}>•</Text>
+                          <Text style={s.itemText}>{text}</Text>
+                        </View>
+                      ))
+                    : <Text>{d.descriptions[0] ?? ''}</Text>}
+                  {(d.is_estimate || !d.billable) && (
                     <Text style={s.flag}>
-                      {[e.is_estimate ? 'estimated' : null, !e.billable ? 'non-billable' : null]
+                      {[d.is_estimate ? 'estimated' : null, !d.billable ? 'non-billable' : null]
                         .filter(Boolean).join(' · ')}
                     </Text>
                   )}
                 </View>
-                <Text style={s.cHours}>{hrs(e.minutes)}</Text>
+                <Text style={s.cHours}>{hrs(d.minutes)}</Text>
               </View>
             ))}
 
@@ -197,7 +206,7 @@ export function TimeReportDocument({ report: r }: { report: TimeReportData }) {
         )}
 
         <Text style={s.note}>
-          Time is recorded in six-minute increments, rounded up. Prepared {longDate(new Date().toISOString())}.
+          Time is recorded in six-minute increments, rounded up. Prepared {longDate(todayLocal())}.
         </Text>
 
         <View style={base.footer} fixed>

@@ -284,7 +284,10 @@ export function TimeTracking() {
         engagementName: selected.name,
         from: from || dates[0] || todayLocal(),
         to: to || dates[dates.length - 1] || todayLocal(),
-        entries: inRange.map(e => ({
+        // The list is newest-first for the screen; the report combines each
+        // day's descriptions in the order given, so reverse it to read in the
+        // order the work actually happened.
+        entries: [...inRange].reverse().map(e => ({
           entry_date: e.entry_date,
           minutes: e.minutes,
           description: e.description,
