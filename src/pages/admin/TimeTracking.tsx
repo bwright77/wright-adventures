@@ -408,7 +408,10 @@ export function TimeTracking() {
                         type="date"
                         value={entryDate}
                         onChange={e => setEntryDateOverride(e.target.value || null)}
-                        className="w-full text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white outline-none focus:border-white/50"
+                        // color-scheme: dark makes the browser draw its own
+                        // calendar icon (and the pop-up) for a dark ground —
+                        // otherwise the icon renders black on this navy card.
+                        className="w-full text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white outline-none focus:border-white/50 [color-scheme:dark]"
                       />
                     </div>
                     <div>
